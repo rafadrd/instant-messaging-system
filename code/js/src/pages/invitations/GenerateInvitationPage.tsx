@@ -5,11 +5,12 @@ import useFetchUserChannels from "../../hooks/channels/useFetchUserChannels";
 import useGenerateInvitation from "../../hooks/invitations/useGenerateInvitation";
 import { useJoinPrivateChannel } from "../../hooks/channels/useJoinChannel";
 import useAuth from "../../hooks/auth/useAuth";
+import { Channel } from "../../types";
 
 const GenerateInvitationPage = () => {
   const { user } = useAuth();
-  const { channels } = useFetchUserChannels();
-  const privateChannels = channels.filter((channel) => !channel.isPublic);
+  const { data: channels = [] } = useFetchUserChannels();
+  const privateChannels = channels.filter((channel: Channel) => !channel.isPublic);
 
   const {
     invitation,
@@ -85,7 +86,7 @@ const GenerateInvitationPage = () => {
             disabled={generateLoading}
           >
             <option value="">-- Select a Channel --</option>
-            {privateChannels.map((channel) => (
+            {privateChannels.map((channel: Channel) => (
               <option key={channel.id} value={channel.id}>
                 {channel.name}
               </option>

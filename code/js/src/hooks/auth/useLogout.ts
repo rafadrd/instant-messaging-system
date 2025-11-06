@@ -1,28 +1,27 @@
-import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import useAuth from "./useAuth";
 import { logoutUser } from "../../api/auth";
+import useAuth from "./useAuth";
 
 const useLogout = () => {
   const { setUser } = useAuth();
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const handleLogout = async () => {
-    setLoading(true);
-    try {
-      await logoutUser();
+  const mutation = useMutation<void, Error>({
+    mutationFn: logoutUser,
+    onSuccess: () => {
       setUser(undefined);
+      queryClient.clear();
       navigate("/login");
-    } catch (err: any) {
-      setError(err.message || "Logout failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
 
-  return { handleLogout, loading, error };
+  return {
+    handleLogout: mutation.mutate,
+    loading: mutation.isPending,
+    error: mutation.error?.message || null,
+  };
 };
 
 export default useLogout;

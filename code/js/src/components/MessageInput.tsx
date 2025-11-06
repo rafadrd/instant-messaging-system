@@ -1,5 +1,5 @@
 import * as React from "react";
-import { FormEvent } from "react";
+import { FormEvent, useId } from "react";
 
 interface MessageInputProps {
   newMessage: string;
@@ -17,30 +17,42 @@ const MessageInput = ({
   isPosting,
   postError,
   generalError,
-}: MessageInputProps) => (
-  <form onSubmit={handleSubmit} className="chat-input-container">
-    <textarea
-      id="newMessage"
-      placeholder="Type a message..."
-      value={newMessage}
-      onChange={(e) => setNewMessage(e.target.value)}
-      className="chat-input"
-      rows={2}
-      disabled={isPosting}
-      required
-      aria-label="New Message"
-    ></textarea>
-    <button
-      type="submit"
-      className="send-button"
-      disabled={isPosting || !newMessage.trim()}
-      aria-label="Send Message"
-    >
-      {isPosting ? "Sending..." : "Send"}
-    </button>
-    {generalError && <div className="error-message">{generalError}</div>}
-    {postError && <div className="error-message">{postError}</div>}
-  </form>
-);
+}: MessageInputProps) => {
+  const errorId = useId();
+  const errorMessage = generalError || postError;
+
+  return (
+    <form onSubmit={handleSubmit} className="chat-input-container">
+      <textarea
+        id="newMessage"
+        placeholder="Type a message..."
+        value={newMessage}
+        onChange={(e) => setNewMessage(e.target.value)}
+        className="chat-input"
+        rows={2}
+        disabled={isPosting}
+        required
+        aria-label="New Message"
+        aria-describedby={errorMessage ? errorId : undefined}
+        aria-invalid={!!errorMessage}
+      ></textarea>
+      <button
+        type="submit"
+        className="send-button"
+        disabled={isPosting || !newMessage.trim()}
+        aria-label="Send Message"
+      >
+        {isPosting ? "Sending..." : "Send"}
+      </button>
+      {errorMessage && (
+        <div id={errorId} className="error-message" role="alert">
+          {" "}
+          {}
+          {errorMessage}
+        </div>
+      )}
+    </form>
+  );
+};
 
 export default MessageInput;

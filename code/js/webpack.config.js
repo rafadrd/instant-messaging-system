@@ -23,12 +23,27 @@ module.exports = {
       },
       {
         test: /\.css$/i,
+        exclude: /\.module\.css$/,
         use: ["style-loader", "css-loader"],
+      },
+      {
+        test: /\.module\.css$/i,
+        use: [
+          "style-loader",
+          {
+            loader: "css-loader",
+            options: {
+              modules: {
+                localIdentName: "[name]__[local]--[hash:base64:5]",
+              },
+            },
+          },
+        ],
       },
     ],
   },
   resolve: {
-    extensions: [".tsx", ".ts", ".js", ".css"],
+    extensions: [".tsx", ".ts", ".js", ".css", ".module.css"],
   },
   output: {
     filename: "bundle.js",

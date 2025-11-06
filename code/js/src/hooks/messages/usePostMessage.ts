@@ -1,42 +1,25 @@
-import { useCallback, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { postNewMessage } from "../../api/messages";
 
-interface UsePostMessageReturn {
-  handlePostMessage: (messageContent: string) => Promise<void>;
-  loading: boolean;
-  error: string | null;
-}
-
-const usePostMessage = (channelId: number | null): UsePostMessageReturn => {
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handlePostMessage = useCallback(
-    async (messageContent: string) => {
+const usePostMessage = (channelId: number | null) => {
+  const mutation = useMutation<any, Error, { content: string }>({
+    mutationFn: ({ content }) => {
       if (!channelId) {
-        setError("Invalid channel ID.");
-        return;
+        return Promise.reject(new Error("Invalid channel ID."));
       }
-
-      const trimmedMessage = messageContent.trim();
+      const trimmedMessage = content.trim();
       if (!trimmedMessage) {
-        setError("Message cannot be empty.");
-        return;
+        return Promise.reject(new Error("Message cannot be empty."));
       }
-
-      setLoading(true);
-      try {
-        await postNewMessage(channelId, trimmedMessage);
-      } catch (error: any) {
-        setError(error.message || "Failed to post the message.");
-      } finally {
-        setLoading(false);
-      }
+      return postNewMessage(channelId, trimmedMessage);
     },
-    [channelId],
-  );
+  });
 
-  return { handlePostMessage, loading, error };
+  return {
+    handlePostMessage: (content: string) => mutation.mutate({ content }),
+    loading: mutation.isPending,
+    error: mutation.error?.message || null,
+  };
 };
 
 export default usePostMessage;

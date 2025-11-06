@@ -1,28 +1,37 @@
-import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { joinChannel, joinChannelByToken } from "../../api/channels";
 
-const useJoinChannel = (joinFunction: (arg: any) => Promise<void>) => {
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleJoin = async (arg: any) => {
-    setLoading(true);
-    try {
-      await joinFunction(arg);
-    } catch (err: any) {
-      setError(err.message || "Failed to join the channel.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return { handleJoin, loading, error };
-};
-
 export const useJoinPublicChannel = (channelId: number) => {
-  return useJoinChannel(async () => await joinChannel(channelId));
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation<void, Error, number>({
+    mutationFn: (id) => joinChannel(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["channels", "user"] });
+      queryClient.invalidateQueries({ queryKey: ["channels", "search"] });
+    },
+  });
+
+  return {
+    handleJoin: mutation.mutate,
+    loading: mutation.isPending,
+    error: mutation.error?.message || null,
+  };
 };
 
 export const useJoinPrivateChannel = () => {
-  return useJoinChannel(joinChannelByToken);
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation<void, Error, string>({
+    mutationFn: (token) => joinChannelByToken(token),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["channels", "user"] });
+    },
+  });
+
+  return {
+    handleJoin: mutation.mutate,
+    loading: mutation.isPending,
+    error: mutation.error?.message || null,
+  };
 };

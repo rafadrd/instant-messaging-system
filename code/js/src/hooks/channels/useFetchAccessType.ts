@@ -1,36 +1,16 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { fetchMemberAccessType } from "../../api/channels";
 import useAuth from "../auth/useAuth";
 
 const useFetchAccessType = (channelId: number | null) => {
   const { user } = useAuth();
-  const [accessType, setAccessType] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const userId = user?.id;
 
-  useEffect(() => {
-    if (!channelId || !user?.id) {
-      setError("Invalid channel or user ID.");
-      setLoading(false);
-      return;
-    }
-
-    const loadAccessType = async () => {
-      setLoading(true);
-      try {
-        const data = await fetchMemberAccessType(user.id, channelId);
-        setAccessType(data);
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch access type.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadAccessType();
-  }, [user?.id, channelId]);
-
-  return { accessType, loading, error };
+  return useQuery<string, Error>({
+    queryKey: ["accessType", channelId, userId],
+    queryFn: () => fetchMemberAccessType(userId!, channelId!),
+    enabled: !!channelId && !!userId,
+  });
 };
 
 export default useFetchAccessType;

@@ -3,15 +3,16 @@ import ChannelBox from "../../components/ChannelBox";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import "../CSS/Channels.css";
 import useFetchUserChannels from "../../hooks/channels/useFetchUserChannels";
+import { Channel } from "../../types";
 
 const JoinedChannelsPage = () => {
-  const { channels, loading, error } = useFetchUserChannels();
+  const { data: channels = [], isLoading: loading, error } = useFetchUserChannels();
 
   if (loading) return <LoadingSpinner />;
   if (error)
     return (
       <div className="channels-error" role="alert">
-        {error}
+        {error.message}
       </div>
     );
 
@@ -24,7 +25,7 @@ const JoinedChannelsPage = () => {
         </div>
       ) : (
         <div className="channels-grid">
-          {channels.map((channel) => (
+          {channels.map((channel: Channel) => (
             <ChannelBox key={channel.id} channel={channel} isJoined />
           ))}
         </div>

@@ -1,31 +1,16 @@
 package pt.isel
 
-import jakarta.annotation.PreDestroy
 import jakarta.inject.Named
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.Executor
 
 @Named
 class MessageEventService(
     private val trxManager: TransactionManager,
+    private val sseExecutor: Executor,
 ) {
     private val listeners = ConcurrentHashMap<Long, MutableSet<UpdatedMessageEmitter>>()
-    private val broadcastingExecutor = Executors.newCachedThreadPool()
-
-    @PreDestroy
-    fun shutdown() {
-        logger.info("Shutting down message event service")
-        broadcastingExecutor.shutdown()
-        try {
-            if (!broadcastingExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
-                broadcastingExecutor.shutdownNow()
-            }
-        } catch (_: InterruptedException) {
-            broadcastingExecutor.shutdownNow()
-        }
-    }
 
     fun addEmitter(
         channelId: Long,
@@ -71,7 +56,7 @@ class MessageEventService(
         signal: UpdatedMessage,
     ) {
         listeners[channelId]?.forEach { emitter ->
-            broadcastingExecutor.execute {
+            sseExecutor.execute {
                 try {
                     emitter.emit(signal)
                 } catch (e: Exception) {

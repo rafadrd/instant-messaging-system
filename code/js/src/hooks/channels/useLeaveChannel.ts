@@ -1,37 +1,28 @@
-import { useState } from "react";
-import { leaveChannel } from "../../api/channels";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { leaveChannel } from "../../api/channels";
 
-interface UseLeaveChannelReturn {
-  handleLeaveChannel: () => Promise<void>;
-  loading: boolean;
-  error: string | null;
-}
-
-const useLeaveChannel = (channelId: number | null): UseLeaveChannelReturn => {
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+const useLeaveChannel = (channelId: number | null) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const handleLeaveChannel = async () => {
-    if (!channelId) {
-      setError("Invalid channel ID.");
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await leaveChannel(channelId);
+  const mutation = useMutation<string, Error>({
+    mutationFn: () => {
+      if (!channelId) throw new Error("Invalid channel ID.");
+      return leaveChannel(channelId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["channels", "user"] });
+      queryClient.invalidateQueries({ queryKey: ["channel", channelId] });
       navigate("/channels");
-    } catch (err: any) {
-      setError(err.message || "Failed to leave the channel.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
 
-  return { handleLeaveChannel, loading, error };
+  return {
+    leaveChannel: mutation.mutate,
+    loading: mutation.isPending,
+    error: mutation.error?.message || null,
+  };
 };
 
 export default useLeaveChannel;

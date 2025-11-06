@@ -5,11 +5,12 @@ import ChannelBox from "../../components/ChannelBox";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import useSearchChannels from "../../hooks/channels/useSearchChannels";
 import useFetchUserChannels from "../../hooks/channels/useFetchUserChannels";
+import { Channel } from "../../types";
 
 const SearchChannelsPage = () => {
   const {
-    channels: userChannels,
-    loading: loadingUserChannels,
+    data: userChannels = [],
+    isLoading: loadingUserChannels,
     error: errorUserChannels,
   } = useFetchUserChannels();
 
@@ -27,7 +28,7 @@ const SearchChannelsPage = () => {
 
   const isUserJoined = useCallback(
     (channelId: number) => {
-      return userChannels.some((channel) => channel.id === channelId);
+      return userChannels.some((channel: Channel) => channel.id === channelId);
     },
     [userChannels],
   );
@@ -60,7 +61,7 @@ const SearchChannelsPage = () => {
 
       {errorUserChannels && (
         <div className="channels-error" role="alert">
-          {errorUserChannels}
+          {errorUserChannels.message}
         </div>
       )}
 

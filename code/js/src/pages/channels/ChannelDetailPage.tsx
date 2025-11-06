@@ -22,23 +22,30 @@ const ChannelDetailPage = () => {
   const channelId = id ? parseInt(id, 10) : null;
 
   const {
-    channel,
-    loading: isChannelLoading,
+    data: channel,
+    isLoading: isChannelLoading,
     error: channelError,
   } = useFetchChannel(channelId);
 
   const {
-    accessType,
-    loading: isAccessTypeLoading,
+    data: accessType,
+    isLoading: isAccessTypeLoading,
     error: accessTypeError,
   } = useFetchAccessType(channelId);
 
   const {
-    messages,
-    setMessages,
+    messages: initialMessages,
     loading: isMessagesLoading,
     error: messagesError,
   } = useFetchMessages(channelId);
+
+  const [messages, setMessages] = useState<Message[]>([]);
+
+  useEffect(() => {
+    if (initialMessages) {
+      setMessages(initialMessages);
+    }
+  }, [initialMessages]);
 
   const {
     handlePostMessage: postNewMessage,
@@ -47,7 +54,7 @@ const ChannelDetailPage = () => {
   } = usePostMessage(channelId);
 
   const {
-    handleLeaveChannel: leaveChannel,
+    leaveChannel,
     loading: isLeaving,
     error: leaveError,
   } = useLeaveChannel(channelId);
@@ -63,15 +70,15 @@ const ChannelDetailPage = () => {
 
   const handleNewMessage = useCallback(
     (message: Message) => {
-      setMessages((prevMessages) => {
-        if (prevMessages.some((m) => m.id === message.id)) {
+      setMessages((prevMessages: Message[]) => {
+        if (prevMessages.some((m: Message) => m.id === message.id)) {
           return prevMessages;
         }
         return [...prevMessages, message];
       });
       scrollToBottom();
     },
-    [setMessages, scrollToBottom],
+    [scrollToBottom],
   );
 
   useEffect(() => {
@@ -107,8 +114,8 @@ const ChannelDetailPage = () => {
   if (channelError || accessTypeError || messagesError) {
     return (
       <div className="error-container">
-        {channelError && <p>{channelError}</p>}
-        {accessTypeError && <p>{accessTypeError}</p>}
+        {channelError && <p>{channelError.message}</p>}
+        {accessTypeError && <p>{accessTypeError.message}</p>}
         {messagesError && <p>{messagesError}</p>}
       </div>
     );

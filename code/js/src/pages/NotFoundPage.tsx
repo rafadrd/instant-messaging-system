@@ -16,10 +16,6 @@ const NotFoundPage = () => {
       <button className="not-found-button" onClick={handleGoHome}>
         Go to Home
       </button>
-      <p className="not-found-links">
-        Return to <Link to="/channels">Channels</Link> or explore other
-        sections.
-      </p>
     </div>
   );
 };

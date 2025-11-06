@@ -1,53 +1,24 @@
-import { Dispatch, FormEvent, SetStateAction, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { createChannel } from "../../api/channels";
+import { ChannelInput, Channel } from "../../types";
 
-interface CreateChannelHook {
-  channelName: string;
-  setChannelName: Dispatch<SetStateAction<string>>;
-  isPublic: boolean;
-  setIsPublic: Dispatch<SetStateAction<boolean>>;
-  handleSubmit: (e: FormEvent<HTMLFormElement>) => void;
-  loading: boolean;
-  error: string | null;
-}
-
-const useCreateChannel = (): CreateChannelHook => {
-  const [channelName, setChannelName] = useState<string>("");
-  const [isPublic, setIsPublic] = useState<boolean>(true);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+const useCreateChannel = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError(null);
-
-    const trimmedName = channelName.trim();
-    if (trimmedName.length < 3) {
-      setError("Channel name must be at least 3 characters long.");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const newChannel = await createChannel({ name: trimmedName, isPublic });
+  const mutation = useMutation<Channel, Error, ChannelInput>({
+    mutationFn: createChannel,
+    onSuccess: (newChannel) => {
+      queryClient.invalidateQueries({ queryKey: ["channels", "user"] });
       navigate(`/channels/${newChannel.id}`);
-    } catch (err: any) {
-      setError(err.message || "Failed to create channel.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
 
   return {
-    channelName,
-    setChannelName,
-    isPublic,
-    setIsPublic,
-    handleSubmit,
-    loading,
-    error,
+    createChannel: mutation.mutate,
+    loading: mutation.isPending,
+    error: mutation.error?.message || null,
   };
 };
 

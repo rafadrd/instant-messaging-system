@@ -1,17 +1,17 @@
 import * as React from "react";
+import { FormEvent, useState } from "react";
 import "../CSS/Channels.css";
 import useCreateChannel from "../../hooks/channels/useCreateChannel";
 
 const CreateChannelPage = () => {
-  const {
-    channelName,
-    setChannelName,
-    isPublic,
-    setIsPublic,
-    handleSubmit,
-    loading,
-    error,
-  } = useCreateChannel();
+  const { createChannel, loading, error } = useCreateChannel();
+  const [channelName, setChannelName] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    createChannel({ name: channelName, isPublic });
+  };
 
   return (
     <div className="create-container">

@@ -6,6 +6,7 @@ import org.springframework.security.crypto.password.PasswordEncoder
 @Named
 class UsersDomain(
     private val passwordEncoder: PasswordEncoder,
+    private val passwordPolicyConfig: PasswordPolicyConfig, // Injected configuration
 ) {
     fun validatePassword(
         password: String,
@@ -16,11 +17,11 @@ class UsersDomain(
         PasswordValidationInfo(passwordEncoder.encode(password))
 
     fun isSafePassword(password: String): Boolean {
-        if (password.length < 8) return false
-        val hasUpperCase = password.any { it.isUpperCase() }
-        val hasLowerCase = password.any { it.isLowerCase() }
-        val hasDigit = password.any { it.isDigit() }
-        val hasSpecialChar = password.any { !it.isLetterOrDigit() }
-        return hasUpperCase && hasLowerCase && hasDigit && hasSpecialChar
+        if (password.length < passwordPolicyConfig.minLength) return false
+        if (passwordPolicyConfig.requiresUppercase && !password.any { it.isUpperCase() }) return false
+        if (passwordPolicyConfig.requiresLowercase && !password.any { it.isLowerCase() }) return false
+        if (passwordPolicyConfig.requiresDigit && !password.any { it.isDigit() }) return false
+        if (passwordPolicyConfig.requiresSpecialChar && !password.any { !it.isLetterOrDigit() }) return false
+        return true
     }
 }
