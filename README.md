@@ -7,6 +7,16 @@
 - António Coelho 47236
 - Rafael Pegacho 49423
 
+## Configuration
+
+Before running the application, you must set the following environment variables.
+
+### JWT Secret
+
+The application uses a JWT (JSON Web Token) for authentication, which requires a strong secret key. Set this using the `JWT_SECRET` environment variable.
+
+You can generate a strong secret using a tool like OpenSSL: `openssl rand -base64 32`
+
 ## Steps to Execute
 
 1. **Start Docker Desktop:**
@@ -29,8 +39,10 @@
 
 5. **Start the Spring Boot Application:**
     - In IntelliJ IDEA, locate the `AppInstantMessaging` Spring Boot application in the `host` folder.
-    - Run the application with the environment variable:
+    - Run the application with the following environment variables:
       ```
+      # Replace with your strong, randomly generated secret
+      JWT_SECRET=your-strong-and-long-jwt-secret-key
       DB_URL=jdbc:postgresql://localhost:5432/db?user=dbuser&password=isel
       ```
     - This sets up the connection to the PostgreSQL database.
