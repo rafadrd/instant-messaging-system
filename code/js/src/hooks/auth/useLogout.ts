@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useAuth from "./useAuth";
 import { logoutUser } from "../../api/auth";
-import { deleteCookie } from "../../utils/cookies";
 
 const useLogout = () => {
   const { setUser } = useAuth();
@@ -11,13 +10,9 @@ const useLogout = () => {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    const confirmLogout = window.confirm("Are you sure you want to logout?");
-    if (!confirmLogout) return;
-
     setLoading(true);
     try {
       await logoutUser();
-      deleteCookie("token");
       setUser(undefined);
       navigate("/login");
     } catch (err: any) {

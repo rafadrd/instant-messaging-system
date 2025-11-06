@@ -1,15 +1,14 @@
 package pt.isel
 
-import java.sql.ResultSet
 import org.jdbi.v3.core.Handle
-import pt.isel.auth.PasswordValidationInfo
+import java.sql.ResultSet
 
 class ChannelRepositoryJdbi(
     private val handle: Handle,
 ) : ChannelRepository {
     override fun create(
         name: String,
-        owner: User,
+        owner: UserInfo,
         isPublic: Boolean,
     ): Channel {
         val id =
@@ -26,9 +25,10 @@ class ChannelRepositoryJdbi(
     override fun findById(id: Long): Channel? =
         handle.executeQueryToSingle(
             """
-            SELECT channels.*, users.* FROM dbo.channels channels
-            JOIN dbo.users users ON channels.owner_id = users.id
-            WHERE channels.id = :id
+            SELECT c.id as channel_id, c.name, c.is_public, u.id as owner_id, u.username 
+            FROM dbo.channels c
+            JOIN dbo.users u ON c.owner_id = u.id
+            WHERE c.id = :id
             """,
             mapOf("id" to id),
             ::mapRowToChannel,
@@ -37,22 +37,24 @@ class ChannelRepositoryJdbi(
     override fun findByName(name: String): Channel? =
         handle.executeQueryToSingle(
             """
-            SELECT channels.*, users.* FROM dbo.channels channels
-            JOIN dbo.users users ON channels.owner_id = users.id
-            WHERE channels.name = :name
+            SELECT c.id as channel_id, c.name, c.is_public, u.id as owner_id, u.username 
+            FROM dbo.channels c
+            JOIN dbo.users u ON c.owner_id = u.id
+            WHERE c.name = :name
             """,
             mapOf("name" to name),
             ::mapRowToChannel,
         )
 
-    override fun findAllByOwner(owner: User): List<Channel> =
+    override fun findAllByOwner(ownerId: Long): List<Channel> =
         handle.executeQueryToList(
             """
-            SELECT channels.*, users.* from dbo.channels channels
-            JOIN dbo.users users ON channels.owner_id = users.id
+            SELECT c.id as channel_id, c.name, c.is_public, u.id as owner_id, u.username 
+            FROM dbo.channels c
+            JOIN dbo.users u ON c.owner_id = u.id
             WHERE owner_id = :owner_id
             """,
-            mapOf("owner_id" to owner.id),
+            mapOf("owner_id" to ownerId),
             ::mapRowToChannel,
         )
 
@@ -62,9 +64,10 @@ class ChannelRepositoryJdbi(
     ): List<Channel> =
         handle.executeQueryToList(
             """
-            SELECT channels.*, users.* FROM dbo.channels channels
-            JOIN dbo.users users ON channels.owner_id = users.id
-            WHERE channels.is_public = TRUE
+            SELECT c.id as channel_id, c.name, c.is_public, u.id as owner_id, u.username 
+            FROM dbo.channels c
+            JOIN dbo.users u ON c.owner_id = u.id
+            WHERE c.is_public = TRUE
             OFFSET :offset
             LIMIT :limit
             """,
@@ -75,8 +78,9 @@ class ChannelRepositoryJdbi(
     override fun findAll(): List<Channel> =
         handle.executeQueryToList(
             """
-            SELECT channels.*, users.* from dbo.channels channels
-            JOIN dbo.users users ON channels.owner_id = users.id
+            SELECT c.id as channel_id, c.name, c.is_public, u.id as owner_id, u.username 
+            FROM dbo.channels c
+            JOIN dbo.users u ON c.owner_id = u.id
             """,
             mapper = ::mapRowToChannel,
         )
@@ -88,9 +92,10 @@ class ChannelRepositoryJdbi(
     ): List<Channel> =
         handle.executeQueryToList(
             """
-            SELECT channels.*, users.* FROM dbo.channels channels
-            JOIN dbo.users users ON channels.owner_id = users.id
-            WHERE channels.name ILIKE '%' || :query || '%' AND channels.is_public = TRUE
+            SELECT c.id as channel_id, c.name, c.is_public, u.id as owner_id, u.username 
+            FROM dbo.channels c
+            JOIN dbo.users u ON c.owner_id = u.id
+            WHERE c.name ILIKE '%' || :query || '%' AND c.is_public = TRUE
             OFFSET :offset
             LIMIT :limit
             """,
@@ -123,14 +128,13 @@ class ChannelRepositoryJdbi(
 
     private fun mapRowToChannel(rs: ResultSet): Channel {
         val owner =
-            User(
+            UserInfo(
                 rs.getLong("owner_id"),
                 rs.getString("username"),
-                PasswordValidationInfo(rs.getString("password_validation")),
             )
 
         return Channel(
-            rs.getLong("id"),
+            rs.getLong("channel_id"),
             rs.getString("name"),
             owner,
             rs.getBoolean("is_public"),

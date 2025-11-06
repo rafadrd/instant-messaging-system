@@ -1,23 +1,28 @@
 import * as React from "react";
-import { fetchCurrentUser } from "../../api/users";
-import { setCookie } from "../../utils/cookies";
 import { loginReducer } from "../../reducers/formReducers";
-import "../CSS/authenticationPages.css";
+import "../CSS/AuthenticationPages.css";
 import useAuth from "../../hooks/auth/useAuth";
 import { loginUser } from "../../api/auth";
 import AuthForm from "../../components/AuthForm";
-import {LoginInput} from "../../types";
+import { LoginInput } from "../../types";
+import { Navigate } from "react-router-dom";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 const LoginPage = () => {
-  const { setUser } = useAuth();
+  const { user, loading, setUser } = useAuth();
 
   const handleLogin = async (inputs: LoginInput) => {
-    const { username, password } = inputs;
-    const token = await loginUser({ username, password });
-    setCookie("token", token.tokenValue);
-    const user = await fetchCurrentUser();
+    const user = await loginUser(inputs);
     setUser(user);
   };
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (user) {
+    return <Navigate to="/channels" replace />;
+  }
 
   return (
     <AuthForm<LoginInput>

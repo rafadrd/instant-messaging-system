@@ -4,13 +4,13 @@ package pt.isel
 interface ChannelRepository : Repository<Channel> {
     fun create(
         name: String,
-        owner: User,
+        owner: UserInfo,
         isPublic: Boolean,
     ): Channel
 
     fun findByName(name: String): Channel?
 
-    fun findAllByOwner(owner: User): List<Channel>
+    fun findAllByOwner(ownerId: Long): List<Channel>
 
     fun findAllPublicChannels(
         limit: Int = 50,

@@ -3,29 +3,29 @@ package pt.isel
 /** Repository interface for managing channel members, extends the generic Repository */
 interface ChannelMemberRepository : Repository<ChannelMember> {
     fun addUserToChannel(
-        user: User,
+        userInfo: UserInfo,
         channel: Channel,
         accessType: AccessType,
     ): ChannelMember
 
     fun findUserInChannel(
-        user: User,
-        channel: Channel,
+        userId: Long,
+        channelId: Long,
     ): ChannelMember?
 
     fun findAllChannelsForUser(
-        user: User,
+        userId: Long,
         limit: Int = 50,
         offset: Int = 0,
     ): List<ChannelMember>
 
     fun removeUserFromChannel(
-        user: User,
-        channel: Channel,
+        userId: Long,
+        channelId: Long,
     )
 
     fun findAllMembersInChannel(
-        channel: Channel,
+        channelId: Long,
         limit: Int = 50,
         offset: Int = 0,
     ): List<ChannelMember>

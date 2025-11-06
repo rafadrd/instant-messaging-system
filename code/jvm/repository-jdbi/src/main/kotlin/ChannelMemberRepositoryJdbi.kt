@@ -1,14 +1,13 @@
 package pt.isel
 
-import java.sql.ResultSet
 import org.jdbi.v3.core.Handle
-import pt.isel.auth.PasswordValidationInfo
+import java.sql.ResultSet
 
 class ChannelMemberRepositoryJdbi(
     private val handle: Handle,
 ) : ChannelMemberRepository {
     override fun addUserToChannel(
-        user: User,
+        userInfo: UserInfo,
         channel: Channel,
         accessType: AccessType,
     ): ChannelMember {
@@ -19,90 +18,68 @@ class ChannelMemberRepositoryJdbi(
                 VALUES (:user_id, :channel_id, :access_type)
                 """,
                 mapOf(
-                    "user_id" to user.id,
+                    "user_id" to userInfo.id,
                     "channel_id" to channel.id,
-                    "access_type" to accessType.toDatabaseValue(),
+                    "access_type" to accessType,
                 ),
             )
-        return ChannelMember(id, user, channel, accessType)
+        return ChannelMember(id, userInfo, channel, accessType)
     }
+
+    private val baseQuery = """
+        SELECT
+            cm.id as cm_id, cm.access_type,
+            member.id AS member_id, member.username AS member_username,
+            c.id AS channel_id, c.name AS channel_name, c.is_public AS channel_is_public,
+            owner.id AS owner_id, owner.username AS owner_username
+        FROM dbo.channel_members cm
+        JOIN dbo.users member ON cm.user_id = member.id
+        JOIN dbo.channels c ON cm.channel_id = c.id
+        JOIN dbo.users owner ON c.owner_id = owner.id
+    """
 
     override fun findById(id: Long): ChannelMember? =
         handle.executeQueryToSingle(
-            """
-            SELECT channel_members.*, users.*, channels.* 
-            FROM dbo.channel_members channel_members
-            JOIN dbo.users users ON channel_members.user_id = users.id
-            JOIN dbo.channels ON channel_members.channel_id = channels.id
-            WHERE channel_members.id = :id
-            """,
+            "$baseQuery WHERE cm.id = :id",
             mapOf("id" to id),
             ::mapRowToChannelMember,
         )
 
     override fun findUserInChannel(
-        user: User,
-        channel: Channel,
+        userId: Long,
+        channelId: Long,
     ): ChannelMember? =
         handle.executeQueryToSingle(
-            """
-            SELECT channel_members.*, users.*, channels.* 
-            FROM dbo.channel_members channel_members
-            JOIN dbo.users users ON channel_members.user_id = users.id
-            JOIN dbo.channels ON channel_members.channel_id = channels.id
-            WHERE channel_members.channel_id = :channel_id 
-            AND channel_members.user_id = :user_id
-            """,
-            mapOf("channel_id" to channel.id, "user_id" to user.id),
+            "$baseQuery WHERE cm.channel_id = :channel_id AND cm.user_id = :user_id",
+            mapOf("channel_id" to channelId, "user_id" to userId),
             ::mapRowToChannelMember,
         )
 
     override fun findAllChannelsForUser(
-        user: User,
+        userId: Long,
         limit: Int,
         offset: Int,
     ): List<ChannelMember> =
         handle.executeQueryToList(
-            """
-            SELECT channel_members.*, users.*, channels.* 
-            FROM dbo.channel_members channel_members
-            JOIN dbo.users users ON channel_members.user_id = users.id
-            JOIN dbo.channels ON channel_members.channel_id = channels.id
-            WHERE channel_members.user_id = :user_id
-            OFFSET :offset
-            LIMIT :limit
-            """,
-            mapOf("user_id" to user.id, "offset" to offset, "limit" to limit),
+            "$baseQuery WHERE cm.user_id = :user_id OFFSET :offset LIMIT :limit",
+            mapOf("user_id" to userId, "offset" to offset, "limit" to limit),
             ::mapRowToChannelMember,
         )
 
     override fun findAllMembersInChannel(
-        channel: Channel,
+        channelId: Long,
         limit: Int,
         offset: Int,
     ): List<ChannelMember> =
         handle.executeQueryToList(
-            """
-            SELECT channel_members.*, users.*, channels.* 
-            FROM dbo.channel_members channel_members
-            JOIN dbo.users users ON channel_members.user_id = users.id
-            JOIN dbo.channels ON channel_members.channel_id = channels.id
-            WHERE channel_members.channel_id = :channel_id
-            OFFSET :offset
-            LIMIT :limit
-            """,
-            mapOf("channel_id" to channel.id, "offset" to offset, "limit" to limit),
+            "$baseQuery WHERE cm.channel_id = :channel_id OFFSET :offset LIMIT :limit",
+            mapOf("channel_id" to channelId, "offset" to offset, "limit" to limit),
             ::mapRowToChannelMember,
         )
 
     override fun findAll(): List<ChannelMember> =
         handle.executeQueryToList(
-            """
-            SELECT channel_members.*, users.*, channels.* 
-            FROM dbo.channel_members channel_members
-            JOIN dbo.users users ON channel_members.user_id = users.id
-            JOIN dbo.channels ON channel_members.channel_id = channels.id
-            """,
+            baseQuery,
             mapper = ::mapRowToChannelMember,
         )
 
@@ -113,20 +90,20 @@ class ChannelMemberRepositoryJdbi(
             SET access_type = :accessType
             WHERE id = :id
             """,
-            mapOf("id" to entity.id, "accessType" to entity.accessType.toDatabaseValue()),
+            mapOf("id" to entity.id, "accessType" to entity.accessType),
         )
     }
 
     override fun removeUserFromChannel(
-        user: User,
-        channel: Channel,
+        userId: Long,
+        channelId: Long,
     ) {
         handle.executeUpdate(
             """
             DELETE FROM dbo.channel_members
             WHERE user_id = :user_id AND channel_id = :channel_id
             """,
-            mapOf("user_id" to user.id, "channel_id" to channel.id),
+            mapOf("user_id" to userId, "channel_id" to channelId),
         )
     }
 
@@ -139,26 +116,31 @@ class ChannelMemberRepositoryJdbi(
     }
 
     private fun mapRowToChannelMember(rs: ResultSet): ChannelMember {
-        val user =
-            User(
-                rs.getLong("user_id"),
-                rs.getString("username"),
-                PasswordValidationInfo(rs.getString("password_validation")),
+        val member =
+            UserInfo(
+                rs.getLong("member_id"),
+                rs.getString("member_username"),
+            )
+
+        val owner =
+            UserInfo(
+                rs.getLong("owner_id"),
+                rs.getString("owner_username"),
             )
 
         val channel =
             Channel(
                 rs.getLong("channel_id"),
-                rs.getString("name"),
-                user,
-                rs.getBoolean("is_public"),
+                rs.getString("channel_name"),
+                owner,
+                rs.getBoolean("channel_is_public"),
             )
 
         return ChannelMember(
-            rs.getLong("id"),
-            user,
+            rs.getLong("cm_id"),
+            member,
             channel,
-            AccessType.fromDatabase(rs.getString("access_type")),
+            AccessType.valueOf(rs.getString("access_type")),
         )
     }
 }

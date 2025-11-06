@@ -10,6 +10,7 @@ class TransactionJdbi(
     override val repoMessages = MessageRepositoryJdbi(handle)
     override val repoMemberships = ChannelMemberRepositoryJdbi(handle)
     override val repoInvitations = InvitationRepositoryJdbi(handle)
+    override val repoTokenBlacklist = TokenBlacklistRepositoryJdbi(handle)
 
     override fun rollback() {
         handle.rollback()

@@ -28,8 +28,8 @@ const AuthForm = <Input extends {}>({
   } as FormState<Input>);
 
   if (state.tag === "redirect") {
-    const redirectPath = (location.state as any)?.source || "/";
-    return <Navigate to={redirectPath} replace />;
+    const redirectPath = (location.state as any)?.from?.pathname || "/";
+    return <Navigate to={redirectPath} replace={true} />;
   }
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -77,7 +77,7 @@ const AuthForm = <Input extends {}>({
                   name={key}
                   value={(state.inputs as any)[key]}
                   onChange={handleChange}
-                  required={key !== "invitationToken"}
+                  required
                   className="authentication-input"
                 />
               </div>

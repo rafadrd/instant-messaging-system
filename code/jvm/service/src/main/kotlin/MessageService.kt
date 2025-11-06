@@ -14,22 +14,23 @@ class MessageService(
     ): Either<MessageError, Message> {
         if (content.isBlank()) return failure(MessageError.EmptyMessage)
 
-        return trxManager.run {
-            val user = repoUsers.findById(userId) ?: return@run failure(MessageError.UserNotFound)
-            val channel =
-                repoChannels.findById(channelId) ?: return@run failure(MessageError.ChannelNotFound)
-            val membership =
-                repoMemberships.findUserInChannel(user, channel)
-                    ?: return@run failure(MessageError.UserNotInChannel)
-
-            if (membership.accessType != AccessType.READ_WRITE) {
-                return@run failure(MessageError.UserNotAuthorized)
+        val result =
+            trxManager.run {
+                when (val checkResult = checkUserCanPostMessage(userId, channelId)) {
+                    is Failure -> checkResult
+                    is Success -> {
+                        val (userInfo, channel) = checkResult.value
+                        val message = repoMessages.create(content, userInfo, channel)
+                        success(message)
+                    }
+                }
             }
 
-            val message = repoMessages.create(content, user, channel)
-            messageEventService.sendMessageToAll(channelId, UpdatedMessage.NewMessage(message))
-            success(message)
+        if (result is Success) {
+            messageEventService.broadcastMessage(channelId, UpdatedMessage.NewMessage(result.value))
         }
+
+        return result
     }
 
     fun getMessagesInChannel(
@@ -42,16 +43,33 @@ class MessageService(
         if (offset < 0) return failure(MessageError.InvalidOffset)
 
         return trxManager.run {
-            val user = repoUsers.findById(userId) ?: return@run failure(MessageError.UserNotFound)
             val channel =
                 repoChannels.findById(channelId) ?: return@run failure(MessageError.ChannelNotFound)
 
-            repoMemberships.findUserInChannel(user, channel)
+            repoMemberships.findUserInChannel(userId, channelId)
                 ?: return@run failure(MessageError.UserNotInChannel)
 
             val messages = repoMessages.findAllInChannel(channel, limit, offset)
 
             success(messages)
         }
+    }
+
+    private fun Transaction.checkUserCanPostMessage(
+        userId: Long,
+        channelId: Long,
+    ): Either<MessageError, Pair<UserInfo, Channel>> {
+        val user = repoUsers.findById(userId) ?: return failure(MessageError.UserNotFound)
+        val channel =
+            repoChannels.findById(channelId) ?: return failure(MessageError.ChannelNotFound)
+        val membership =
+            repoMemberships.findUserInChannel(user.id, channel.id)
+                ?: return failure(MessageError.UserNotInChannel)
+
+        if (membership.accessType != AccessType.READ_WRITE) {
+            return failure(MessageError.UserNotAuthorized)
+        }
+        val userInfo = UserInfo(user.id, user.username)
+        return success(userInfo to channel)
     }
 }

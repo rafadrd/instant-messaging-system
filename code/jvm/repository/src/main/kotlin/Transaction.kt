@@ -12,6 +12,7 @@ interface Transaction {
     val repoMessages: MessageRepository
     val repoMemberships: ChannelMemberRepository
     val repoInvitations: InvitationRepository
+    val repoTokenBlacklist: TokenBlacklistRepository
 
     fun rollback()
 }

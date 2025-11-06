@@ -1,53 +1,63 @@
 package pt.isel
 
 import jakarta.inject.Named
-import java.time.LocalDateTime
-import kotlinx.datetime.Clock
-import pt.isel.auth.Token
 import pt.isel.auth.TokenExternalInfo
 import pt.isel.auth.UsersDomain
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 @Named
 class UserService(
     private val trxManager: TransactionManager,
     private val usersDomain: UsersDomain,
-    private val clock: Clock,
+    private val tokenService: TokenService,
 ) {
     fun registerUser(
         username: String,
         password: String,
         token: String? = null,
-    ): Either<UserError, User> =
+    ): Either<UserError, TokenExternalInfo> =
         trxManager.run {
-            if (repoUsers.findAll().isEmpty()) {
-                return@run createUser(username, password)
-            }
-            if (token.isNullOrBlank()) return@run failure(UserError.EmptyToken)
+            val userEither =
+                if (token.isNullOrBlank()) {
+                    // The check for the first user has been removed to allow open registration.
+                    // A different policy (e.g., admin approval) could be implemented here if needed.
+                    createUser(username, password)
+                } else {
+                    val invitation =
+                        repoInvitations.findByToken(token)
+                            ?: return@run failure(UserError.InvitationNotFound)
 
-            val invitation =
-                repoInvitations.findByToken(token)
-                    ?: return@run failure(UserError.InvitationNotFound)
+                    if (invitation.expiresAt.isBefore(LocalDateTime.now())) {
+                        return@run failure(UserError.InvitationExpired)
+                    }
+                    if (invitation.status != Status.PENDING) {
+                        return@run failure(UserError.InvitationAlreadyUsed)
+                    }
 
-            if (invitation.expiresAt.isBefore(LocalDateTime.now())) {
-                return@run failure(UserError.InvitationExpired)
-            }
-            if (invitation.status != Status.PENDING) {
-                return@run failure(UserError.InvitationAlreadyUsed)
-            }
+                    val newUserResult = createUser(username, password)
+                    if (newUserResult is Failure) {
+                        return@run newUserResult
+                    }
 
-            val newUser = createUser(username, password)
-            if (newUser is Either.Left) {
-                return@run failure(newUser.value)
-            } else if (newUser is Either.Right) {
-                repoMemberships.addUserToChannel(
-                    newUser.value,
-                    invitation.channel,
-                    invitation.accessType,
-                )
-                repoInvitations.save(invitation.copy(status = Status.ACCEPTED))
-                return@run success(newUser.value)
+                    val newUser = (newUserResult as Success).value
+                    val newUserInfo = UserInfo(newUser.id, newUser.username)
+                    repoMemberships.addUserToChannel(
+                        newUserInfo,
+                        invitation.channel,
+                        invitation.accessType,
+                    )
+                    repoInvitations.save(invitation.copy(status = Status.ACCEPTED))
+                    newUserResult
+                }
+
+            when (userEither) {
+                is Failure -> userEither
+                is Success -> {
+                    val tokenInfo = tokenService.createToken(userEither.value.id)
+                    success(tokenInfo)
+                }
             }
-            newUser
         }
 
     private fun Transaction.createUser(
@@ -88,7 +98,7 @@ class UserService(
     fun updateUsername(
         userId: Long,
         newUsername: String,
-        password: String = "",
+        password: String,
     ): Either<UserError, User> {
         if (newUsername.isBlank()) return failure(UserError.EmptyUsername)
 
@@ -98,9 +108,9 @@ class UserService(
             if (repoUsers.findByUsername(newUsername) != null) {
                 return@run failure(UserError.UsernameAlreadyInUse)
             }
-            // if (!usersDomain.validatePassword(password, user.passwordValidation)) {
-            //    return@run failure(UserError.IncorrectPassword)
-            // }
+            if (!usersDomain.validatePassword(password, user.passwordValidation)) {
+                return@run failure(UserError.IncorrectPassword)
+            }
 
             val updatedUser = user.copy(username = newUsername)
             repoUsers.save(updatedUser)
@@ -135,12 +145,12 @@ class UserService(
         trxManager.run {
             val user = repoUsers.findById(userId) ?: return@run failure(UserError.UserNotFound)
 
-            if (repoChannels.findAllByOwner(user).isNotEmpty()) {
+            if (repoChannels.findAllByOwner(user.id).isNotEmpty()) {
                 return@run failure(UserError.UserHasOwnedChannels)
             }
 
-            repoMemberships.findAllChannelsForUser(user, Int.MAX_VALUE, 0).forEach {
-                repoMemberships.removeUserFromChannel(user, it.channel)
+            repoMemberships.findAllChannelsForUser(user.id, Int.MAX_VALUE, 0).forEach {
+                repoMemberships.removeUserFromChannel(user.id, it.channel.id)
             }
 
             repoUsers.deleteById(userId)
@@ -162,44 +172,34 @@ class UserService(
                 return@run failure(UserError.IncorrectPassword)
             }
 
-            val tokenValue = usersDomain.generateTokenValue()
-            val now = clock.now()
-            val newToken =
-                Token(
-                    usersDomain.createTokenValidationInformation(tokenValue),
-                    user.id,
-                    createdAt = now,
-                    lastUsedAt = now,
-                )
-
-            repoUsers.createToken(newToken, usersDomain.maxNumberOfTokensPerUser)
-            Either.Right(TokenExternalInfo(tokenValue, usersDomain.getTokenExpiration(newToken)))
+            val tokenInfo = tokenService.createToken(user.id)
+            success(tokenInfo)
         }
     }
 
     fun getUserByToken(token: String): User? {
-        if (!usersDomain.canBeToken(token)) return null
+        val claims = tokenService.validateToken(token)?.payload ?: return null
+        val jti = claims.id ?: return null
+        val userId = claims.subject.toLongOrNull() ?: return null
 
         return trxManager.run {
-            val tokenValidationInfo = usersDomain.createTokenValidationInformation(token)
-
-            repoUsers.getTokenByTokenValidationInfo(tokenValidationInfo)?.let { (user, token) ->
-                if (usersDomain.isTokenTimeValid(clock, token)) {
-                    repoUsers.updateTokenLastUsed(token, clock.now())
-                    user
-                } else {
-                    null
-                }
+            if (repoTokenBlacklist.exists(jti)) {
+                return@run null
             }
+            repoUsers.findById(userId)
         }
     }
 
-    fun revokeToken(token: String): Boolean {
-        val tokenValidationInfo = usersDomain.createTokenValidationInformation(token)
-
-        return trxManager.run {
-            repoUsers.removeTokenByValidationInfo(tokenValidationInfo)
-            true
+    fun revokeToken(token: String) {
+        val claims = tokenService.validateToken(token)?.payload ?: return
+        val jti = claims.id ?: return
+        val expiresAt =
+            claims.expiration
+                .toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime()
+        trxManager.run {
+            repoTokenBlacklist.add(jti, expiresAt)
         }
     }
 }

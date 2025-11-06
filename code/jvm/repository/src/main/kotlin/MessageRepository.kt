@@ -4,7 +4,7 @@ package pt.isel
 interface MessageRepository : Repository<Message> {
     fun create(
         content: String,
-        user: User,
+        user: UserInfo,
         channel: Channel,
     ): Message
 

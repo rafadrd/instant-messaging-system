@@ -14,7 +14,7 @@ import useMessageSSE from "../../hooks/messages/useMessageSSE";
 import Header from "../../components/Header";
 import MessageComponent from "../../components/MessageComponent";
 import MessageInput from "../../components/MessageInput";
-import Modal from "../../components/Modal";
+import LeaveChannelModal from "../../components/LeaveChannelModal";
 
 const ChannelDetailPage = () => {
   const { user } = useAuth();
@@ -157,29 +157,14 @@ const ChannelDetailPage = () => {
         />
       )}
 
-      {showModal && (
-        <Modal title="Confirm Leave" onClose={() => setShowModal(false)}>
-          <p>Are you sure you want to leave the channel "{channel.name}"?</p>
-          {leaveError && <p className="modal-error">{leaveError}</p>}
-          <div className="modal-buttons">
-            <button
-              className="modal-confirm-button"
-              onClick={handleLeaveChannel}
-              disabled={isLeaving}
-              aria-label="Confirm Leave Channel"
-            >
-              {isLeaving ? "Leaving..." : "Confirm"}
-            </button>
-            <button
-              className="modal-cancel-button"
-              onClick={() => setShowModal(false)}
-              aria-label="Cancel Leave Channel"
-            >
-              Cancel
-            </button>
-          </div>
-        </Modal>
-      )}
+      <LeaveChannelModal
+        channel={channel}
+        show={showModal}
+        onClose={() => setShowModal(false)}
+        onConfirm={handleLeaveChannel}
+        isLeaving={isLeaving}
+        leaveError={leaveError}
+      />
     </div>
   );
 };

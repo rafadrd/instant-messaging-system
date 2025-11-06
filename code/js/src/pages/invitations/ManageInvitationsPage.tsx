@@ -1,12 +1,13 @@
 import * as React from "react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Invitation } from "../../types";
 import "../CSS/ChannelDetailPage.css";
-import { revokeInvitations } from "../../api/invitations";
 import useManageInvitations from "../../hooks/invitations/useManageInvitations";
 import LoadingSpinner from "../../components/LoadingSpinner";
 import useRevokeInvitation from "../../hooks/invitations/useRevokeInvitation";
 import useAuth from "../../hooks/auth/useAuth";
+import Modal from "../../components/Modal";
 
 const ManageInvitationsPage = () => {
   const { user } = useAuth();
@@ -21,18 +22,25 @@ const ManageInvitationsPage = () => {
     error: revokeError,
   } = useRevokeInvitation(channelId);
 
+  const [showModal, setShowModal] = useState(false);
+  const [selectedInvitation, setSelectedInvitation] = useState<Invitation | null>(null);
+
   const handleBack = () => {
     navigate(-1);
   };
 
-  const handleRevoke = async (invitationId: number) => {
-    if (!window.confirm("Are you sure you want to revoke this invitation?")) {
-      return;
-    }
-    try {
-      await revokeInvitations(channelId, invitationId);
+  const openRevokeModal = (invitation: Invitation) => {
+    setSelectedInvitation(invitation);
+    setShowModal(true);
+  };
+
+  const handleConfirmRevoke = async () => {
+    if (selectedInvitation) {
+      await revokeInvitation(selectedInvitation.id);
       await reloadInvitations();
-    } catch (err) {}
+    }
+    setShowModal(false);
+    setSelectedInvitation(null);
   };
 
   if (!user) {
@@ -77,7 +85,7 @@ const ManageInvitationsPage = () => {
           (invitation: Invitation) => invitation.status === "PENDING",
         ).length === 0 ? (
           <div className="no-messages">
-            No invitations found for this channel.
+            No pending invitations found for this channel.
           </div>
         ) : (
           <div className="invitations-list">
@@ -107,7 +115,7 @@ const ManageInvitationsPage = () => {
                       </p>
                     </div>
                     <button
-                      onClick={() => handleRevoke(invitation.id)}
+                      onClick={() => openRevokeModal(invitation)}
                       className="revoke-button"
                       aria-label={`Revoke invitation ${invitation.token}`}
                       disabled={revokeLoading}
@@ -123,6 +131,27 @@ const ManageInvitationsPage = () => {
           </div>
         )}
       </div>
+      {showModal && selectedInvitation && (
+        <Modal title="Confirm Revoke" onClose={() => setShowModal(false)}>
+          <p>Are you sure you want to revoke this invitation?</p>
+          <p><strong>Token:</strong> {selectedInvitation.token}</p>
+          <div className="modal-buttons">
+            <button
+              className="modal-confirm-button"
+              onClick={handleConfirmRevoke}
+              disabled={revokeLoading}
+            >
+              {revokeLoading ? "Revoking..." : "Confirm"}
+            </button>
+            <button
+              className="modal-cancel-button"
+              onClick={() => setShowModal(false)}
+            >
+              Cancel
+            </button>
+          </div>
+        </Modal>
+      )}
     </div>
   );
 };

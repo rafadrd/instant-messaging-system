@@ -1,10 +1,7 @@
 import { Channel, User } from "../types";
 import { apiRequest } from "../utils/api";
-import { getCookie } from "../utils/cookies";
 
 export const fetchCurrentUser = async (): Promise<User | null> => {
-  const token = getCookie("token");
-  if (!token) return null;
   return apiRequest<User>("/api/users/me", {
     method: "GET",
   });

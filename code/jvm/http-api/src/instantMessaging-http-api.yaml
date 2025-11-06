@@ -10,21 +10,20 @@ paths:
   /auth/register:
     post:
       summary: Register a new user
-      description: Creates a new user with the provided username and password
+      description: Creates a new user with the provided username and password, optionally using an invitation token.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserInput'
+              $ref: '#/components/schemas/RegisterInput'
       responses:
         '201':
           description: User created successfully
-          headers:
-            Location:
-              description: URL of the created user
+          content:
+            application/json:
               schema:
-                type: string
+                $ref: '#/components/schemas/UserHomeOutput'
         '400':
           description: Invalid input
           content:
@@ -47,7 +46,7 @@ paths:
   /auth/login:
     post:
       summary: Login a user
-      description: Authenticates a user and returns a token
+      description: Authenticates a user and returns user info. An auth token is set in an HTTP-only cookie.
       requestBody:
         required: true
         content:
@@ -60,8 +59,7 @@ paths:
           content:
             application/json:
               schema:
-                type: string
-                example: "token_value"
+                $ref: '#/components/schemas/UserHomeOutput'
         '400':
           description: Invalid input
           content:
@@ -84,18 +82,10 @@ paths:
   /auth/logout:
     post:
       summary: Logout the user
-      description: Revokes the user's authentication token
-      security:
-        - BearerAuth: [ ]
+      description: Revokes the user's authentication token (from Bearer token or cookie) and clears the cookie.
       responses:
         '204':
           description: User logged out successfully
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Problem'
         '500':
           description: Internal server error
           content:
@@ -106,9 +96,9 @@ paths:
   /users/me:
     get:
       summary: Get current user information
-      description: Retrieves information about the authenticated user
+      description: Retrieves information about the authenticated user.
       security:
-        - BearerAuth: [ ]
+        - BearerAuth: []
       responses:
         '200':
           description: User information retrieved successfully
@@ -129,20 +119,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
-  /users/{userId}/channels:
+  /users/me/channels:
     get:
-      summary: Get channels for a user
-      description: Retrieves the list of channels the user has joined
+      summary: Get channels for the current user
+      description: Retrieves the list of channels the authenticated user has joined.
       security:
-        - BearerAuth: [ ]
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: integer
-            format: int64
-          description: Unique identifier for the user
+        - BearerAuth: []
       responses:
         '200':
           description: Channels retrieved successfully
@@ -173,17 +155,17 @@ paths:
 
   /channels:
     get:
-      summary: Get list of channels
-      description: Retrieves a list of channels based on the query parameter
+      summary: Get list of public channels
+      description: Retrieves a list of public channels, optionally filtered by a search query.
       security:
-        - BearerAuth: [ ]
+        - BearerAuth: []
       parameters:
         - name: query
           in: query
           required: false
           schema:
             type: string
-          description: Query string to search for channels
+          description: Query string to search for public channels by name.
       responses:
         '200':
           description: Channels retrieved successfully
@@ -207,9 +189,9 @@ paths:
                 $ref: '#/components/schemas/Problem'
     post:
       summary: Create a new channel
-      description: Creates a new channel with the provided name and visibility
+      description: Creates a new channel with the provided name and visibility.
       security:
-        - BearerAuth: [ ]
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -245,9 +227,9 @@ paths:
   /channels/{channelId}:
     get:
       summary: Get channel by ID
-      description: Retrieves the details of a specific channel by its ID
+      description: Retrieves the details of a specific channel by its ID.
       security:
-        - BearerAuth: [ ]
+        - BearerAuth: []
       parameters:
         - name: channelId
           in: path
@@ -255,7 +237,7 @@ paths:
           schema:
             type: integer
             format: int64
-          description: Unique identifier for the channel
+          description: Unique identifier for the channel.
       responses:
         '200':
           description: Channel retrieved successfully
@@ -284,10 +266,10 @@ paths:
 
   /channels/{channelId}/join:
     post:
-      summary: Join a channel by ID
-      description: Allows a user to join a specific channel by its ID
+      summary: Join a public channel by ID
+      description: Allows a user to join a specific public channel by its ID.
       security:
-        - BearerAuth: [ ]
+        - BearerAuth: []
       parameters:
         - name: channelId
           in: path
@@ -295,13 +277,7 @@ paths:
           schema:
             type: integer
             format: int64
-          description: Unique identifier for the channel
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/JoinChannelInput'
+          description: Unique identifier for the channel.
       responses:
         '200':
           description: User joined the channel successfully
@@ -309,13 +285,7 @@ paths:
             application/json:
               schema:
                 type: string
-                example: "Joined channel successfully"
-        '400':
-          description: Invalid input
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Problem'
+                example: "Joined public channel 'channel-name'."
         '401':
           description: Unauthorized
           content:
@@ -335,12 +305,57 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
+  /channels/join-by-token:
+    post:
+      summary: Join a private channel using a token
+      description: Allows a user to join a private channel using an invitation token.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinByTokenInput'
+      responses:
+        '200':
+          description: User joined the channel successfully
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Joined private channel 'channel-name'"
+        '400':
+          description: Invalid input (e.g. expired token)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Token or channel not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+
   /channels/{channelId}/leave:
     post:
-      summary: Remove a user from a channel
-      description: Removes a specific user from a specific channel
+      summary: Leave a channel
+      description: Removes the authenticated user from a specific channel.
       security:
-        - BearerAuth: [ ]
+        - BearerAuth: []
       parameters:
         - name: channelId
           in: path
@@ -348,23 +363,15 @@ paths:
           schema:
             type: integer
             format: int64
-          description: Unique identifier for the channel
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: integer
-              format: int64
-              description: Unique identifier for the user
+          description: Unique identifier for the channel.
       responses:
         '200':
-          description: User removed from the channel successfully
+          description: User left the channel successfully
           content:
             application/json:
               schema:
                 type: string
-                example: "User removed from channel successfully"
+                example: "Left channel 'channel-name'"
         '401':
           description: Unauthorized
           content:
@@ -387,9 +394,9 @@ paths:
   /channels/{channelId}/messages:
     get:
       summary: Get messages in a channel
-      description: Retrieves a list of messages in the specified channel
+      description: Retrieves a list of messages in the specified channel.
       security:
-        - BearerAuth: [ ]
+        - BearerAuth: []
       parameters:
         - name: channelId
           in: path
@@ -397,7 +404,7 @@ paths:
           schema:
             type: integer
             format: int64
-          description: Unique identifier for the channel
+          description: Unique identifier for the channel.
         - name: limit
           in: query
           required: false
@@ -405,7 +412,7 @@ paths:
             type: integer
             format: int32
             default: 50
-          description: Maximum number of items to return
+          description: Maximum number of items to return.
         - name: offset
           in: query
           required: false
@@ -413,7 +420,7 @@ paths:
             type: integer
             format: int32
             default: 0
-          description: Number of items to skip before starting to collect the result set
+          description: Number of items to skip before starting to collect the result set.
       responses:
         '200':
           description: Messages retrieved successfully
@@ -449,9 +456,9 @@ paths:
                 $ref: '#/components/schemas/Problem'
     post:
       summary: Create a new message in a channel
-      description: Creates a new message in the specified channel
+      description: Creates a new message in the specified channel.
       security:
-        - BearerAuth: [ ]
+        - BearerAuth: []
       parameters:
         - name: channelId
           in: path
@@ -459,14 +466,13 @@ paths:
           schema:
             type: integer
             format: int64
-          description: Unique identifier for the channel
+          description: Unique identifier for the channel.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: string
-              description: Content of the message
+              $ref: '#/components/schemas/MessageInput'
       responses:
         '201':
           description: Message created successfully
@@ -506,11 +512,11 @@ paths:
                 $ref: '#/components/schemas/Problem'
 
   /channels/{channelId}/invitations:
-    post:
-      summary: Create an invitation for a channel
-      description: Creates an invitation for the specified channel
+    get:
+      summary: Get invitations for a channel
+      description: Retrieves a list of invitations for the specified channel. User must have write access.
       security:
-        - BearerAuth: [ ]
+        - BearerAuth: []
       parameters:
         - name: channelId
           in: path
@@ -518,7 +524,53 @@ paths:
           schema:
             type: integer
             format: int64
-          description: Unique identifier for the channel
+          description: Unique identifier for the channel.
+      responses:
+        '200':
+          description: Invitations retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Invitation'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Channel not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+    post:
+      summary: Create an invitation for a channel
+      description: Creates an invitation for the specified channel. User must have write access.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Unique identifier for the channel.
       requestBody:
         required: true
         content:
@@ -562,29 +614,83 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Problem'
+  /channels/{channelId}/invitations/{invitationId}/revoke:
+    post:
+      summary: Revoke an invitation
+      description: Revokes a specific invitation for a channel. Only the channel owner can perform this action.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Unique identifier for the channel.
+        - name: invitationId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+          description: Unique identifier for the invitation.
+      responses:
+        '200':
+          description: Invitation revoked successfully
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Invitation revoked."
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '404':
+          description: Channel or invitation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
-      description: Bearer Token needed to access the endpoints
+      description: Bearer Token needed to access the endpoints.
   schemas:
     User:
       type: object
+      description: Internal representation of a User, not exposed in API responses.
       properties:
         id:
           type: integer
           format: int64
-          description: Unique identifier for the user
+          description: Unique identifier for the user.
         username:
           type: string
-          description: Username of the user
+          description: Username of the user.
         passwordValidation:
           type: object
           properties:
             validationInfo:
               type: string
-              description: Information regarding password validation
+              description: Information regarding password validation.
           required:
             - validationInfo
       required:
@@ -594,14 +700,15 @@ components:
 
     UserHomeOutput:
       type: object
+      description: Public representation of a User.
       properties:
         id:
           type: integer
           format: int64
-          description: Unique identifier for the user
+          description: Unique identifier for the user.
         username:
           type: string
-          description: Username of the user
+          description: Username of the user.
       required:
         - id
         - username
@@ -611,10 +718,26 @@ components:
       properties:
         username:
           type: string
-          description: Username of the user
+          description: Username of the user.
         password:
           type: string
-          description: Password of the user
+          description: Password of the user.
+      required:
+        - username
+        - password
+
+    RegisterInput:
+      type: object
+      properties:
+        username:
+          type: string
+          description: Username for the new user.
+        password:
+          type: string
+          description: Password for the new user.
+        invitationToken:
+          type: string
+          description: Optional token to join a private channel upon registration.
       required:
         - username
         - password
@@ -625,50 +748,42 @@ components:
         id:
           type: integer
           format: int64
-          description: Unique identifier for the channel
+          description: Unique identifier for the channel.
         name:
           type: string
-          description: Name of the channel
+          description: Name of the channel.
         owner:
-          $ref: '#/components/schemas/User'
+          $ref: '#/components/schemas/UserHomeOutput'
         isPublic:
           type: boolean
-          description: Indicates if the channel is public
-          default: true
+          description: Indicates if the channel is public.
       required:
         - id
         - name
         - owner
+        - isPublic
 
     ChannelInput:
       type: object
       properties:
         name:
           type: string
-          description: Name of the channel
+          description: Name of the channel.
         isPublic:
           type: boolean
-          description: Indicates if the channel is public
+          description: Indicates if the channel is public.
       required:
         - name
         - isPublic
 
-    JoinChannelInput:
+    JoinByTokenInput:
       type: object
       properties:
         token:
           type: string
-          description: Token for joining the channel
-        action:
-          type: string
-          description: Action to be performed (e.g., accept, reject)
-          enum:
-            - PENDING
-            - ACCEPTED
-            - REJECTED
+          description: Invitation token for joining a private channel.
       required:
         - token
-        - action
 
     Message:
       type: object
@@ -676,18 +791,18 @@ components:
         id:
           type: integer
           format: int64
-          description: Unique identifier for the message
+          description: Unique identifier for the message.
         content:
           type: string
-          description: Content of the message
+          description: Content of the message.
         user:
-          $ref: '#/components/schemas/User'
+          $ref: '#/components/schemas/UserHomeOutput'
         channel:
           $ref: '#/components/schemas/Channel'
         createdAt:
           type: string
           format: date-time
-          description: Timestamp when the message was created
+          description: Timestamp when the message was created.
       required:
         - id
         - content
@@ -695,33 +810,42 @@ components:
         - channel
         - createdAt
 
+    MessageInput:
+      type: object
+      properties:
+        content:
+          type: string
+          description: Content of the message to be created.
+      required:
+        - content
+
     Invitation:
       type: object
       properties:
         id:
           type: integer
           format: int64
-          description: Unique identifier for the invitation
+          description: Unique identifier for the invitation.
         token:
           type: string
-          description: Token for the invitation
+          description: Token for the invitation.
         createdBy:
-          $ref: '#/components/schemas/User'
+          $ref: '#/components/schemas/UserHomeOutput'
         channel:
           $ref: '#/components/schemas/Channel'
         accessType:
           type: string
-          description: Type of access granted by the invitation
+          description: Type of access granted by the invitation.
           enum:
             - READ_ONLY
             - READ_WRITE
         expiresAt:
           type: string
           format: date-time
-          description: Expiration date and time of the invitation
+          description: Expiration date and time of the invitation.
         status:
           type: string
-          description: Status of the invitation
+          description: Status of the invitation.
           enum:
             - PENDING
             - ACCEPTED
@@ -740,14 +864,14 @@ components:
       properties:
         accessType:
           type: string
-          description: Type of access granted by the invitation
+          description: Type of access granted by the invitation.
           enum:
             - READ_ONLY
             - READ_WRITE
         expiresAt:
           type: string
           format: date-time
-          description: Expiration date and time of the invitation
+          description: Expiration date and time of the invitation.
       required:
         - accessType
         - expiresAt
@@ -758,10 +882,17 @@ components:
         type:
           type: string
           format: uri
-          description: URI reference that identifies the problem type
+          description: URI reference that identifies the problem type.
         title:
           type: string
-          description: Short, human-readable summary of the problem type
+          description: Short, human-readable summary of the problem type.
+        status:
+          type: integer
+          description: The HTTP status code generated by the origin server for this occurrence of the problem.
+        detail:
+          type: string
+          description: A human-readable explanation specific to this occurrence of the problem.
       required:
         - type
         - title
+        - status

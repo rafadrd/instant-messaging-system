@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 interface InvitationRepository : Repository<Invitation> {
     fun create(
         token: String,
-        createdBy: User,
+        createdBy: UserInfo,
         channel: Channel,
         accessType: AccessType,
         expiresAt: LocalDateTime,

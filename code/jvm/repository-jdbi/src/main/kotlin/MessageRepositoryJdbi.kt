@@ -1,17 +1,16 @@
 package pt.isel
 
+import org.jdbi.v3.core.Handle
 import java.sql.ResultSet
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
-import org.jdbi.v3.core.Handle
-import pt.isel.auth.PasswordValidationInfo
 
 class MessageRepositoryJdbi(
     private val handle: Handle,
 ) : MessageRepository {
     override fun create(
         content: String,
-        user: User,
+        user: UserInfo,
         channel: Channel,
     ): Message {
         val createdAt = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS)
@@ -31,14 +30,21 @@ class MessageRepositoryJdbi(
         return Message(id, content, user, channel, createdAt)
     }
 
+    private val baseQuery = """
+        SELECT
+            m.id as msg_id, m.content, m.created_at,
+            author.id AS author_id, author.username AS author_username,
+            c.id AS channel_id, c.name AS channel_name, c.is_public AS channel_is_public,
+            owner.id AS owner_id, owner.username AS owner_username
+        FROM dbo.messages m
+        JOIN dbo.users author ON m.user_id = author.id
+        JOIN dbo.channels c ON m.channel_id = c.id
+        JOIN dbo.users owner ON c.owner_id = owner.id
+    """
+
     override fun findById(id: Long): Message? =
         handle.executeQueryToSingle(
-            """
-            SELECT messages.*, users.*, channels.* FROM dbo.messages messages
-            JOIN dbo.users users ON messages.user_id = users.id
-            JOIN dbo.channels channels ON messages.channel_id = channels.id
-            WHERE messages.id = :id
-             """,
+            "$baseQuery WHERE m.id = :id",
             mapOf("id" to id),
             ::mapRowToMessage,
         )
@@ -50,11 +56,9 @@ class MessageRepositoryJdbi(
     ): List<Message> =
         handle.executeQueryToList(
             """
-            SELECT messages.*, users.*, channels.* FROM dbo.messages messages
-            JOIN dbo.users users ON messages.user_id = users.id
-            JOIN dbo.channels channels ON messages.channel_id = channels.id
-            WHERE messages.channel_id = :channel_id
-            ORDER BY messages.created_at ASC
+            $baseQuery
+            WHERE m.channel_id = :channel_id
+            ORDER BY m.created_at ASC
             OFFSET :offset
             LIMIT :limit
             """,
@@ -64,11 +68,7 @@ class MessageRepositoryJdbi(
 
     override fun findAll(): List<Message> =
         handle.executeQueryToList(
-            """
-            SELECT messages.*, users.*, channels.* FROM dbo.messages messages
-            JOIN dbo.users users ON messages.user_id = users.id
-            JOIN dbo.channels channels  ON messages.channel_id = channels.id 
-            """,
+            baseQuery,
             mapper = ::mapRowToMessage,
         )
 
@@ -92,25 +92,30 @@ class MessageRepositoryJdbi(
     }
 
     private fun mapRowToMessage(rs: ResultSet): Message {
-        val user =
-            User(
-                rs.getLong("user_id"),
-                rs.getString("username"),
-                PasswordValidationInfo(rs.getString("password_validation")),
+        val author =
+            UserInfo(
+                rs.getLong("author_id"),
+                rs.getString("author_username"),
+            )
+
+        val owner =
+            UserInfo(
+                rs.getLong("owner_id"),
+                rs.getString("owner_username"),
             )
 
         val channel =
             Channel(
                 rs.getLong("channel_id"),
-                rs.getString("name"),
-                user,
-                rs.getBoolean("is_public"),
+                rs.getString("channel_name"),
+                owner,
+                rs.getBoolean("channel_is_public"),
             )
 
         return Message(
-            rs.getLong("id"),
+            rs.getLong("msg_id"),
             rs.getString("content"),
-            user,
+            author,
             channel,
             rs.getTimestamp("created_at").toLocalDateTime().truncatedTo(ChronoUnit.MILLIS),
         )

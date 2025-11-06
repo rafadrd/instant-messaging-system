@@ -3,7 +3,7 @@ package pt.isel.mem
 import jakarta.inject.Named
 import pt.isel.Channel
 import pt.isel.ChannelRepository
-import pt.isel.User
+import pt.isel.UserInfo
 
 /**
  * Naif in memory repository non thread-safe and basic sequential id. Useful for unit tests purpose.
@@ -14,10 +14,15 @@ class ChannelRepositoryInMem : ChannelRepository {
 
     override fun create(
         name: String,
-        owner: User,
+        owner: UserInfo,
         isPublic: Boolean,
     ): Channel =
-        Channel(channels.size.toLong() + 1, name, owner, isPublic).also { channels.add(it) }
+        Channel(
+            channels.size.toLong() + 1,
+            name,
+            owner,
+            isPublic,
+        ).also { channels.add(it) }
 
     override fun findById(id: Long): Channel? = channels.firstOrNull { it.id == id }
 
@@ -28,7 +33,7 @@ class ChannelRepositoryInMem : ChannelRepository {
         offset: Int,
     ): List<Channel> = channels.filter { it.isPublic }.drop(offset).take(limit)
 
-    override fun findAllByOwner(owner: User): List<Channel> = channels.filter { it.owner == owner }
+    override fun findAllByOwner(ownerId: Long): List<Channel> = channels.filter { it.owner.id == ownerId }
 
     override fun findAll(): List<Channel> = channels.toList()
 

@@ -4,7 +4,7 @@ import jakarta.inject.Named
 import pt.isel.Channel
 import pt.isel.Message
 import pt.isel.MessageRepository
-import pt.isel.User
+import pt.isel.UserInfo
 
 /**
  * Naif in memory repository non thread-safe and basic sequential id. Useful for unit tests purpose.
@@ -15,10 +15,15 @@ class MessageRepositoryInMem : MessageRepository {
 
     override fun create(
         content: String,
-        user: User,
+        user: UserInfo,
         channel: Channel,
     ): Message =
-        Message(messages.size.toLong() + 1, content, user, channel).also { messages.add(it) }
+        Message(
+            messages.size.toLong() + 1,
+            content,
+            user,
+            channel,
+        ).also { messages.add(it) }
 
     override fun findById(id: Long): Message? = messages.firstOrNull { it.id == id }
 

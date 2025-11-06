@@ -5,7 +5,7 @@ import pt.isel.AccessType
 import pt.isel.Channel
 import pt.isel.ChannelMember
 import pt.isel.ChannelMemberRepository
-import pt.isel.User
+import pt.isel.UserInfo
 
 /**
  * Naif in memory repository non thread-safe and basic sequential id. Useful for unit tests purpose.
@@ -15,33 +15,37 @@ class ChannelMemberRepositoryInMem : ChannelMemberRepository {
     private val channelMembers = mutableListOf<ChannelMember>()
 
     override fun addUserToChannel(
-        user: User,
+        userInfo: UserInfo,
         channel: Channel,
         accessType: AccessType,
     ): ChannelMember =
-        ChannelMember(channelMembers.size.toLong() + 1, user, channel, accessType).also {
+        ChannelMember(
+            channelMembers.size.toLong() + 1,
+            userInfo,
+            channel,
+            accessType,
+        ).also {
             channelMembers.add(it)
         }
 
     override fun findById(id: Long): ChannelMember? = channelMembers.firstOrNull { it.id == id }
 
     override fun findUserInChannel(
-        user: User,
-        channel: Channel,
-    ): ChannelMember? = channelMembers.firstOrNull { it.user == user && it.channel == channel }
+        userId: Long,
+        channelId: Long,
+    ): ChannelMember? = channelMembers.firstOrNull { it.user.id == userId && it.channel.id == channelId }
 
     override fun findAllChannelsForUser(
-        user: User,
+        userId: Long,
         limit: Int,
         offset: Int,
-    ): List<ChannelMember> = channelMembers.filter { it.user == user }.drop(offset).take(limit)
+    ): List<ChannelMember> = channelMembers.filter { it.user.id == userId }.drop(offset).take(limit)
 
     override fun findAllMembersInChannel(
-        channel: Channel,
+        channelId: Long,
         limit: Int,
         offset: Int,
-    ): List<ChannelMember> =
-        channelMembers.filter { it.channel == channel }.drop(limit).take(offset)
+    ): List<ChannelMember> = channelMembers.filter { it.channel.id == channelId }.drop(offset).take(limit)
 
     override fun findAll(): List<ChannelMember> = channelMembers.toList()
 
@@ -50,10 +54,10 @@ class ChannelMemberRepositoryInMem : ChannelMemberRepository {
     }
 
     override fun removeUserFromChannel(
-        user: User,
-        channel: Channel,
+        userId: Long,
+        channelId: Long,
     ) {
-        channelMembers.removeIf { it.user == user && it.channel == channel }
+        channelMembers.removeIf { it.user.id == userId && it.channel.id == channelId }
     }
 
     override fun deleteById(id: Long) {

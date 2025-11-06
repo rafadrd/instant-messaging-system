@@ -1,4 +1,4 @@
-import { LoginInput, RegisterInput, TokenResponse, User } from "../types";
+import { LoginInput, RegisterInput, User } from "../types";
 import { apiRequest } from "../utils/api";
 
 export const registerUser = async (input: RegisterInput): Promise<User> => {
@@ -8,8 +8,8 @@ export const registerUser = async (input: RegisterInput): Promise<User> => {
   });
 };
 
-export const loginUser = async (input: LoginInput): Promise<TokenResponse> => {
-  return apiRequest<TokenResponse>("/api/auth/login", {
+export const loginUser = async (input: LoginInput): Promise<User> => {
+  return apiRequest<User>("/api/auth/login", {
     method: "POST",
     body: JSON.stringify(input),
   });

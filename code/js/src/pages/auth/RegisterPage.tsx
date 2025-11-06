@@ -1,24 +1,28 @@
 import * as React from "react";
-import { fetchCurrentUser } from "../../api/users";
-import { setCookie } from "../../utils/cookies";
 import { registerReducer } from "../../reducers/formReducers";
-import "../CSS/authenticationPages.css";
+import "../CSS/AuthenticationPages.css";
 import useAuth from "../../hooks/auth/useAuth";
-import { loginUser, registerUser } from "../../api/auth";
+import { registerUser } from "../../api/auth";
 import { RegisterInput } from "../../types";
 import AuthForm from "../../components/AuthForm";
+import { Navigate } from "react-router-dom";
+import LoadingSpinner from "../../components/LoadingSpinner";
 
 const RegisterPage = () => {
-  const { setUser } = useAuth();
+  const { user, loading, setUser } = useAuth();
 
   const handleRegister = async (inputs: RegisterInput) => {
-    const { username, password, invitationToken } = inputs;
-    await registerUser({ username, password, invitationToken });
-    const token = await loginUser({ username, password });
-    setCookie("token", token.tokenValue);
-    const currentUser = await fetchCurrentUser();
-    setUser(currentUser);
+    const registeredUser = await registerUser(inputs);
+    setUser(registeredUser);
   };
+
+  if (loading) {
+    return <LoadingSpinner />;
+  }
+
+  if (user) {
+    return <Navigate to="/channels" replace />;
+  }
 
   return (
     <AuthForm<RegisterInput>

@@ -1,17 +1,16 @@
 package pt.isel
 
+import org.jdbi.v3.core.Handle
 import java.sql.ResultSet
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
-import org.jdbi.v3.core.Handle
-import pt.isel.auth.PasswordValidationInfo
 
 class InvitationRepositoryJdbi(
     private val handle: Handle,
 ) : InvitationRepository {
     override fun create(
         token: String,
-        createdBy: User,
+        createdBy: UserInfo,
         channel: Channel,
         accessType: AccessType,
         expiresAt: LocalDateTime,
@@ -27,60 +26,49 @@ class InvitationRepositoryJdbi(
                     "token" to token,
                     "created_by" to createdBy.id,
                     "channel_id" to channel.id,
-                    "access_type" to accessType.toDatabaseValue(),
+                    "access_type" to accessType,
                     "expires_at" to expiration,
                 ),
             )
         return Invitation(id, token, createdBy, channel, accessType, expiration)
     }
 
+    private val baseQuery = """
+        SELECT
+            i.id as inv_id, i.token, i.access_type, i.expires_at, i.status,
+            creator.id AS creator_id, creator.username AS creator_username,
+            c.id AS channel_id, c.name AS channel_name, c.is_public AS channel_is_public,
+            owner.id AS owner_id, owner.username AS owner_username
+        FROM dbo.invitations i
+        JOIN dbo.users creator ON i.created_by = creator.id
+        JOIN dbo.channels c ON i.channel_id = c.id
+        JOIN dbo.users owner ON c.owner_id = owner.id
+    """
+
     override fun findById(id: Long): Invitation? =
         handle.executeQueryToSingle(
-            """
-            SELECT invitations.*, users.*, channels.* 
-            FROM dbo.invitations invitations
-            JOIN dbo.users users ON invitations.created_by = users.id
-            JOIN dbo.channels channels ON invitations.channel_id = channels.id
-            WHERE invitations.id = :id
-            """,
+            "$baseQuery WHERE i.id = :id",
             mapOf("id" to id),
             ::mapRowToInvitation,
         )
 
     override fun findByToken(token: String): Invitation? =
         handle.executeQueryToSingle(
-            """
-            SELECT invitations.*, users.*, channels.* 
-            FROM dbo.invitations invitations
-            JOIN dbo.users users ON invitations.created_by = users.id
-            JOIN dbo.channels channels ON invitations.channel_id = channels.id
-            WHERE invitations.token = :token
-            """,
+            "$baseQuery WHERE i.token = :token",
             mapOf("token" to token),
             ::mapRowToInvitation,
         )
 
     override fun findByChannelId(channelId: Long): List<Invitation> =
         handle.executeQueryToList(
-            """
-            SELECT invitations.*, users.*, channels.*
-            FROM dbo.invitations invitations
-            JOIN dbo.users users ON invitations.created_by = users.id
-            JOIN dbo.channels channels ON invitations.channel_id = channels.id
-            WHERE invitations.channel_id = :channelId
-            """,
+            "$baseQuery WHERE i.channel_id = :channelId",
             mapOf("channelId" to channelId),
             ::mapRowToInvitation,
         )
 
     override fun findAll(): List<Invitation> =
         handle.executeQueryToList(
-            """
-            SELECT invitations.*, users.*, channels.* 
-            FROM dbo.invitations invitations
-            JOIN dbo.users users ON invitations.created_by = users.id
-            JOIN dbo.channels channels ON invitations.channel_id = channels.id
-            """,
+            baseQuery,
             mapper = ::mapRowToInvitation,
         )
 
@@ -93,7 +81,7 @@ class InvitationRepositoryJdbi(
             """,
             mapOf(
                 "id" to entity.id,
-                "status" to entity.status.toDatabaseValue(),
+                "status" to entity.status,
             ),
         )
     }
@@ -107,29 +95,34 @@ class InvitationRepositoryJdbi(
     }
 
     private fun mapRowToInvitation(rs: ResultSet): Invitation {
-        val user =
-            User(
-                rs.getLong("created_by"),
-                rs.getString("username"),
-                PasswordValidationInfo(rs.getString("password_validation")),
+        val creator =
+            UserInfo(
+                rs.getLong("creator_id"),
+                rs.getString("creator_username"),
+            )
+
+        val owner =
+            UserInfo(
+                rs.getLong("owner_id"),
+                rs.getString("owner_username"),
             )
 
         val channel =
             Channel(
                 rs.getLong("channel_id"),
-                rs.getString("name"),
-                user,
-                rs.getBoolean("is_public"),
+                rs.getString("channel_name"),
+                owner,
+                rs.getBoolean("channel_is_public"),
             )
 
         return Invitation(
-            rs.getLong("id"),
+            rs.getLong("inv_id"),
             rs.getString("token"),
-            user,
+            creator,
             channel,
-            AccessType.fromDatabase(rs.getString("access_type")),
+            AccessType.valueOf(rs.getString("access_type")),
             rs.getTimestamp("expires_at").toLocalDateTime().truncatedTo(ChronoUnit.MILLIS),
-            Status.fromDatabase(rs.getString("status")),
+            Status.valueOf(rs.getString("status")),
         )
     }
 }

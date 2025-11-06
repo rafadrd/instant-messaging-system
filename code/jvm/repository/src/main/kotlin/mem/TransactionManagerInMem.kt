@@ -9,6 +9,7 @@ class TransactionManagerInMem : TransactionManager {
     private val repoMessages = MessageRepositoryInMem()
     private val repoMemberships = ChannelMemberRepositoryInMem()
     private val repoInvitations = InvitationRepositoryInMem()
+    private val repoTokenBlacklist = TokenBlacklistRepositoryInMem()
 
     override fun <R> run(block: Transaction.() -> R): R =
         block(
@@ -18,6 +19,7 @@ class TransactionManagerInMem : TransactionManager {
                 repoMessages,
                 repoMemberships,
                 repoInvitations,
+                repoTokenBlacklist,
             ),
         )
 }

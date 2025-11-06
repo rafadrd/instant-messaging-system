@@ -35,11 +35,3 @@ VALUES ('ola!', 1, 1),             -- antonio in public1
        ('como é que vamos', 2, 2), -- diogo in public2
        ('como é que tamos', 1, 3), -- antonio in private1
        ('zeze', 2, 4); -- diogo in private2
-
-INSERT INTO dbo.tokens (token_validation, user_id, created_at, last_used_at)
-VALUES ('valid_token1', 1, EXTRACT(EPOCH FROM NOW()),
-        EXTRACT(EPOCH FROM NOW()) - 3600), -- token for antonio (1 hour ago)
-       ('valid_token2', 2, EXTRACT(EPOCH FROM NOW()),
-        EXTRACT(EPOCH FROM NOW()) - 7200), -- token for diogo (2 hours ago)
-       ('expired_token', 3, EXTRACT(EPOCH FROM NOW()) - 86400,
-        EXTRACT(EPOCH FROM NOW()) - 86400); -- expired token for rafael (1 day ago)

@@ -9,11 +9,6 @@ export interface RegisterInput {
   invitationToken?: string;
 }
 
-export interface TokenResponse {
-  tokenValue: string;
-  tokenExpiration: string;
-}
-
 export interface User {
   id: number;
   username: string;

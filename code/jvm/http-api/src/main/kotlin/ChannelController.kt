@@ -1,9 +1,11 @@
 package pt.isel
 
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -26,8 +28,7 @@ class ChannelController(
         user: AuthenticatedUser,
         @RequestParam query: String = "",
         @RequestParam page: PageInput = PageInput(),
-    ): ResponseEntity<*> =
-        handleResult(channelService.searchChannels(query, page.limit, page.offset))
+    ): ResponseEntity<*> = handleResult(channelService.searchChannels(query, page.limit, page.offset))
 
     @PostMapping
     fun createChannel(
@@ -48,7 +49,7 @@ class ChannelController(
         @PathVariable channelId: Long,
     ): ResponseEntity<*> = handleResult(channelService.getChannelById(channelId))
 
-    @PostMapping("/{channelId}")
+    @PutMapping("/{channelId}")
     fun editChannel(
         user: AuthenticatedUser,
         @PathVariable channelId: Long,
@@ -63,29 +64,23 @@ class ChannelController(
             ),
         )
 
+    @DeleteMapping("/{channelId}")
+    fun deleteChannel(
+        user: AuthenticatedUser,
+        @PathVariable channelId: Long,
+    ): ResponseEntity<*> = handleResult(channelService.deleteChannel(ownerId = user.user.id, channelId = channelId))
+
     @PostMapping("/{channelId}/join")
     fun joinChannel(
         user: AuthenticatedUser,
         @PathVariable channelId: Long,
-    ): ResponseEntity<*> =
-        handleResult(
-            channelService.joinPublicChannel(
-                userId = user.user.id,
-                channelId = channelId,
-            ),
-        )
+    ): ResponseEntity<*> = handleResult(channelService.joinPublicChannel(userId = user.user.id, channelId = channelId))
 
     @PostMapping("/join-by-token")
     fun joinChannelByToken(
         user: AuthenticatedUser,
         @RequestBody input: JoinByTokenInput,
-    ): ResponseEntity<*> =
-        handleResult(
-            channelService.joinPrivateChannel(
-                userId = user.user.id,
-                token = input.token,
-            ),
-        )
+    ): ResponseEntity<*> = handleResult(channelService.joinPrivateChannel(userId = user.user.id, token = input.token))
 
     @PostMapping("/{channelId}/leave")
     fun leaveChannel(
@@ -98,8 +93,7 @@ class ChannelController(
         user: AuthenticatedUser,
         @PathVariable channelId: Long,
         @RequestParam page: PageInput = PageInput(),
-    ): ResponseEntity<*> =
-        handleResult(channelService.getUsersInChannel(channelId, page.limit, page.offset))
+    ): ResponseEntity<*> = handleResult(channelService.getUsersInChannel(channelId, page.limit, page.offset))
 
     @GetMapping("/{channelId}/members/{userId}")
     fun getAccessType(
@@ -113,17 +107,20 @@ class ChannelController(
         @PathVariable channelId: Long,
         @PathVariable userId: Long,
         @RequestBody accessType: AccessType,
-    ): ResponseEntity<*> =
-        handleResult(channelService.editUser(user.user.id, channelId, userId, accessType))
+    ): ResponseEntity<*> = handleResult(channelService.editUser(user.user.id, channelId, userId, accessType))
 
     @GetMapping("/{channelId}/listen")
     fun listen(
         user: AuthenticatedUser,
         @PathVariable channelId: Long,
     ): SseEmitter {
-        val emitter = SseEmitter(Long.MAX_VALUE)
-        val adapter = SseUpdatedMessageEmitterAdapter(emitter)
-        messageEventService.addEmitter(channelId, adapter)
+        val emitter = SseEmitter(30_000L)
+        try {
+            val adapter = SseUpdatedMessageEmitterAdapter(emitter)
+            messageEventService.addEmitter(channelId, user.user.id, adapter)
+        } catch (e: Exception) {
+            emitter.completeWithError(e)
+        }
         return emitter
     }
 }

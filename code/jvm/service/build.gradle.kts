@@ -15,6 +15,11 @@ dependencies {
     // To use Kotlin specific date and time functions
     implementation(libs.kotlinx.datetime)
 
+    // JWT dependencies for token handling
+    implementation(libs.jjwt.api)
+    runtimeOnly(libs.jjwt.impl)
+    runtimeOnly(libs.jjwt.jackson)
+
     // JDBI and Postgres dependencies
     testImplementation(project(":repository-jdbi"))
     testImplementation(libs.jdbi3.core)

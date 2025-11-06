@@ -1,23 +1,39 @@
+export class ApiError extends Error {
+  status: number;
+  body: any;
+
+  constructor(message: string, status: number, body: any) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.body = body;
+  }
+}
+
 export const handleResponse = async <T>(res: Response): Promise<T> => {
   const contentType = res.headers.get("Content-Type") || "";
   let data: any;
 
   if (res.status === 204 || res.headers.get("content-length") === "0") {
-    return {} as T;
-  }
-
-  try {
-    data =
-      contentType.includes("application/json") ||
-      contentType.includes("application/problem+json")
-        ? await res.json()
-        : await res.text();
-  } catch (error) {
-    throw new Error("Invalid response from server");
+    data = null;
+  } else {
+    try {
+      data =
+        contentType.includes("application/json") ||
+        contentType.includes("application/problem+json")
+          ? await res.json()
+          : await res.text();
+    } catch (error) {
+      if (res.ok) {
+        throw new Error("Invalid response from server");
+      }
+      data = null;
+    }
   }
 
   if (!res.ok) {
-    throw new Error(data?.detail || "An error occurred");
+    const message = data?.detail || "An error occurred";
+    throw new ApiError(message, res.status, data);
   }
 
   return data as T;

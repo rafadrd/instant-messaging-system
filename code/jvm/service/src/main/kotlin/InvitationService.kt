@@ -19,22 +19,16 @@ class InvitationService(
         }
 
         return trxManager.run {
-            val creator =
-                repoUsers.findById(creatorId) ?: return@run failure(InvitationError.UserNotFound)
-            val channel =
-                repoChannels.findById(channelId)
-                    ?: return@run failure(InvitationError.ChannelNotFound)
-            val membership =
-                repoMemberships.findUserInChannel(creator, channel)
-                    ?: return@run failure(InvitationError.UserNotInChannel)
-
-            if (membership.accessType != AccessType.READ_WRITE) {
-                return@run failure(InvitationError.UserNotAuthorized)
+            when (val checkResult = checkUserCanManageInvitations(creatorId, channelId)) {
+                is Failure -> checkResult
+                is Success -> {
+                    val (creatorInfo, channel) = checkResult.value
+                    val token = UUID.randomUUID().toString()
+                    val invitation =
+                        repoInvitations.create(token, creatorInfo, channel, accessType, expiresAt)
+                    success(invitation)
+                }
             }
-
-            val token = UUID.randomUUID().toString()
-            val invitation = repoInvitations.create(token, creator, channel, accessType, expiresAt)
-            success(invitation)
         }
     }
 
@@ -43,21 +37,13 @@ class InvitationService(
         channelId: Long,
     ): Either<InvitationError, List<Invitation>> =
         trxManager.run {
-            val user =
-                repoUsers.findById(requesterId) ?: return@run failure(InvitationError.UserNotFound)
-            val channel =
-                repoChannels.findById(channelId)
-                    ?: return@run failure(InvitationError.ChannelNotFound)
-            val membership =
-                repoMemberships.findUserInChannel(user, channel)
-                    ?: return@run failure(InvitationError.UserNotInChannel)
-
-            if (membership.accessType != AccessType.READ_WRITE) {
-                return@run failure(InvitationError.UserNotAuthorized)
+            when (val checkResult = checkUserCanManageInvitations(requesterId, channelId)) {
+                is Failure -> checkResult
+                is Success -> {
+                    val invitations = repoInvitations.findByChannelId(channelId)
+                    success(invitations)
+                }
             }
-
-            val invitations = repoInvitations.findByChannelId(channelId)
-            success(invitations)
         }
 
     fun revokeInvitation(
@@ -71,11 +57,8 @@ class InvitationService(
             val channel =
                 repoChannels.findById(channelId)
                     ?: return@run failure(InvitationError.ChannelNotFound)
-            val membership =
-                repoMemberships.findUserInChannel(user, channel)
-                    ?: return@run failure(InvitationError.UserNotInChannel)
 
-            if (user != channel.owner || membership.accessType != AccessType.READ_WRITE) {
+            if (user.id != channel.owner.id) {
                 return@run failure(InvitationError.UserNotAuthorized)
             }
 
@@ -86,4 +69,23 @@ class InvitationService(
             repoInvitations.save(invitation.copy(status = Status.REJECTED))
             success("Invitation revoked.")
         }
+
+    private fun Transaction.checkUserCanManageInvitations(
+        creatorId: Long,
+        channelId: Long,
+    ): Either<InvitationError, Pair<UserInfo, Channel>> {
+        val creator = repoUsers.findById(creatorId) ?: return failure(InvitationError.UserNotFound)
+        val channel =
+            repoChannels.findById(channelId) ?: return failure(InvitationError.ChannelNotFound)
+        val membership =
+            repoMemberships.findUserInChannel(creator.id, channel.id)
+                ?: return failure(InvitationError.UserNotInChannel)
+
+        if (membership.accessType != AccessType.READ_WRITE) {
+            return failure(InvitationError.UserNotAuthorized)
+        }
+
+        val creatorInfo = UserInfo(creator.id, creator.username)
+        return success(creatorInfo to channel)
+    }
 }

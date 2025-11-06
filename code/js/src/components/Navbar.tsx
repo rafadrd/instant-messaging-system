@@ -51,7 +51,7 @@ const Navbar = () => {
                 `navbar-item ${isActive ? "navbar-item-active" : ""}`
               }
             >
-              Manage Invitations
+              Invitations
             </NavLink>
 
             <NavLink

@@ -34,7 +34,7 @@ export const joinChannel = async (channelId: number): Promise<void> => {
 export const joinChannelByToken = async (token: string): Promise<void> => {
   return apiRequest<void>(`/api/channels/join-by-token`, {
     method: "POST",
-    body: JSON.stringify(token),
+    body: JSON.stringify({ token }),
   });
 };
 

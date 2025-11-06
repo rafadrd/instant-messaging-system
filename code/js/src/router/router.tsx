@@ -12,13 +12,14 @@ import GenerateInvitationPage from "../pages/invitations/GenerateInvitationPage"
 import ManageInvitationsPage from "../pages/invitations/ManageInvitationsPage";
 import AboutPage from "../pages/about/AboutPage";
 import NotFoundPage from "../pages/NotFoundPage";
+import RootRedirect from "../components/RootRedirect";
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <Layout />,
     children: [
-      { index: true, element: <Navigate to="/channels" replace /> },
+      { index: true, element: <RootRedirect /> },
       { path: "/login", element: <LoginPage /> },
       { path: "/register", element: <RegisterPage /> },
       {
@@ -77,7 +78,14 @@ const router = createBrowserRouter([
           </AuthRequire>
         ),
       },
-      { path: "*", element: <NotFoundPage /> },
+      {
+        path: "*",
+        element: (
+          <AuthRequire>
+            <NotFoundPage />
+          </AuthRequire>
+        ),
+      },
     ],
   },
 ]);

@@ -20,9 +20,9 @@ class ChannelService(
             if (repoChannels.findByName(name) != null) {
                 return@run failure(ChannelError.ChannelAlreadyExists)
             }
-
-            val newChannel = repoChannels.create(name, owner, isPublic)
-            repoMemberships.addUserToChannel(owner, newChannel, AccessType.READ_WRITE)
+            val ownerInfo = UserInfo(owner.id, owner.username)
+            val newChannel = repoChannels.create(name, ownerInfo, isPublic)
+            repoMemberships.addUserToChannel(ownerInfo, newChannel, AccessType.READ_WRITE)
             success(newChannel)
         }
     }
@@ -33,15 +33,30 @@ class ChannelService(
                 ?: return@run failure(ChannelError.ChannelNotFound)
         }
 
+    fun deleteChannel(
+        ownerId: Long,
+        channelId: Long,
+    ): Either<ChannelError, String> =
+        trxManager.run {
+            when (val result = checkUserIsOwner(ownerId, channelId)) {
+                is Failure -> result
+                is Success -> {
+                    val (_, channel) = result.value
+                    repoChannels.deleteById(channel.id)
+                    success("Channel '${channel.name}' was deleted successfully.")
+                }
+            }
+        }
+
     fun getJoinedChannels(
         userId: Long,
         limit: Int = 50,
         offset: Int = 0,
     ): Either<ChannelError, List<Channel>> =
         trxManager.run {
-            val user = repoUsers.findById(userId) ?: return@run failure(ChannelError.UserNotFound)
+            if (repoUsers.findById(userId) == null) return@run failure(ChannelError.UserNotFound)
             val channels =
-                repoMemberships.findAllChannelsForUser(user, limit, offset).map { it.channel }
+                repoMemberships.findAllChannelsForUser(userId, limit, offset).map { it.channel }
             success(channels)
         }
 
@@ -49,12 +64,10 @@ class ChannelService(
         channelId: Long,
         limit: Int = 50,
         offset: Int = 0,
-    ): Either<ChannelError, List<User>> =
+    ): Either<ChannelError, List<UserInfo>> =
         trxManager.run {
-            val channel =
-                repoChannels.findById(channelId) ?: return@run failure(ChannelError.ChannelNotFound)
             val users =
-                repoMemberships.findAllMembersInChannel(channel, limit, offset).map { it.user }
+                repoMemberships.findAllMembersInChannel(channelId, limit, offset).map { it.user }
             success(users)
         }
 
@@ -65,18 +78,15 @@ class ChannelService(
         isPublic: Boolean,
     ): Either<ChannelError, Channel> =
         trxManager.run {
-            val owner =
-                repoUsers.findById(ownerId) ?: return@run failure(ChannelError.UserNotInChannel)
-            val channel =
-                repoChannels.findById(channelId) ?: return@run failure(ChannelError.ChannelNotFound)
-            repoMemberships.findUserInChannel(owner, channel)
-                ?: return@run failure(ChannelError.UserNotInChannel)
-            if (owner != channel.owner) {
-                return@run failure(ChannelError.UserNotOwner)
+            when (val result = checkUserIsOwner(ownerId, channelId)) {
+                is Failure -> result
+                is Success -> {
+                    val (_, channel) = result.value
+                    val updatedChannel = channel.copy(name = name, isPublic = isPublic)
+                    repoChannels.save(updatedChannel)
+                    success(updatedChannel)
+                }
             }
-
-            val result = channel.copy(name = name, isPublic = isPublic)
-            success(result)
         }
 
     fun getAccessType(
@@ -84,11 +94,8 @@ class ChannelService(
         channelId: Long,
     ): Either<MessageError, AccessType> {
         return trxManager.run {
-            val user = repoUsers.findById(userId) ?: return@run failure(MessageError.UserNotFound)
-            val channel =
-                repoChannels.findById(channelId) ?: return@run failure(MessageError.ChannelNotFound)
             val membership =
-                repoMemberships.findUserInChannel(user, channel)
+                repoMemberships.findUserInChannel(userId, channelId)
                     ?: return@run failure(MessageError.UserNotInChannel)
 
             success(membership.accessType)
@@ -102,30 +109,15 @@ class ChannelService(
         accessType: AccessType,
     ): Either<ChannelError, ChannelMember> =
         trxManager.run {
-            val owner = repoUsers.findById(ownerId) ?: return@run failure(ChannelError.UserNotFound)
-            val user = repoUsers.findById(userId) ?: return@run failure(ChannelError.UserNotFound)
-            val channel =
-                repoChannels.findById(channelId) ?: return@run failure(ChannelError.ChannelNotFound)
-
-            val ownerMembership =
-                repoMemberships.findUserInChannel(owner, channel)
-                    ?: return@run failure(ChannelError.UserNotInChannel)
-            val userMembership =
-                repoMemberships.findUserInChannel(user, channel)
-                    ?: return@run failure(ChannelError.UserNotInChannel)
-
-            if (owner != channel.owner) {
-                return@run failure(ChannelError.UserNotOwner)
+            when (val result = checkUserCanEditMember(ownerId, channelId, userId)) {
+                is Failure -> result
+                is Success -> {
+                    val (_, _, userMembership) = result.value
+                    val updatedMembership = userMembership.copy(accessType = accessType)
+                    repoMemberships.save(updatedMembership)
+                    success(updatedMembership)
+                }
             }
-            if (user == channel.owner) {
-                return@run failure(ChannelError.UserIsOwner)
-            }
-            if (ownerMembership.accessType == AccessType.READ_ONLY) {
-                return@run failure(ChannelError.UserNotAuthorized)
-            }
-
-            val result = userMembership.copy(accessType = accessType)
-            success(result)
         }
 
     fun searchChannels(
@@ -154,11 +146,11 @@ class ChannelService(
             val channel =
                 repoChannels.findById(channelId) ?: return@run failure(ChannelError.ChannelNotFound)
 
-            if (repoMemberships.findUserInChannel(user, channel) != null) {
+            if (repoMemberships.findUserInChannel(user.id, channel.id) != null) {
                 return@run failure(ChannelError.UserAlreadyInChannel)
             }
-
-            repoMemberships.addUserToChannel(user, channel, AccessType.READ_WRITE)
+            val userInfo = UserInfo(user.id, user.username)
+            repoMemberships.addUserToChannel(userInfo, channel, AccessType.READ_WRITE)
             return@run success("Joined public channel '${channel.name}'.")
         }
 
@@ -167,14 +159,13 @@ class ChannelService(
         userId: Long,
     ): Either<ChannelError, String> {
         return trxManager.run {
-            val user = repoUsers.findById(userId) ?: return@run failure(ChannelError.UserNotFound)
             val channel =
                 repoChannels.findById(channelId) ?: return@run failure(ChannelError.ChannelNotFound)
             val membership =
-                repoMemberships.findUserInChannel(user, channel)
+                repoMemberships.findUserInChannel(userId, channelId)
                     ?: return@run failure(ChannelError.UserNotInChannel)
 
-            if (channel.owner == user) {
+            if (channel.owner.id == userId) {
                 return@run failure(ChannelError.OwnerCannotLeave)
             }
 
@@ -204,12 +195,49 @@ class ChannelService(
                 repoChannels.findById(invitation.channel.id)
                     ?: return@run failure(ChannelError.ChannelNotFound)
 
-            if (repoMemberships.findUserInChannel(user, channel) != null) {
+            if (repoMemberships.findUserInChannel(user.id, channel.id) != null) {
                 return@run failure(ChannelError.UserAlreadyInChannel)
             }
-
-            repoMemberships.addUserToChannel(user, channel, invitation.accessType)
+            val userInfo = UserInfo(user.id, user.username)
+            repoMemberships.addUserToChannel(userInfo, channel, invitation.accessType)
             repoInvitations.save(invitation.copy(status = Status.ACCEPTED))
             success("Joined private channel '${channel.name}'")
         }
+
+    private fun Transaction.checkUserIsOwner(
+        userId: Long,
+        channelId: Long,
+    ): Either<ChannelError, Pair<User, Channel>> {
+        val user = repoUsers.findById(userId) ?: return failure(ChannelError.UserNotFound)
+        val channel =
+            repoChannels.findById(channelId) ?: return failure(ChannelError.ChannelNotFound)
+        if (channel.owner.id != user.id) {
+            return failure(ChannelError.UserNotOwner)
+        }
+        return success(user to channel)
+    }
+
+    private fun Transaction.checkUserCanEditMember(
+        ownerId: Long,
+        channelId: Long,
+        userId: Long,
+    ): Either<ChannelError, Triple<User, User, ChannelMember>> {
+        val owner = repoUsers.findById(ownerId) ?: return failure(ChannelError.UserNotFound)
+        val userToEdit = repoUsers.findById(userId) ?: return failure(ChannelError.UserNotFound)
+        val channel =
+            repoChannels.findById(channelId) ?: return failure(ChannelError.ChannelNotFound)
+
+        val ownerMembership =
+            repoMemberships.findUserInChannel(owner.id, channel.id)
+                ?: return failure(ChannelError.UserNotInChannel)
+        val userMembership =
+            repoMemberships.findUserInChannel(userToEdit.id, channel.id)
+                ?: return failure(ChannelError.UserNotInChannel)
+
+        if (channel.owner.id != owner.id) return failure(ChannelError.UserNotOwner)
+        if (userToEdit.id == channel.owner.id) return failure(ChannelError.UserIsOwner)
+        if (ownerMembership.accessType == AccessType.READ_ONLY) return failure(ChannelError.UserNotAuthorized)
+
+        return success(Triple(owner, userToEdit, userMembership))
+    }
 }
