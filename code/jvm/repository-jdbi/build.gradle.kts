@@ -19,12 +19,8 @@ tasks.withType<Test> {
     finalizedBy(":repository-jdbi:dbTestsDown")
 }
 
-/* * DB related tasks
- * - To run `psql` inside the container, do
- *      docker exec -ti db-tests psql -d db -U dbuser -W
- *   and provide it with the same password as define on `tests/Dockerfile-db-test`
- */
-val composeFileDir: Directory = rootProject.layout.projectDirectory
+// DB related tasks
+val composeFileDir = rootProject.layout.projectDirectory.dir("../../")
 val dockerComposePath = composeFileDir.file("docker-compose.yml").toString()
 
 task<Exec>("dbTestsUp") {
@@ -35,17 +31,15 @@ task<Exec>("dbTestsUp") {
         dockerComposePath,
         "up",
         "-d",
-        "--build",
-        "--force-recreate",
-        "db-tests",
+        "postgres",
     )
 }
 
 task<Exec>("dbTestsWait") {
-    commandLine("docker", "exec", "db-tests", "/app/bin/wait-for-postgres.sh", "localhost")
+    commandLine("docker", "exec", "ims-postgres", "/app/bin/wait-for-postgres.sh", "localhost")
     dependsOn("dbTestsUp")
 }
 
 task<Exec>("dbTestsDown") {
-    commandLine("docker", "compose", "-f", dockerComposePath, "down", "db-tests")
+    commandLine("docker", "compose", "-f", dockerComposePath, "stop", "postgres")
 }

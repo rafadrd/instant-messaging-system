@@ -1,0 +1,60 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: ims-postgres
+    environment:
+      POSTGRES_USER: dbuser
+      POSTGRES_PASSWORD: isel
+      POSTGRES_DB: db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./code/jvm/repository-jdbi/src/sql/create-schema.sql:/docker-entrypoint-initdb.d/1_create.sql
+      - ./code/jvm/repository-jdbi/src/sql/insert-test-data.sql:/docker-entrypoint-initdb.d/2_data.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - ims-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dbuser -d db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./code/jvm
+      dockerfile: Dockerfile
+    container_name: ims-backend
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/db?user=dbuser&password=isel
+      JWT_SECRET: ${JWT_SECRET:-change_me_to_a_strong_secret_via_env_file}
+      CORS_ALLOWED_ORIGINS: http://localhost:8000,http://localhost:80
+      SSE_POOL_CORE_SIZE: 50
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ims-network
+
+  frontend:
+    build:
+      context: ./code/js
+      dockerfile: Dockerfile
+    container_name: ims-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - ims-network
+
+volumes:
+  postgres_data:
+    name: postgres_data
+
+networks:
+  ims-network:
+    name: ims-network
+    driver: bridge

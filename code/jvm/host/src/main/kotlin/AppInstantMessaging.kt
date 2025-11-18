@@ -22,6 +22,7 @@ import java.util.concurrent.Executor
 class PipelineConfigurer(
     val authenticationInterceptor: AuthenticationInterceptor,
     val authenticatedUserArgumentResolver: AuthenticatedUserArgumentResolver,
+    @Value("\${cors.allowed-origins}") val allowedOrigins: String
 ) : WebMvcConfigurer {
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry.addInterceptor(authenticationInterceptor)
@@ -34,7 +35,7 @@ class PipelineConfigurer(
     override fun addCorsMappings(registry: CorsRegistry) {
         registry
             .addMapping("/api/**")
-            .allowedOrigins("http://localhost:8000")
+            .allowedOrigins(*allowedOrigins.split(",").toTypedArray())
             .allowCredentials(true)
     }
 }
@@ -74,11 +75,15 @@ class AppInstantMessaging {
         )
 
     @Bean
-    fun sseExecutor(): Executor {
+    fun sseExecutor(
+        @Value("\${sse.pool.core-size}") coreSize: Int,
+        @Value("\${sse.pool.max-size}") maxSize: Int,
+        @Value("\${sse.pool.queue-capacity}") queueCapacity: Int
+    ): Executor {
         val executor = ThreadPoolTaskExecutor()
-        executor.corePoolSize = 10
-        executor.maxPoolSize = 50
-        executor.queueCapacity = 100
+        executor.corePoolSize = coreSize
+        executor.maxPoolSize = maxSize
+        executor.queueCapacity = queueCapacity
         executor.threadNamePrefix = "sse-broadcaster-"
         executor.initialize()
         return executor

@@ -28,11 +28,6 @@ dependencies {
     testImplementation(libs.spring.boot.starter.webflux)
 }
 
-tasks.bootRun {
-    environment("DB_URL", "jdbc:postgresql://localhost:5432/db?user=dbuser&password=isel")
-    environment("JWT_SECRET", "a-very-weak-secret-for-local-dev-only-to-be-replaced-in-production")
-}
-
 tasks.withType<Test> {
     environment("DB_URL", "jdbc:postgresql://localhost:5432/db?user=dbuser&password=isel")
     dependsOn(":repository-jdbi:dbTestsWait")
