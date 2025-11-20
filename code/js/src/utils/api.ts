@@ -43,8 +43,11 @@ export const apiRequest = async <T>(
   endpoint: string,
   options: RequestInit = {},
 ): Promise<T> => {
+  const token = localStorage.getItem("token");
+
   const headers: HeadersInit = {
     "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...options.headers,
   };
 

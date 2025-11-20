@@ -1,16 +1,26 @@
 package pt.isel
 
-import jakarta.inject.Named
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import org.slf4j.LoggerFactory
+import org.springframework.data.redis.core.StringRedisTemplate
+import org.springframework.stereotype.Service
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.Executor
 
-@Named
+@Service
 class MessageEventService(
     private val trxManager: TransactionManager,
-    private val sseExecutor: Executor,
+    private val redisTemplate: StringRedisTemplate,
+    private val objectMapper: ObjectMapper,
 ) {
-    private val listeners = ConcurrentHashMap<Long, MutableSet<UpdatedMessageEmitter>>()
+    private val localListeners = ConcurrentHashMap<Long, MutableSet<UpdatedMessageEmitter>>()
+
+    private val TOPIC_NAME = "chat-events"
+
+    data class DistributedEvent(
+        val channelId: Long,
+        val message: UpdatedMessage,
+    )
 
     fun addEmitter(
         channelId: Long,
@@ -28,12 +38,9 @@ class MessageEventService(
                 ?: throw SecurityException("User $userId is not a member of channel $channelId.")
         }
 
-        listeners
+        localListeners
             .computeIfAbsent(channelId) { ConcurrentHashMap.newKeySet() }
-            .apply {
-                add(emitter)
-                logger.debug("Emitter added to channel $channelId. Total emitters: $size")
-            }
+            .add(emitter)
 
         emitter.onCompletion { removeEmitter(channelId, emitter) }
         emitter.onError { removeEmitter(channelId, emitter) }
@@ -43,11 +50,9 @@ class MessageEventService(
         channelId: Long,
         emitter: UpdatedMessageEmitter,
     ) {
-        listeners[channelId]?.run {
-            if (remove(emitter)) {
-                logger.debug("Emitter removed from channel $channelId. Remaining emitters: $size")
-                if (isEmpty()) listeners.remove(channelId)
-            }
+        localListeners[channelId]?.apply {
+            remove(emitter)
+            if (isEmpty()) localListeners.remove(channelId)
         }
     }
 
@@ -55,18 +60,28 @@ class MessageEventService(
         channelId: Long,
         signal: UpdatedMessage,
     ) {
-        listeners[channelId]?.forEach { emitter ->
-            sseExecutor.execute {
+        try {
+            val event = DistributedEvent(channelId, signal)
+            val json = objectMapper.writeValueAsString(event)
+            redisTemplate.convertAndSend(TOPIC_NAME, json)
+        } catch (e: Exception) {
+            logger.error("Failed to publish message to Redis", e)
+        }
+    }
+
+    fun handleRedisMessage(json: String) {
+        try {
+            val event = objectMapper.readValue<DistributedEvent>(json)
+
+            localListeners[event.channelId]?.forEach { emitter ->
                 try {
-                    emitter.emit(signal)
-                } catch (e: Exception) {
-                    logger.error(
-                        "Error broadcasting message to channel $channelId: ${e.message}",
-                        e,
-                    )
-                    removeEmitter(channelId, emitter)
+                    emitter.emit(event.message)
+                } catch (_: Exception) {
+                    removeEmitter(event.channelId, emitter)
                 }
             }
+        } catch (e: Exception) {
+            logger.error("Failed to process Redis message", e)
         }
     }
 

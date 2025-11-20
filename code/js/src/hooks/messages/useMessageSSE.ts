@@ -16,7 +16,10 @@ const useMessageSSE = ({ channelId, onNewMessage }: UseMessageSSEProps) => {
     let retryTimeout: NodeJS.Timeout;
 
     const connect = () => {
-      eventSource = new EventSource(`/api/channels/${channelId}/listen`, {
+      const token = localStorage.getItem("token");
+      const url = `/api/channels/${channelId}/listen?access_token=${token}`;
+
+      eventSource = new EventSource(url, {
         withCredentials: true,
       });
 

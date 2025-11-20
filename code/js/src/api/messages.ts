@@ -13,6 +13,6 @@ export const postNewMessage = async (
 ): Promise<Message> => {
   return apiRequest<Message>(`/api/channels/${channelId}/messages`, {
     method: "POST",
-    body: JSON.stringify(content),
+    body: JSON.stringify({ content }),
   });
 };

@@ -20,11 +20,19 @@ class AuthenticationInterceptor(
             handler is HandlerMethod &&
             handler.methodParameters.any { it.parameterType == AuthenticatedUser::class.java }
         ) {
+            var authorizationValue = request.getHeader(NAME_AUTHORIZATION_HEADER)
+
+            if (authorizationValue == null) {
+                val accessToken = request.getParameter("access_token")
+                if (accessToken != null) {
+                    authorizationValue = "$SCHEME $accessToken"
+                }
+            }
+
             val user =
-                request
-                    .getHeader(NAME_AUTHORIZATION_HEADER)
-                    ?.let { authorizationHeaderProcessor.processAuthorizationHeaderValue(it) }
-                    ?: authorizationHeaderProcessor.processTokenFromCookie(request.cookies)
+                authorizationValue?.let {
+                    authorizationHeaderProcessor.processAuthorizationHeaderValue(it)
+                }
 
             return if (user == null) {
                 response.apply {
@@ -44,5 +52,6 @@ class AuthenticationInterceptor(
     companion object {
         const val NAME_AUTHORIZATION_HEADER = "Authorization"
         private const val NAME_WWW_AUTHENTICATE_HEADER = "WWW-Authenticate"
+        private const val SCHEME = "bearer"
     }
 }

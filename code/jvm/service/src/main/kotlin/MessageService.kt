@@ -27,7 +27,7 @@ class MessageService(
             }
 
         if (result is Success) {
-            messageEventService.broadcastMessage(channelId, UpdatedMessage.NewMessage(result.value))
+            messageEventService.broadcastMessage(channelId, NewMessage(result.value))
         }
 
         return result

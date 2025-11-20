@@ -15,11 +15,13 @@ import Header from "../../components/Header";
 import MessageComponent from "../../components/MessageComponent";
 import MessageInput from "../../components/MessageInput";
 import LeaveChannelModal from "../../components/LeaveChannelModal";
+import { useQueryClient } from "@tanstack/react-query";
 
 const ChannelDetailPage = () => {
   const { user } = useAuth();
   const { id } = useParams<{ id: string }>();
   const channelId = id ? parseInt(id, 10) : null;
+  const queryClient = useQueryClient();
 
   const {
     data: channel,
@@ -34,18 +36,10 @@ const ChannelDetailPage = () => {
   } = useFetchAccessType(channelId);
 
   const {
-    messages: initialMessages,
+    messages,
     loading: isMessagesLoading,
     error: messagesError,
   } = useFetchMessages(channelId);
-
-  const [messages, setMessages] = useState<Message[]>([]);
-
-  useEffect(() => {
-    if (initialMessages) {
-      setMessages(initialMessages);
-    }
-  }, [initialMessages]);
 
   const {
     handlePostMessage: postNewMessage,
@@ -64,21 +58,24 @@ const ChannelDetailPage = () => {
   const [generalError, setGeneralError] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
   const handleNewMessage = useCallback(
     (message: Message) => {
-      setMessages((prevMessages: Message[]) => {
-        if (prevMessages.some((m: Message) => m.id === message.id)) {
-          return prevMessages;
+      queryClient.setQueryData(
+        ["messages", channelId],
+        (oldMessages: Message[] | undefined) => {
+          if (!oldMessages) return [message];
+          if (oldMessages.some((m) => m.id === message.id)) return oldMessages;
+          return [...oldMessages, message];
         }
-        return [...prevMessages, message];
-      });
+      );
       scrollToBottom();
     },
-    [scrollToBottom],
+    [queryClient, channelId, scrollToBottom]
   );
 
   useEffect(() => {
@@ -134,9 +131,7 @@ const ChannelDetailPage = () => {
       />
 
       <div className="chat-messages">
-        {isMessagesLoading ? (
-          <LoadingSpinner />
-        ) : messages.length === 0 ? (
+        {messages.length === 0 ? (
           <div className="no-messages">
             No messages yet. Start the conversation!
           </div>
@@ -150,7 +145,6 @@ const ChannelDetailPage = () => {
           ))
         )}
         <div ref={messagesEndRef} />
-        {messagesError && <div className="error-message">{messagesError}</div>}
       </div>
 
       {accessType && accessType !== "READ_ONLY" && (

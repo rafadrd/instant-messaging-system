@@ -1,10 +1,7 @@
 package pt.isel
 
 import jakarta.servlet.http.HttpServletRequest
-import jakarta.servlet.http.HttpServletResponse
-import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseCookie
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -20,7 +17,6 @@ import pt.isel.model.RegisterInput
 import pt.isel.model.UpdateUsernameInput
 import pt.isel.model.UserHomeOutput
 import pt.isel.model.UserInput
-import kotlin.time.Duration.Companion.days
 
 @RestController
 @RequestMapping("/api")
@@ -31,54 +27,27 @@ class UserController(
     @PostMapping("/auth/register")
     fun registerUser(
         @RequestBody user: RegisterInput,
-        response: HttpServletResponse,
     ): ResponseEntity<*> =
         handleResult(
-            userService.registerUser(
-                user.username,
-                user.password,
-                user.invitationToken,
-            ),
+            userService.registerUser(user.username, user.password, user.invitationToken),
         ) { tokenInfo ->
-            val cookie =
-                ResponseCookie
-                    .from(TOKEN_COOKIE_NAME, tokenInfo.tokenValue)
-                    .httpOnly(true)
-                    .path("/")
-                    .maxAge(7.days.inWholeSeconds)
-                    .sameSite("Lax")
-                    .build()
-            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString())
             ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(UserHomeOutput(tokenInfo.userId, user.username))
+                .body(UserHomeOutput(tokenInfo.userId, user.username, tokenInfo.tokenValue))
         }
 
     @PostMapping("/auth/login")
     fun loginUser(
         @RequestBody user: UserInput,
-        response: HttpServletResponse,
     ): ResponseEntity<*> =
         handleResult(userService.createToken(user.username, user.password)) { tokenInfo ->
-            val cookie =
-                ResponseCookie
-                    .from(TOKEN_COOKIE_NAME, tokenInfo.tokenValue)
-                    .httpOnly(true)
-                    .path("/")
-                    .maxAge(7.days.inWholeSeconds)
-                    .sameSite("Lax")
-                    .build()
-            response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString())
-            ResponseEntity.ok(UserHomeOutput(tokenInfo.userId, user.username))
+            ResponseEntity.ok(UserHomeOutput(tokenInfo.userId, user.username, tokenInfo.tokenValue))
         }
 
     @PostMapping("/auth/logout")
-    fun logout(
-        request: HttpServletRequest,
-        response: HttpServletResponse,
-    ): ResponseEntity<Unit> {
+    fun logout(request: HttpServletRequest): ResponseEntity<Unit> {
         val authHeader = request.getHeader(NAME_AUTHORIZATION_HEADER)
-        val tokenFromHeader =
+        val tokenToRevoke =
             authHeader?.let {
                 if (it.startsWith("$SCHEME ", ignoreCase = true)) {
                     it.substring(SCHEME.length + 1)
@@ -87,28 +56,14 @@ class UserController(
                 }
             }
 
-        val tokenFromCookie = request.cookies?.find { it.name == TOKEN_COOKIE_NAME }?.value
-
-        val tokenToRevoke = tokenFromHeader ?: tokenFromCookie
-
-        tokenToRevoke?.let { token ->
-            userService.revokeToken(token)
-        }
-
-        val expiredCookie =
-            ResponseCookie
-                .from(TOKEN_COOKIE_NAME, "")
-                .path("/")
-                .maxAge(0)
-                .build()
-        response.addHeader(HttpHeaders.SET_COOKIE, expiredCookie.toString())
+        tokenToRevoke?.let { token -> userService.revokeToken(token) }
 
         return ResponseEntity.noContent().build()
     }
 
     @GetMapping("/users/me")
     fun userHome(user: AuthenticatedUser): ResponseEntity<UserHomeOutput> =
-        ResponseEntity.ok(UserHomeOutput(user.user.id, user.user.username))
+        ResponseEntity.ok(UserHomeOutput(user.user.id, user.user.username, null))
 
     @PutMapping("/users/me")
     fun editUser(
@@ -128,6 +83,5 @@ class UserController(
     companion object {
         private const val NAME_AUTHORIZATION_HEADER = "Authorization"
         private const val SCHEME = "bearer"
-        private const val TOKEN_COOKIE_NAME = "token"
     }
 }

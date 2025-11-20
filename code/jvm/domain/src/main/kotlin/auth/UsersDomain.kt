@@ -1,12 +1,11 @@
 package pt.isel.auth
 
 import jakarta.inject.Named
-import org.springframework.security.crypto.password.PasswordEncoder
 
 @Named
 class UsersDomain(
     private val passwordEncoder: PasswordEncoder,
-    private val passwordPolicyConfig: PasswordPolicyConfig, // Injected configuration
+    private val passwordPolicyConfig: PasswordPolicyConfig,
 ) {
     fun validatePassword(
         password: String,

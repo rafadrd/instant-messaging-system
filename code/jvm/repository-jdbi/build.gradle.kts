@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 dependencies {
     // Module dependencies
     implementation(project(":repository"))
@@ -13,8 +16,30 @@ dependencies {
     implementation(libs.kotlin.reflect)
 }
 
+fun loadEnv(): Map<String, String> {
+    val envFile =
+        project.projectDir.parentFile
+            ?.parentFile
+            ?.parentFile
+            ?.resolve(".env")
+
+    if (envFile == null || !envFile.exists()) {
+        return emptyMap()
+    }
+
+    val props = Properties()
+    props.load(FileInputStream(envFile))
+    return props.entries.associate { it.key.toString() to it.value.toString() }
+}
+
 tasks.withType<Test> {
-    environment("DB_URL", "jdbc:postgresql://localhost:5432/db?user=dbuser&password=isel")
+    val envVars = loadEnv()
+    environment(envVars)
+
+    if (!envVars.containsKey("DB_URL")) {
+        environment("DB_URL", "jdbc:postgresql://localhost:5432/db?user=dbuser&password=isel")
+    }
+
     dependsOn(":repository-jdbi:dbTestsWait")
     finalizedBy(":repository-jdbi:dbTestsDown")
 }

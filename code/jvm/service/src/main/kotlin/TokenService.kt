@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jws
 import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
+import io.jsonwebtoken.security.WeakKeyException
 import jakarta.annotation.PostConstruct
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
@@ -24,7 +25,11 @@ class TokenService(
 
     @PostConstruct
     fun init() {
-        this.key = Keys.hmacShaKeyFor(secret.toByteArray(StandardCharsets.UTF_8))
+        val bytes = secret.toByteArray(StandardCharsets.UTF_8)
+        if (bytes.size * 8 < 256) {
+            throw WeakKeyException("JWT_SECRET must be at least 256 bits (32 characters) long.")
+        }
+        this.key = Keys.hmacShaKeyFor(bytes)
     }
 
     fun createToken(userId: Long): TokenExternalInfo {

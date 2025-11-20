@@ -1,10 +1,12 @@
 package pt.isel
 
+import io.github.cdimascio.dotenv.dotenv
 import kotlinx.datetime.Clock
 import org.jdbi.v3.core.Jdbi
 import org.postgresql.ds.PGSimpleDataSource
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -22,7 +24,7 @@ import java.util.concurrent.Executor
 class PipelineConfigurer(
     val authenticationInterceptor: AuthenticationInterceptor,
     val authenticatedUserArgumentResolver: AuthenticatedUserArgumentResolver,
-    @Value("\${cors.allowed-origins}") val allowedOrigins: String
+    @Value("\${cors.allowed-origins}") val allowedOrigins: String,
 ) : WebMvcConfigurer {
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry.addInterceptor(authenticationInterceptor)
@@ -40,13 +42,14 @@ class PipelineConfigurer(
     }
 }
 
-@SpringBootApplication
+@SpringBootApplication(exclude = [DataSourceAutoConfiguration::class])
 class AppInstantMessaging {
     @Bean
-    fun jdbi() =
-        Jdbi
-            .create(PGSimpleDataSource().apply { setURL(Environment.getDbUrl()) })
-            .configureWithAppRequirements()
+    fun jdbi(
+        @Value("\${spring.datasource.url}") dbUrl: String,
+    ) = Jdbi
+        .create(PGSimpleDataSource().apply { setURL(dbUrl) })
+        .configureWithAppRequirements()
 
     @Bean
     @Profile("jdbi")
@@ -78,7 +81,7 @@ class AppInstantMessaging {
     fun sseExecutor(
         @Value("\${sse.pool.core-size}") coreSize: Int,
         @Value("\${sse.pool.max-size}") maxSize: Int,
-        @Value("\${sse.pool.queue-capacity}") queueCapacity: Int
+        @Value("\${sse.pool.queue-capacity}") queueCapacity: Int,
     ): Executor {
         val executor = ThreadPoolTaskExecutor()
         executor.corePoolSize = coreSize
@@ -90,6 +93,12 @@ class AppInstantMessaging {
     }
 }
 
-fun main() {
-    runApplication<AppInstantMessaging>()
+fun main(args: Array<String>) {
+    val dotenv =
+        dotenv {
+            directory = "./"
+            ignoreIfMissing = true
+        }
+    dotenv.entries().forEach { System.setProperty(it.key, it.value) }
+    runApplication<AppInstantMessaging>(*args)
 }

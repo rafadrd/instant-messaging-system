@@ -20,6 +20,12 @@ dependencies {
     runtimeOnly(libs.jjwt.impl)
     runtimeOnly(libs.jjwt.jackson)
 
+    // Redis for Pub/Sub
+    implementation(libs.spring.boot.starter.data.redis)
+
+    // Jackson for JSON serialization/deserialization in Redis messages
+    implementation(libs.jackson.module.kotlin)
+
     // JDBI and Postgres dependencies
     testImplementation(project(":repository-jdbi"))
     testImplementation(libs.jdbi3.core)

@@ -1,6 +1,5 @@
 package pt.isel
 
-import java.io.IOException
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 
 class SseUpdatedMessageEmitterAdapter(
@@ -9,23 +8,22 @@ class SseUpdatedMessageEmitterAdapter(
     override fun emit(signal: UpdatedMessage) {
         val sseEvent =
             when (signal) {
-                is UpdatedMessage.NewMessage ->
+                is NewMessage ->
                     SseEmitter
                         .event()
                         .id(signal.message.id.toString())
                         .name("new-message")
                         .data(signal.message)
 
-                is UpdatedMessage.KeepAlive ->
+                is KeepAlive ->
                     SseEmitter
                         .event()
                         .comment("keep-alive: ${signal.timestamp.epochSecond}")
             }
         try {
             sseEmitter.send(sseEvent)
-        } catch (e: IOException) {
+        } catch (e: Exception) {
             sseEmitter.completeWithError(e)
-            throw e
         }
     }
 

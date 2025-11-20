@@ -11,6 +11,9 @@ dependencies {
     // To use SLF4J
     implementation(libs.slf4j.api)
 
+    // For @JsonInclude annotations in DTOs
+    implementation(libs.jackson.module.kotlin)
+
     // for JDBI and Postgres Tests
     testImplementation(libs.jdbi3.core)
     testImplementation(libs.postgresql)

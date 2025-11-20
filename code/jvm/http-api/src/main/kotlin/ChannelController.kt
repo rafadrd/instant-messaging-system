@@ -114,7 +114,7 @@ class ChannelController(
         user: AuthenticatedUser,
         @PathVariable channelId: Long,
     ): SseEmitter {
-        val emitter = SseEmitter(30_000L)
+        val emitter = SseEmitter(0L)
         try {
             val adapter = SseUpdatedMessageEmitterAdapter(emitter)
             messageEventService.addEmitter(channelId, user.user.id, adapter)
