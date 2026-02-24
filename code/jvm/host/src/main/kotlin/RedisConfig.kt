@@ -14,7 +14,7 @@ class RedisConfig {
     fun stringRedisTemplate(connectionFactory: RedisConnectionFactory): StringRedisTemplate = StringRedisTemplate(connectionFactory)
 
     @Bean
-    fun listenerAdapter(messageEventService: MessageEventService): MessageListenerAdapter =
+    fun listenerAdapter(messageEventService: RedisMessageEventService): MessageListenerAdapter =
         MessageListenerAdapter(messageEventService, "handleRedisMessage")
 
     @Bean

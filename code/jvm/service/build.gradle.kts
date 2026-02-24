@@ -15,11 +15,6 @@ dependencies {
     // To use Kotlin specific date and time functions
     implementation(libs.kotlinx.datetime)
 
-    // JWT dependencies for token handling
-    implementation(libs.jjwt.api)
-    runtimeOnly(libs.jjwt.impl)
-    runtimeOnly(libs.jjwt.jackson)
-
     // Redis for Pub/Sub
     implementation(libs.spring.boot.starter.data.redis)
 

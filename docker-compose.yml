@@ -8,8 +8,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./code/jvm/http-api/src/resources/sql/create-schema.sql:/docker-entrypoint-initdb.d/1_create.sql
-      - ./code/jvm/http-api/src/resources/sql/insert-test-data.sql:/docker-entrypoint-initdb.d/2_data.sql
+      - ./code/jvm/repository-jdbi/src/main/resources/sql/create-schema.sql:/docker-entrypoint-initdb.d/1_create.sql
+      - ./code/jvm/repository-jdbi/src/test/resources/sql/insert-test-data.sql:/docker-entrypoint-initdb.d/2_data.sql
     ports:
       - "5432:5432"
     networks:

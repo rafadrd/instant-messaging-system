@@ -26,6 +26,11 @@ dependencies {
     implementation(libs.jdbi3.core)
     implementation(libs.postgresql)
 
+    // JWT dependencies for token handling
+    implementation(libs.jjwt.api)
+    runtimeOnly(libs.jjwt.impl)
+    runtimeOnly(libs.jjwt.jackson)
+
     // DotEnv
     implementation(libs.dotenv.kotlin)
 

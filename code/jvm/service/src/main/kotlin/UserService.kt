@@ -4,7 +4,6 @@ import jakarta.inject.Named
 import pt.isel.auth.TokenExternalInfo
 import pt.isel.auth.UsersDomain
 import java.time.LocalDateTime
-import java.time.ZoneId
 
 @Named
 class UserService(
@@ -52,7 +51,10 @@ class UserService(
                 }
 
             when (userEither) {
-                is Failure -> userEither
+                is Failure -> {
+                    userEither
+                }
+
                 is Success -> {
                     val tokenInfo = tokenService.createToken(userEither.value.id)
                     success(tokenInfo)
@@ -178,28 +180,20 @@ class UserService(
     }
 
     fun getUserByToken(token: String): User? {
-        val claims = tokenService.validateToken(token)?.payload ?: return null
-        val jti = claims.id ?: return null
-        val userId = claims.subject.toLongOrNull() ?: return null
+        val parsedToken = tokenService.validateToken(token) ?: return null
 
         return trxManager.run {
-            if (repoTokenBlacklist.exists(jti)) {
+            if (repoTokenBlacklist.exists(parsedToken.jti)) {
                 return@run null
             }
-            repoUsers.findById(userId)
+            repoUsers.findById(parsedToken.userId)
         }
     }
 
     fun revokeToken(token: String) {
-        val claims = tokenService.validateToken(token)?.payload ?: return
-        val jti = claims.id ?: return
-        val expiresAt =
-            claims.expiration
-                .toInstant()
-                .atZone(ZoneId.systemDefault())
-                .toLocalDateTime()
+        val parsedToken = tokenService.validateToken(token) ?: return
         trxManager.run {
-            repoTokenBlacklist.add(jti, expiresAt)
+            repoTokenBlacklist.add(parsedToken.jti, parsedToken.expiresAt)
         }
     }
 }
