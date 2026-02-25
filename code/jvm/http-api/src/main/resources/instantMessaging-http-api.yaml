@@ -46,7 +46,7 @@ paths:
   /auth/login:
     post:
       summary: Login a user
-      description: Authenticates a user and returns user info. An auth token is set in an HTTP-only cookie.
+      description: Authenticates a user and returns user info. An auth token is returned.
       requestBody:
         required: true
         content:
@@ -82,10 +82,18 @@ paths:
   /auth/logout:
     post:
       summary: Logout the user
-      description: Revokes the user's authentication token (from Bearer token or cookie) and clears the cookie.
+      description: Revokes the user's authentication token (from Bearer token).
+      security:
+        - BearerAuth: [ ]
       responses:
         '204':
           description: User logged out successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '500':
           description: Internal server error
           content:
@@ -98,7 +106,7 @@ paths:
       summary: Get current user information
       description: Retrieves information about the authenticated user.
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: User information retrieved successfully
@@ -118,13 +126,45 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Problem'
+    put:
+      summary: Update username
+      description: Updates the current user's username. Requires current password confirmation.
+      security:
+        - BearerAuth: [ ]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUsernameInput'
+      responses:
+        '200':
+          description: Username updated successfully
+        '400':
+          description: Invalid Input
+        '401':
+          description: Unauthorized
+        '409':
+          description: Username already in use
+    delete:
+      summary: Delete user account
+      description: Deletes the authenticated user account and removes them from all joined channels. Fails if user owns channels.
+      security:
+        - BearerAuth: [ ]
+      responses:
+        '200':
+          description: User account deleted successfully
+        '400':
+          description: User has owned channels
+        '401':
+          description: Unauthorized
 
   /users/me/channels:
     get:
       summary: Get channels for the current user
       description: Retrieves the list of channels the authenticated user has joined.
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       responses:
         '200':
           description: Channels retrieved successfully
@@ -158,7 +198,7 @@ paths:
       summary: Get list of public channels
       description: Retrieves a list of public channels, optionally filtered by a search query.
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
         - name: query
           in: query
@@ -191,7 +231,7 @@ paths:
       summary: Create a new channel
       description: Creates a new channel with the provided name and visibility.
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -229,7 +269,7 @@ paths:
       summary: Get channel by ID
       description: Retrieves the details of a specific channel by its ID.
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
         - name: channelId
           in: path
@@ -263,13 +303,61 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Problem'
+    put:
+      summary: Edit channel details
+      description: Updates the name and public visibility of a channel. Only the channel owner can perform this action.
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChannelInput'
+      responses:
+        '200':
+          description: Channel updated successfully
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (Not owner)
+        '404':
+          description: Channel not found
+    delete:
+      summary: Delete a channel
+      description: Deletes a channel entirely. Only the owner can perform this.
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Channel deleted
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (Not owner)
+        '404':
+          description: Channel not found
 
   /channels/{channelId}/join:
     post:
       summary: Join a public channel by ID
       description: Allows a user to join a specific public channel by its ID.
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
         - name: channelId
           in: path
@@ -310,7 +398,7 @@ paths:
       summary: Join a private channel using a token
       description: Allows a user to join a private channel using an invitation token.
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       requestBody:
         required: true
         content:
@@ -355,7 +443,7 @@ paths:
       summary: Leave a channel
       description: Removes the authenticated user from a specific channel.
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
         - name: channelId
           in: path
@@ -391,12 +479,138 @@ paths:
               schema:
                 $ref: '#/components/schemas/Problem'
 
+  /channels/{channelId}/members:
+    get:
+      summary: Get members of a channel
+      description: Retrieves the list of users who are members of the specified channel.
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Members retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserHomeOutput'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Channel not found
+
+  /channels/{channelId}/members/{userId}:
+    get:
+      summary: Get access type of a member
+      description: Retrieves the access level of a specific user in the channel.
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Access type retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "READ_WRITE"
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (Not in channel)
+        '404':
+          description: User or Channel not found
+    post:
+      summary: Edit member access type
+      description: Updates the access rights of a member in the channel. Only owners can do this.
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: string
+              enum: [ READ_ONLY, READ_WRITE ]
+      responses:
+        '200':
+          description: Access type updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChannelMember'
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (Not owner)
+        '404':
+          description: User or Channel not found
+
+  /channels/{channelId}/listen:
+    get:
+      summary: Listen for real-time messages via SSE
+      description: Establishes a Server-Sent Events (SSE) stream for real-time chat messages.
+      security:
+        - BearerAuth: [ ]
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Connection established successfully. Streams real-time data.
+          content:
+            text/event-stream:
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+        '403':
+          description: Forbidden (Not in channel)
+        '404':
+          description: Channel not found
+
   /channels/{channelId}/messages:
     get:
       summary: Get messages in a channel
       description: Retrieves a list of messages in the specified channel.
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
         - name: channelId
           in: path
@@ -458,7 +672,7 @@ paths:
       summary: Create a new message in a channel
       description: Creates a new message in the specified channel.
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
         - name: channelId
           in: path
@@ -516,7 +730,7 @@ paths:
       summary: Get invitations for a channel
       description: Retrieves a list of invitations for the specified channel. User must have write access.
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
         - name: channelId
           in: path
@@ -562,7 +776,7 @@ paths:
       summary: Create an invitation for a channel
       description: Creates an invitation for the specified channel. User must have write access.
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
         - name: channelId
           in: path
@@ -619,7 +833,7 @@ paths:
       summary: Revoke an invitation
       description: Revokes a specific invitation for a channel. Only the channel owner can perform this action.
       security:
-        - BearerAuth: []
+        - BearerAuth: [ ]
       parameters:
         - name: channelId
           in: path
@@ -674,29 +888,16 @@ components:
       scheme: bearer
       description: Bearer Token needed to access the endpoints.
   schemas:
-    User:
+    UpdateUsernameInput:
       type: object
-      description: Internal representation of a User, not exposed in API responses.
       properties:
-        id:
-          type: integer
-          format: int64
-          description: Unique identifier for the user.
-        username:
+        newUsername:
           type: string
-          description: Username of the user.
-        passwordValidation:
-          type: object
-          properties:
-            validationInfo:
-              type: string
-              description: Information regarding password validation.
-          required:
-            - validationInfo
+        password:
+          type: string
       required:
-        - id
-        - username
-        - passwordValidation
+        - newUsername
+        - password
 
     UserHomeOutput:
       type: object
@@ -709,6 +910,9 @@ components:
         username:
           type: string
           description: Username of the user.
+        token:
+          type: string
+          description: User's session token (optional).
       required:
         - id
         - username
@@ -775,6 +979,25 @@ components:
       required:
         - name
         - isPublic
+
+    ChannelMember:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        user:
+          $ref: '#/components/schemas/UserHomeOutput'
+        channel:
+          $ref: '#/components/schemas/Channel'
+        accessType:
+          type: string
+          enum: [ READ_ONLY, READ_WRITE ]
+      required:
+        - id
+        - user
+        - channel
+        - accessType
 
     JoinByTokenInput:
       type: object

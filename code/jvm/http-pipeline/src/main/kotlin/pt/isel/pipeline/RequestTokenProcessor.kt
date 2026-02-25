@@ -1,7 +1,8 @@
-package pt.isel
+package pt.isel.pipeline
 
 import org.springframework.stereotype.Component
-import pt.isel.auth.AuthenticatedUser
+import pt.isel.domain.auth.AuthenticatedUser
+import pt.isel.services.UserService
 
 @Component
 class RequestTokenProcessor(

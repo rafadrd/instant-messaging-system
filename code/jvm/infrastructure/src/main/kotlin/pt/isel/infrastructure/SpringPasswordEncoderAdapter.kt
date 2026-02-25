@@ -1,7 +1,7 @@
-package pt.isel
+package pt.isel.infrastructure
 
 import org.springframework.stereotype.Component
-import pt.isel.auth.PasswordEncoder
+import pt.isel.domain.auth.PasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder as SpringPasswordEncoder
 
 @Component

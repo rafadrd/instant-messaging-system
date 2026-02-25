@@ -1,13 +1,16 @@
-package pt.isel
+package pt.isel.infrastructure
 
 import io.jsonwebtoken.JwtException
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
 import io.jsonwebtoken.security.WeakKeyException
 import jakarta.annotation.PostConstruct
+import kotlinx.datetime.Instant
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
-import pt.isel.auth.TokenExternalInfo
+import pt.isel.domain.auth.TokenExternalInfo
+import pt.isel.services.ParsedToken
+import pt.isel.services.TokenService
 import java.nio.charset.StandardCharsets
 import java.time.ZoneId
 import java.util.Date
@@ -46,7 +49,7 @@ class JwtTokenService(
                 .compact()
         return TokenExternalInfo(
             tokenValue,
-            kotlinx.datetime.Instant.fromEpochMilliseconds(expiration.time),
+            Instant.fromEpochMilliseconds(expiration.time),
             userId,
         )
     }

@@ -24,6 +24,7 @@ jakarta-inject-api = { group = "jakarta.inject", name = "jakarta.inject-api", ve
 jakarta-servlet-api = { group = "jakarta.servlet", name = "jakarta.servlet-api", version.ref = "jakarta-servlet" }
 spring-webmvc = { group = "org.springframework", name = "spring-webmvc", version.ref = "spring-webmvc" }
 spring-security-core = { group = "org.springframework.security", name = "spring-security-core", version.ref = "spring-security" }
+spring-boot-starter = { group = "org.springframework.boot", name = "spring-boot-starter", version.ref = "spring-boot" }
 spring-boot-starter-validation = { group = "org.springframework.boot", name = "spring-boot-starter-validation", version.ref = "spring-boot" }
 spring-boot-starter-web = { group = "org.springframework.boot", name = "spring-boot-starter-web", version.ref = "spring-boot" }
 spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test", version.ref = "spring-boot" }

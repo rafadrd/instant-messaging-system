@@ -1,10 +1,14 @@
-package pt.isel
+package pt.isel.infrastructure
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.slf4j.LoggerFactory
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.stereotype.Service
+import pt.isel.domain.UpdatedMessage
+import pt.isel.domain.UpdatedMessageEmitter
+import pt.isel.repositories.TransactionManager
+import pt.isel.services.MessageEventService
 import java.util.concurrent.ConcurrentHashMap
 
 @Service
@@ -14,8 +18,6 @@ class RedisMessageEventService(
     private val objectMapper: ObjectMapper,
 ) : MessageEventService {
     private val localListeners = ConcurrentHashMap<Long, MutableSet<UpdatedMessageEmitter>>()
-
-    private val TOPIC_NAME = "chat-events"
 
     data class DistributedEvent(
         val channelId: Long,
@@ -87,5 +89,6 @@ class RedisMessageEventService(
 
     companion object {
         private val logger = LoggerFactory.getLogger(RedisMessageEventService::class.java)
+        private const val TOPIC_NAME = "chat-events"
     }
 }

@@ -1,4 +1,4 @@
-package pt.isel
+package pt.isel.repositories.jdbi
 
 object Environment {
     private const val KEY_DB_URL = "DB_URL"

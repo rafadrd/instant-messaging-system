@@ -1,4 +1,4 @@
-package pt.isel
+package pt.isel.pipeline
 
 import jakarta.servlet.http.HttpServletRequest
 import org.springframework.core.MethodParameter
@@ -7,12 +7,11 @@ import org.springframework.web.bind.support.WebDataBinderFactory
 import org.springframework.web.context.request.NativeWebRequest
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.method.support.ModelAndViewContainer
-import pt.isel.auth.AuthenticatedUser
+import pt.isel.domain.auth.AuthenticatedUser
 
 @Component
 class AuthenticatedUserArgumentResolver : HandlerMethodArgumentResolver {
-    override fun supportsParameter(parameter: MethodParameter): Boolean =
-        parameter.parameterType == AuthenticatedUser::class.java
+    override fun supportsParameter(parameter: MethodParameter): Boolean = parameter.parameterType == AuthenticatedUser::class.java
 
     override fun resolveArgument(
         parameter: MethodParameter,
@@ -22,8 +21,10 @@ class AuthenticatedUserArgumentResolver : HandlerMethodArgumentResolver {
     ): Any {
         val request =
             webRequest.getNativeRequest(HttpServletRequest::class.java)
-                ?: throw IllegalStateException("TODO")
-        return getUserFrom(request) ?: throw IllegalStateException("TODO")
+                ?: throw IllegalStateException("Failed to extract HttpServletRequest from NativeWebRequest.")
+
+        return getUserFrom(request)
+            ?: throw IllegalStateException("AuthenticatedUser not found in request attributes.")
     }
 
     companion object {
@@ -34,7 +35,6 @@ class AuthenticatedUserArgumentResolver : HandlerMethodArgumentResolver {
             request: HttpServletRequest,
         ) = request.setAttribute(KEY, user)
 
-        fun getUserFrom(request: HttpServletRequest): AuthenticatedUser? =
-            request.getAttribute(KEY)?.let { it as? AuthenticatedUser }
+        fun getUserFrom(request: HttpServletRequest): AuthenticatedUser? = request.getAttribute(KEY)?.let { it as? AuthenticatedUser }
     }
 }

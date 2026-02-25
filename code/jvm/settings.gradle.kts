@@ -15,3 +15,5 @@ include("repository-jdbi")
 include("host")
 
 include("http-pipeline")
+
+include("infrastructure")

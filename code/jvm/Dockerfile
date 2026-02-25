@@ -1,9 +1,13 @@
 FROM gradle:8.10-jdk21 AS build
 WORKDIR /app
 
-COPY . .
-
+COPY gradlew .
+COPY gradle/ gradle/
 RUN chmod +x ./gradlew
+
+RUN ./gradlew --version --no-daemon
+
+COPY . .
 
 RUN ./gradlew :host:bootJar -x test --no-daemon
 

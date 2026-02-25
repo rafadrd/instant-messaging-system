@@ -8,10 +8,11 @@ plugins {
 }
 
 dependencies {
-    // Module dependencies
+    // Internal Module dependencies
     implementation(project(":http-api"))
     implementation(project(":repository-jdbi"))
     implementation(project(":http-pipeline"))
+    implementation(project(":infrastructure"))
 
     // Spring Boot dependencies
     implementation(libs.spring.boot.starter.validation)
@@ -26,16 +27,8 @@ dependencies {
     implementation(libs.jdbi3.core)
     implementation(libs.postgresql)
 
-    // JWT dependencies for token handling
-    implementation(libs.jjwt.api)
-    runtimeOnly(libs.jjwt.impl)
-    runtimeOnly(libs.jjwt.jackson)
-
     // DotEnv
     implementation(libs.dotenv.kotlin)
-
-    // Redis
-    implementation(libs.spring.boot.starter.data.redis)
 
     // Test dependencies
     testImplementation(libs.spring.boot.starter.test)

@@ -9,7 +9,7 @@ CREATE TABLE dbo.users
     password_validation VARCHAR(255)       NOT NULL
 );
 
--- Create table for events in the dbo schema
+-- Create table for channels in the dbo schema
 CREATE TABLE dbo.channels
 (
     id        SERIAL PRIMARY KEY,
