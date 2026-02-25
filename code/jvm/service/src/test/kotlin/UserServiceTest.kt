@@ -1,5 +1,15 @@
 package pt.isel
 
+import org.jdbi.v3.core.Jdbi
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
+import org.postgresql.ds.PGSimpleDataSource
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import pt.isel.auth.PasswordSecurityDomain
+import pt.isel.auth.Sha256TokenEncoder
+import pt.isel.auth.UsersDomainConfig
+import pt.isel.mem.TransactionManagerInMem
 import java.time.LocalDateTime
 import java.util.stream.Stream
 import kotlin.test.assertEquals
@@ -8,16 +18,6 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
-import org.jdbi.v3.core.Jdbi
-import org.junit.jupiter.api.Assertions.assertNull
-import org.junit.jupiter.params.ParameterizedTest
-import org.junit.jupiter.params.provider.MethodSource
-import org.postgresql.ds.PGSimpleDataSource
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
-import pt.isel.auth.Sha256TokenEncoder
-import pt.isel.auth.UsersDomain
-import pt.isel.auth.UsersDomainConfig
-import pt.isel.mem.TransactionManagerInMem
 
 const val VALID_PASSWORD = "Aa1#2345"
 const val NEW_VALID_PASSWORD = "Aa1#2346"
@@ -54,7 +54,7 @@ class UserServiceTest {
             maxTokensPerUser: Int = 3,
         ) = UserService(
             trxManager,
-            UsersDomain(
+            PasswordSecurityDomain(
                 BCryptPasswordEncoder(),
                 Sha256TokenEncoder(),
                 UsersDomainConfig(

@@ -1,5 +1,17 @@
 package pt.isel
 
+import kotlinx.datetime.Clock
+import org.junit.jupiter.api.BeforeEach
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
+import pt.isel.auth.AuthenticatedUser
+import pt.isel.auth.PasswordSecurityDomain
+import pt.isel.auth.PasswordValidationInfo
+import pt.isel.auth.Sha256TokenEncoder
+import pt.isel.auth.Token
+import pt.isel.auth.TokenEncoder
+import pt.isel.auth.TokenValidationInfo
+import pt.isel.auth.UsersDomainConfig
 import java.time.LocalDateTime
 import kotlin.math.abs
 import kotlin.random.Random
@@ -12,18 +24,6 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
-import kotlinx.datetime.Clock
-import org.junit.jupiter.api.BeforeEach
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
-import org.springframework.security.crypto.password.PasswordEncoder
-import pt.isel.auth.AuthenticatedUser
-import pt.isel.auth.PasswordValidationInfo
-import pt.isel.auth.Sha256TokenEncoder
-import pt.isel.auth.Token
-import pt.isel.auth.TokenEncoder
-import pt.isel.auth.TokenValidationInfo
-import pt.isel.auth.UsersDomain
-import pt.isel.auth.UsersDomainConfig
 
 class InstantMessagingTest {
     private fun newTokenValidationData() = "token-${abs(Random.nextLong())}"
@@ -32,7 +32,7 @@ class InstantMessagingTest {
     private lateinit var tokenEncoder: TokenEncoder
     private lateinit var clock: Clock
     private lateinit var config: UsersDomainConfig
-    private lateinit var usersDomain: UsersDomain
+    private lateinit var passwordSecurityDomain: PasswordSecurityDomain
 
     @BeforeEach
     fun setup() {
@@ -46,7 +46,7 @@ class InstantMessagingTest {
                 tokenRollingTtl = 1.hours,
                 maxTokensPerUser = 3,
             )
-        usersDomain = UsersDomain(passwordEncoder, tokenEncoder, config)
+        passwordSecurityDomain = PasswordSecurityDomain(passwordEncoder, tokenEncoder, config)
     }
 
     @Test
@@ -147,50 +147,50 @@ class InstantMessagingTest {
 
     @Test
     fun `test generate token value`() {
-        val token = usersDomain.generateTokenValue()
-        assertTrue(usersDomain.canBeToken(token))
+        val token = passwordSecurityDomain.generateTokenValue()
+        assertTrue(passwordSecurityDomain.canBeToken(token))
     }
 
     @Test
     fun `test create token validation information`() {
-        val token = usersDomain.generateTokenValue()
-        val tokenValidationInfo = usersDomain.createTokenValidationInformation(token)
+        val token = passwordSecurityDomain.generateTokenValue()
+        val tokenValidationInfo = passwordSecurityDomain.createTokenValidationInformation(token)
         assertNotNull(tokenValidationInfo)
     }
 
     @Test
     fun `test validate token`() {
-        val token = usersDomain.generateTokenValue()
-        val tokenValidationInfo = usersDomain.createTokenValidationInformation(token)
+        val token = passwordSecurityDomain.generateTokenValue()
+        val tokenValidationInfo = passwordSecurityDomain.createTokenValidationInformation(token)
         val userId = 1L
         val createdAt = clock.now()
         val lastUsedAt = clock.now()
         val tokenObj = Token(tokenValidationInfo, userId, createdAt, lastUsedAt)
 
-        assertTrue(usersDomain.isTokenTimeValid(clock, tokenObj))
+        assertTrue(passwordSecurityDomain.isTokenTimeValid(clock, tokenObj))
     }
 
     @Test
     fun `test can be token`() {
-        val validToken = usersDomain.generateTokenValue()
+        val validToken = passwordSecurityDomain.generateTokenValue()
 
-        assertTrue(usersDomain.canBeToken(validToken))
-        assertFalse(usersDomain.canBeToken("shortToken"))
-        assertFalse(usersDomain.canBeToken(""))
+        assertTrue(passwordSecurityDomain.canBeToken(validToken))
+        assertFalse(passwordSecurityDomain.canBeToken("shortToken"))
+        assertFalse(passwordSecurityDomain.canBeToken(""))
     }
 
     @Test
     fun `test validate password`() {
-        val validationInfo = usersDomain.createPasswordValidationInformation("password123!")
+        val validationInfo = passwordSecurityDomain.createPasswordValidationInformation("password123!")
 
-        assertTrue(usersDomain.validatePassword("password123!", validationInfo))
-        assertFalse(usersDomain.validatePassword("wrongPassword", validationInfo))
+        assertTrue(passwordSecurityDomain.validatePassword("password123!", validationInfo))
+        assertFalse(passwordSecurityDomain.validatePassword("wrongPassword", validationInfo))
     }
 
     @Test
     fun `test create password validation information`() {
         val password = "Password!"
-        val validationInfo = usersDomain.createPasswordValidationInformation(password)
+        val validationInfo = passwordSecurityDomain.createPasswordValidationInformation(password)
 
         assertNotNull(validationInfo)
         assertTrue(passwordEncoder.matches(password, validationInfo.validationInfo))
@@ -198,12 +198,12 @@ class InstantMessagingTest {
 
     @Test
     fun `test is safe password`() {
-        assertTrue(usersDomain.isSafePassword("SafePassword123!"))
-        assertFalse(usersDomain.isSafePassword("short"))
-        assertFalse(usersDomain.isSafePassword("nocapital123"))
-        assertFalse(usersDomain.isSafePassword("NOLOWERCASE123"))
-        assertFalse(usersDomain.isSafePassword("NoNumber!"))
-        assertFalse(usersDomain.isSafePassword("NoSpecialChar123"))
+        assertTrue(passwordSecurityDomain.isSafePassword("SafePassword123!"))
+        assertFalse(passwordSecurityDomain.isSafePassword("short"))
+        assertFalse(passwordSecurityDomain.isSafePassword("nocapital123"))
+        assertFalse(passwordSecurityDomain.isSafePassword("NOLOWERCASE123"))
+        assertFalse(passwordSecurityDomain.isSafePassword("NoNumber!"))
+        assertFalse(passwordSecurityDomain.isSafePassword("NoSpecialChar123"))
     }
 
     @Test
@@ -211,11 +211,11 @@ class InstantMessagingTest {
         val now = Clock.System.now()
 
         val token1 = Token(TokenValidationInfo("info"), 1L, now - 30.hours, now - 30.minutes)
-        val expiration1 = usersDomain.getTokenExpiration(token1)
+        val expiration1 = passwordSecurityDomain.getTokenExpiration(token1)
         assertEquals(token1.createdAt + config.tokenTtl, expiration1)
 
         val token2 = Token(TokenValidationInfo("info"), 1L, now - 30.minutes, now - 30.hours)
-        val expiration2 = usersDomain.getTokenExpiration(token2)
+        val expiration2 = passwordSecurityDomain.getTokenExpiration(token2)
         assertEquals(token2.lastUsedAt + config.tokenRollingTtl, expiration2)
     }
 
@@ -243,13 +243,13 @@ class InstantMessagingTest {
         val validationInfo = TokenValidationInfo("info")
 
         val token1 = Token(validationInfo, 1L, now - 30.minutes, now - 15.minutes)
-        assertTrue(usersDomain.isTokenTimeValid(clock, token1))
+        assertTrue(passwordSecurityDomain.isTokenTimeValid(clock, token1))
 
         val token2 = Token(validationInfo, 1L, now - 30.minutes, now - 15.hours)
-        assertFalse(usersDomain.isTokenTimeValid(clock, token2))
+        assertFalse(passwordSecurityDomain.isTokenTimeValid(clock, token2))
 
         val token3 = Token(validationInfo, 1L, now - 30.hours, now - 15.minutes)
-        assertFalse(usersDomain.isTokenTimeValid(clock, token3))
+        assertFalse(passwordSecurityDomain.isTokenTimeValid(clock, token3))
     }
 
     @Test

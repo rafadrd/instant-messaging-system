@@ -1,14 +1,14 @@
 package pt.isel
 
 import jakarta.inject.Named
+import pt.isel.auth.PasswordSecurityDomain
 import pt.isel.auth.TokenExternalInfo
-import pt.isel.auth.UsersDomain
 import java.time.LocalDateTime
 
 @Named
 class UserService(
     private val trxManager: TransactionManager,
-    private val usersDomain: UsersDomain,
+    private val passwordSecurityDomain: PasswordSecurityDomain,
     private val tokenService: TokenService,
 ) {
     fun registerUser(
@@ -72,11 +72,11 @@ class UserService(
         if (repoUsers.findByUsername(username) != null) {
             return failure(UserError.UsernameAlreadyInUse)
         }
-        if (!usersDomain.isSafePassword(password)) {
+        if (!passwordSecurityDomain.isSafePassword(password)) {
             return failure(UserError.InsecurePassword)
         }
 
-        val passwordValidationInfo = usersDomain.createPasswordValidationInformation(password)
+        val passwordValidationInfo = passwordSecurityDomain.createPasswordValidationInformation(password)
         val newUser = repoUsers.create(username, passwordValidationInfo)
 
         return success(newUser)
@@ -110,7 +110,7 @@ class UserService(
             if (repoUsers.findByUsername(newUsername) != null) {
                 return@run failure(UserError.UsernameAlreadyInUse)
             }
-            if (!usersDomain.validatePassword(password, user.passwordValidation)) {
+            if (!passwordSecurityDomain.validatePassword(password, user.passwordValidation)) {
                 return@run failure(UserError.IncorrectPassword)
             }
 
@@ -125,18 +125,18 @@ class UserService(
         newPassword: String,
     ): Either<UserError, User> {
         if (newPassword.isBlank()) return failure(UserError.EmptyPassword)
-        if (!usersDomain.isSafePassword(newPassword)) {
+        if (!passwordSecurityDomain.isSafePassword(newPassword)) {
             return failure(UserError.InsecurePassword)
         }
 
         return trxManager.run {
             val user = repoUsers.findById(userId) ?: return@run failure(UserError.UserNotFound)
 
-            if (usersDomain.validatePassword(newPassword, user.passwordValidation)) {
+            if (passwordSecurityDomain.validatePassword(newPassword, user.passwordValidation)) {
                 return@run failure(UserError.PasswordSameAsPrevious)
             }
 
-            val passwordValidation = usersDomain.createPasswordValidationInformation(newPassword)
+            val passwordValidation = passwordSecurityDomain.createPasswordValidationInformation(newPassword)
             val updatedUser = user.copy(passwordValidation = passwordValidation)
             repoUsers.save(updatedUser)
             success(updatedUser)
@@ -170,7 +170,7 @@ class UserService(
             val user =
                 repoUsers.findByUsername(username) ?: return@run failure(UserError.UserNotFound)
 
-            if (!usersDomain.validatePassword(password, user.passwordValidation)) {
+            if (!passwordSecurityDomain.validatePassword(password, user.passwordValidation)) {
                 return@run failure(UserError.IncorrectPassword)
             }
 

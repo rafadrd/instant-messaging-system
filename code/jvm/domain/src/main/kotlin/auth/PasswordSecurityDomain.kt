@@ -3,7 +3,7 @@ package pt.isel.auth
 import jakarta.inject.Named
 
 @Named
-class UsersDomain(
+class PasswordSecurityDomain(
     private val passwordEncoder: PasswordEncoder,
     private val passwordPolicyConfig: PasswordPolicyConfig,
 ) {

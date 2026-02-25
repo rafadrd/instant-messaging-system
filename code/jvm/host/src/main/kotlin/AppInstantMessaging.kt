@@ -9,38 +9,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
-import org.springframework.web.method.support.HandlerMethodArgumentResolver
-import org.springframework.web.servlet.config.annotation.CorsRegistry
-import org.springframework.web.servlet.config.annotation.InterceptorRegistry
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 import pt.isel.auth.PasswordPolicyConfig
 import java.util.concurrent.Executor
-
-@Configuration
-class PipelineConfigurer(
-    val authenticationInterceptor: AuthenticationInterceptor,
-    val authenticatedUserArgumentResolver: AuthenticatedUserArgumentResolver,
-    @Value("\${cors.allowed-origins}") val allowedOrigins: String,
-) : WebMvcConfigurer {
-    override fun addInterceptors(registry: InterceptorRegistry) {
-        registry.addInterceptor(authenticationInterceptor)
-    }
-
-    override fun addArgumentResolvers(resolvers: MutableList<HandlerMethodArgumentResolver>) {
-        resolvers.add(authenticatedUserArgumentResolver)
-    }
-
-    override fun addCorsMappings(registry: CorsRegistry) {
-        registry
-            .addMapping("/api/**")
-            .allowedOrigins(*allowedOrigins.split(",").toTypedArray())
-            .allowCredentials(true)
-    }
-}
 
 @SpringBootApplication(exclude = [DataSourceAutoConfiguration::class])
 class AppInstantMessaging {

@@ -1,9 +1,5 @@
 package pt.isel
 
-import java.util.stream.Stream
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.time.Duration.Companion.hours
 import org.jdbi.v3.core.Jdbi
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.params.ParameterizedTest
@@ -12,13 +8,17 @@ import org.postgresql.ds.PGSimpleDataSource
 import org.springframework.http.HttpStatus
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import pt.isel.auth.AuthenticatedUser
+import pt.isel.auth.PasswordSecurityDomain
 import pt.isel.auth.PasswordValidationInfo
 import pt.isel.auth.Sha256TokenEncoder
-import pt.isel.auth.UsersDomain
 import pt.isel.auth.UsersDomainConfig
 import pt.isel.mem.TransactionManagerInMem
 import pt.isel.model.RegisterInput
 import pt.isel.model.UserInput
+import java.util.stream.Stream
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.time.Duration.Companion.hours
 
 class UserControllerTest {
     companion object {
@@ -46,7 +46,7 @@ class UserControllerTest {
     }
 
     private lateinit var trxManager: TransactionManager
-    private lateinit var usersDomain: UsersDomain
+    private lateinit var passwordSecurityDomain: PasswordSecurityDomain
     private lateinit var userService: UserService
     private lateinit var userController: UserController
     private lateinit var channelService: ChannelService
@@ -54,8 +54,8 @@ class UserControllerTest {
     @BeforeEach
     fun setup() {
         trxManager = TransactionManagerInMem()
-        usersDomain =
-            UsersDomain(
+        passwordSecurityDomain =
+            PasswordSecurityDomain(
                 passwordEncoder = BCryptPasswordEncoder(),
                 tokenEncoder = Sha256TokenEncoder(),
                 config =
@@ -66,7 +66,7 @@ class UserControllerTest {
                         maxTokensPerUser = 3,
                     ),
             )
-        userService = UserService(trxManager, usersDomain, TestClock())
+        userService = UserService(trxManager, passwordSecurityDomain, TestClock())
         channelService = ChannelService(trxManager)
         userController = UserController(userService, channelService)
     }
