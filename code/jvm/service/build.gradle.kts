@@ -1,5 +1,3 @@
-plugins { alias(libs.plugins.test.logger) }
-
 dependencies {
     // Module dependencies
     api(project(":repository"))
