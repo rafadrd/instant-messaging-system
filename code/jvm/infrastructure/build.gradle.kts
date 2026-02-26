@@ -1,6 +1,5 @@
 plugins {
     alias(libs.plugins.kotlin.spring)
-    alias(libs.plugins.dependency.management)
 }
 
 dependencies {
@@ -9,8 +8,8 @@ dependencies {
     implementation(project(":service"))
     implementation(project(":repository"))
 
-    // Spring Boot dependencies
-    implementation(libs.spring.boot.starter)
+    // Spring Security
+    api(libs.spring.security.core)
 
     // Redis Implementation
     implementation(libs.spring.boot.starter.data.redis)
@@ -22,7 +21,4 @@ dependencies {
 
     // JSON Handling
     implementation(libs.jackson.module.kotlin)
-
-    // Utils
-    implementation(libs.kotlinx.datetime)
 }

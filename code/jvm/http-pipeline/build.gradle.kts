@@ -12,7 +12,4 @@ dependencies {
 
     // Spring Boot dependencies
     implementation(libs.spring.boot.starter)
-
-    // To use SLF4J
-    implementation(libs.slf4j.api)
 }
