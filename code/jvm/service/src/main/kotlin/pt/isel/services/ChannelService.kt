@@ -21,6 +21,7 @@ class ChannelService(
         isPublic: Boolean,
     ): Either<ChannelError, Channel> {
         if (name.isBlank()) return failure(ChannelError.EmptyChannelName)
+        if (name.length !in 1..30) return failure(ChannelError.InvalidChannelNameLength)
 
         return trxManager.run {
             val owner = repoUsers.findById(ownerId) ?: return@run failure(ChannelError.UserNotFound)
@@ -63,32 +64,43 @@ class ChannelService(
         userId: Long,
         limit: Int = 50,
         offset: Int = 0,
-    ): Either<ChannelError, List<Channel>> =
-        trxManager.run {
+    ): Either<ChannelError, List<Channel>> {
+        if (limit <= 0) return failure(ChannelError.InvalidLimit)
+        if (offset < 0) return failure(ChannelError.InvalidOffset)
+
+        return trxManager.run {
             if (repoUsers.findById(userId) == null) return@run failure(ChannelError.UserNotFound)
             val channels =
                 repoMemberships.findAllChannelsForUser(userId, limit, offset).map { it.channel }
             success(channels)
         }
+    }
 
     fun getUsersInChannel(
         channelId: Long,
         limit: Int = 50,
         offset: Int = 0,
-    ): Either<ChannelError, List<UserInfo>> =
-        trxManager.run {
+    ): Either<ChannelError, List<UserInfo>> {
+        if (limit <= 0) return failure(ChannelError.InvalidLimit)
+        if (offset < 0) return failure(ChannelError.InvalidOffset)
+
+        return trxManager.run {
             val users =
                 repoMemberships.findAllMembersInChannel(channelId, limit, offset).map { it.user }
             success(users)
         }
+    }
 
     fun editChannel(
         ownerId: Long,
         channelId: Long,
         name: String,
         isPublic: Boolean,
-    ): Either<ChannelError, Channel> =
-        trxManager.run {
+    ): Either<ChannelError, Channel> {
+        if (name.isBlank()) return failure(ChannelError.EmptyChannelName)
+        if (name.length !in 1..30) return failure(ChannelError.InvalidChannelNameLength)
+
+        return trxManager.run {
             when (val result = checkUserIsOwner(ownerId, channelId)) {
                 is Failure -> {
                     result
@@ -102,6 +114,7 @@ class ChannelService(
                 }
             }
         }
+    }
 
     fun getAccessType(
         userId: Long,
@@ -116,7 +129,7 @@ class ChannelService(
         }
     }
 
-    fun editUser(
+    fun editMemberAccess(
         ownerId: Long,
         channelId: Long,
         userId: Long,
@@ -141,8 +154,11 @@ class ChannelService(
         query: String,
         limit: Int = 50,
         offset: Int = 0,
-    ): Either<ChannelError, List<Channel>> =
-        trxManager.run {
+    ): Either<ChannelError, List<Channel>> {
+        if (limit <= 0) return failure(ChannelError.InvalidLimit)
+        if (offset < 0) return failure(ChannelError.InvalidOffset)
+
+        return trxManager.run {
             val channels =
                 if (query.isBlank()) {
                     repoChannels.findAllPublicChannels(limit, offset)
@@ -153,6 +169,7 @@ class ChannelService(
                 }
             success(channels)
         }
+    }
 
     fun joinPublicChannel(
         userId: Long,

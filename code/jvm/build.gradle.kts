@@ -1,94 +1,81 @@
+import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.util.Properties
 
 plugins {
-    // Kotlin plugins
-    alias(libs.plugins.kotlin) apply false
+    alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.spring) apply false
-
-    // Spring plugins
     alias(libs.plugins.spring.boot) apply false
-    alias(libs.plugins.dependency.management) apply false
-
-    // Linting plugin
     alias(libs.plugins.ktlint) apply false
-
-    // Test logging plugin
-    alias(libs.plugins.test.logger) apply false
 }
 
-val dockerComposePath: String = rootProject.file("docker-compose.yml").absolutePath
+allprojects {
+    group = "pt.isel"
+    version = "0.0.1-SNAPSHOT"
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+// Environment & Docker Configuration
+val envFile = file("../../.env")
+val dockerComposePath: String = file("../../docker-compose.yml").absolutePath
+
+val envVars =
+    if (envFile.exists()) {
+        Properties()
+            .apply { envFile.inputStream().use { load(it) } }
+            .entries
+            .associate { it.key.toString() to it.value.toString() }
+    } else {
+        emptyMap()
+    }
 
 val dbTestsUp by tasks.registering(Exec::class) {
+    group = "database"
+    description = "Starts the PostgreSQL container"
     commandLine("docker", "compose", "-f", dockerComposePath, "up", "-d", "postgres")
 }
 
 val dbTestsWait by tasks.registering(Exec::class) {
+    group = "database"
+    description = "Waits for PostgreSQL to be ready"
     dependsOn(dbTestsUp)
     commandLine("docker", "exec", "ims-postgres", "sh", "-c", "until pg_isready -U dbuser -d db; do sleep 1; done")
 }
 
 val dbTestsDown by tasks.registering(Exec::class) {
+    group = "database"
+    description = "Stops the PostgreSQL container"
     commandLine("docker", "compose", "-f", dockerComposePath, "stop", "postgres")
 }
 
-fun loadEnv(project: Project): Map<String, String> {
-    val envFile =
-        project.rootProject.layout.projectDirectory
-            .file("../../.env")
-    val content =
-        project.providers
-            .fileContents(envFile)
-            .asText.orNull ?: return emptyMap()
-
-    val props = Properties()
-    props.load(content.byteInputStream())
-    return props.entries.associate { it.key.toString() to it.value.toString() }
-}
-
-val junitApi = libs.junit.jupiter.api
-val junitParams = libs.junit.jupiter.params
-val junitEngine = libs.junit.jupiter.engine
-
+// Subprojects Configuration
 subprojects {
     apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "java-library")
     apply(plugin = "org.jlleitschuh.gradle.ktlint")
 
-    group = "pt.isel"
-    version = "0.0.1-SNAPSHOT"
-
-    repositories { mavenCentral() }
-
-    configure<org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension> {
+    configure<KotlinProjectExtension> {
         jvmToolchain(21)
     }
 
-    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    tasks.withType<KotlinCompile>().configureEach {
         compilerOptions {
-            freeCompilerArgs.add("-Xjsr305=strict")
+            freeCompilerArgs.addAll("-Xjsr305=strict", "-Xannotation-default-target=param-property")
         }
     }
 
     dependencies {
-        "testImplementation"(junitApi)
-        "testImplementation"(junitParams)
-        "testRuntimeOnly"(junitEngine)
+        add("api", platform(rootProject.libs.spring.boot.dependencies))
+        add("testImplementation", rootProject.libs.spring.boot.starter.test)
     }
 
-    tasks.withType<Test> {
+    tasks.withType<Test>().configureEach {
         useJUnitPlatform()
 
-        val envFile =
-            project.rootProject.layout.projectDirectory
-                .file(".env")
-        inputs.file(envFile).optional().withPropertyName("envFile")
-
-        val envVars = loadEnv(project)
         environment(envVars)
-
-        if (!envVars.containsKey("DB_URL")) {
-            environment("DB_URL", "jdbc:postgresql://localhost:5432/db?user=dbuser&password=isel")
-        }
 
         val dbDependentModules = setOf("repository-jdbi", "service", "http-api", "host", "infrastructure")
         if (project.name in dbDependentModules) {

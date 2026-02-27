@@ -1,54 +1,45 @@
 [versions]
-kotlin = "2.0.21"
-kotlinx-datetime = "0.6.1"
-spring-boot = "3.3.5"
-spring-security = "6.3.4"
-spring-webmvc = "6.1.14"
-dependency-management = "1.1.6"
-jakarta-annotation = "3.0.0"
-jakarta-inject = "2.0.1"
-jakarta-servlet = "6.1.0"
-test-logger = "4.0.0"
-ktlint = "12.1.1"
-jdbi = "3.47.0"
-postgresql = "42.7.4"
-slf4j = "2.0.16"
-junit-jupiter = "5.11.3"
-jackson = "2.17.2"
+kotlin = "2.2.21"
+spring-boot = "3.5.11"
+ktlint = "14.0.1"
+jdbi = "3.51.0"
 jjwt = "0.13.0"
 
 [libraries]
-jakarta-annotation-api = { group = "jakarta.annotation", name = "jakarta.annotation-api", version.ref = "jakarta-annotation" }
-jakarta-inject-api = { group = "jakarta.inject", name = "jakarta.inject-api", version.ref = "jakarta-inject" }
-jakarta-servlet-api = { group = "jakarta.servlet", name = "jakarta.servlet-api", version.ref = "jakarta-servlet" }
-spring-webmvc = { group = "org.springframework", name = "spring-webmvc", version.ref = "spring-webmvc" }
-spring-security-core = { group = "org.springframework.security", name = "spring-security-core", version.ref = "spring-security" }
-spring-boot-starter = { group = "org.springframework.boot", name = "spring-boot-starter", version.ref = "spring-boot" }
-spring-boot-starter-validation = { group = "org.springframework.boot", name = "spring-boot-starter-validation", version.ref = "spring-boot" }
-spring-boot-starter-web = { group = "org.springframework.boot", name = "spring-boot-starter-web", version.ref = "spring-boot" }
-spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test", version.ref = "spring-boot" }
-spring-boot-starter-webflux = { group = "org.springframework.boot", name = "spring-boot-starter-webflux", version.ref = "spring-boot" }
-spring-boot-starter-data-redis = { group = "org.springframework.boot", name = "spring-boot-starter-data-redis", version.ref = "spring-boot" }
-kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect", version.ref = "kotlin" }
-kotlinx-datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "kotlinx-datetime" }
+# Jakarta
+jakarta-inject-api = { group = "jakarta.inject", name = "jakarta.inject-api" }
+
+# Spring Boot
+spring-boot-dependencies = { group = "org.springframework.boot", name = "spring-boot-dependencies", version.ref = "spring-boot" }
+spring-boot-starter-jdbc = { group = "org.springframework.boot", name = "spring-boot-starter-jdbc" }
+spring-boot-starter-validation = { group = "org.springframework.boot", name = "spring-boot-starter-validation" }
+spring-boot-starter-web = { group = "org.springframework.boot", name = "spring-boot-starter-web" }
+spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test" }
+spring-boot-starter-webflux = { group = "org.springframework.boot", name = "spring-boot-starter-webflux" }
+spring-boot-starter-data-redis = { group = "org.springframework.boot", name = "spring-boot-starter-data-redis" }
+
+# Spring Security
+spring-security-core = { group = "org.springframework.security", name = "spring-security-core" }
+
+# Kotlin & Utilities
+kotlin-reflect = { group = "org.jetbrains.kotlin", name = "kotlin-reflect" }
+jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin" }
+
+# Database
+postgresql = { group = "org.postgresql", name = "postgresql" }
+
+# JDBI
 jdbi3-core = { group = "org.jdbi", name = "jdbi3-core", version.ref = "jdbi" }
 jdbi3-kotlin = { group = "org.jdbi", name = "jdbi3-kotlin", version.ref = "jdbi" }
 jdbi3-postgres = { group = "org.jdbi", name = "jdbi3-postgres", version.ref = "jdbi" }
-junit-jupiter-api = { group = "org.junit.jupiter", name = "junit-jupiter-api", version.ref = "junit-jupiter" }
-junit-jupiter-params = { group = "org.junit.jupiter", name = "junit-jupiter-params", version.ref = "junit-jupiter" }
-junit-jupiter-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine", version.ref = "junit-jupiter" }
-jackson-module-kotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson" }
-jackson-annotations = { group = "com.fasterxml.jackson.core", name = "jackson-annotations", version.ref = "jackson" }
-postgresql = { group = "org.postgresql", name = "postgresql", version.ref = "postgresql" }
-slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
+
+# Security / JWT
 jjwt-api = { group = "io.jsonwebtoken", name = "jjwt-api", version.ref = "jjwt"}
 jjwt-impl = { group = "io.jsonwebtoken", name = "jjwt-impl", version.ref = "jjwt"}
 jjwt-jackson = { group = "io.jsonwebtoken", name = "jjwt-jackson", version.ref = "jjwt"}
 
 [plugins]
-kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-spring = { id = "org.jetbrains.kotlin.plugin.spring", version.ref = "kotlin" }
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
-dependency-management = { id = "io.spring.dependency-management", version.ref = "dependency-management" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint" }
-test-logger = { id = "com.adarshr.test-logger", version.ref = "test-logger" }

@@ -59,11 +59,25 @@ sealed class Problem(
         detail = "The channel name is empty.",
     )
 
+    data object InvalidChannelNameLength : Problem(
+        type = createUri("invalid-channel-name-length"),
+        title = "Invalid Channel Name Length",
+        status = HttpStatus.BAD_REQUEST,
+        detail = "The channel name must be between 1 and 30 characters.",
+    )
+
     data object EmptyMessage : Problem(
         type = createUri("empty-message"),
         title = "Empty Message",
         status = HttpStatus.BAD_REQUEST,
         detail = "The message is empty.",
+    )
+
+    data object InvalidMessageLength : Problem(
+        type = createUri("invalid-message-length"),
+        title = "Invalid Message Length",
+        status = HttpStatus.BAD_REQUEST,
+        detail = "The message content must be between 1 and 1000 characters.",
     )
 
     data object EmptyPassword : Problem(
@@ -85,6 +99,13 @@ sealed class Problem(
         title = "Empty Username",
         status = HttpStatus.BAD_REQUEST,
         detail = "The username is empty.",
+    )
+
+    data object InvalidUsernameLength : Problem(
+        type = createUri("invalid-username-length"),
+        title = "Invalid Username Length",
+        status = HttpStatus.BAD_REQUEST,
+        detail = "The username must be between 1 and 30 characters.",
     )
 
     data object IncorrectPassword : Problem(

@@ -24,8 +24,6 @@ class UserService(
         trxManager.run {
             val userEither =
                 if (token.isNullOrBlank()) {
-                    // The check for the first user has been removed to allow open registration.
-                    // A different policy (e.g., admin approval) could be implemented here if needed.
                     createUser(username, password)
                 } else {
                     val invitation =
@@ -72,6 +70,7 @@ class UserService(
         password: String,
     ): Either<UserError, User> {
         if (username.isBlank()) return failure(UserError.EmptyUsername)
+        if (username.length !in 1..30) return failure(UserError.InvalidUsernameLength)
         if (password.isBlank()) return failure(UserError.EmptyPassword)
 
         if (repoUsers.findByUsername(username) != null) {
@@ -108,6 +107,7 @@ class UserService(
         password: String,
     ): Either<UserError, User> {
         if (newUsername.isBlank()) return failure(UserError.EmptyUsername)
+        if (newUsername.length !in 1..30) return failure(UserError.InvalidUsernameLength)
 
         return trxManager.run {
             val user = repoUsers.findById(userId) ?: return@run failure(UserError.UserNotFound)

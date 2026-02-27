@@ -11,6 +11,8 @@ sealed class UserError : AppError {
 
     data object EmptyUsername : UserError()
 
+    data object InvalidUsernameLength : UserError()
+
     data object EmptyPassword : UserError()
 
     data object EmptyToken : UserError()
@@ -30,6 +32,8 @@ sealed class UserError : AppError {
 
 sealed class MessageError : AppError {
     data object EmptyMessage : MessageError()
+
+    data object InvalidMessageLength : MessageError()
 
     data object ChannelNotFound : MessageError()
 
@@ -79,9 +83,15 @@ sealed class ChannelError : AppError {
 
     data object EmptyChannelName : ChannelError()
 
+    data object InvalidChannelNameLength : ChannelError()
+
     data object EmptyAccessType : ChannelError()
 
     data object InvalidAction : ChannelError()
+
+    data object InvalidLimit : ChannelError()
+
+    data object InvalidOffset : ChannelError()
 
     data object InvitationExpired : ChannelError()
 

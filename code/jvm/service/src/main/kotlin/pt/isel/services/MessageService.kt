@@ -20,6 +20,7 @@ class MessageService(
         channelId: Long,
     ): Either<MessageError, Message> {
         if (content.isBlank()) return failure(MessageError.EmptyMessage)
+        if (content.length !in 1..1000) return failure(MessageError.InvalidMessageLength)
 
         val result =
             trxManager.run {

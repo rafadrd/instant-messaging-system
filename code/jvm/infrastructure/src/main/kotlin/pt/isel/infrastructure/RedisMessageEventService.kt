@@ -4,11 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.slf4j.LoggerFactory
 import org.springframework.data.redis.core.StringRedisTemplate
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
+import pt.isel.domain.KeepAlive
 import pt.isel.domain.UpdatedMessage
 import pt.isel.domain.UpdatedMessageEmitter
 import pt.isel.repositories.TransactionManager
 import pt.isel.services.MessageEventService
+import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 
 @Service
@@ -84,6 +87,21 @@ class RedisMessageEventService(
             }
         } catch (e: Exception) {
             logger.error("Failed to process Redis message", e)
+        }
+    }
+
+    @Scheduled(fixedRate = 30000)
+    fun sendKeepAlive() {
+        val now = Instant.now()
+        localListeners.forEach { (channelId, emitters) ->
+            val keepAlive = KeepAlive(now)
+            emitters.forEach { emitter ->
+                try {
+                    emitter.emit(keepAlive)
+                } catch (_: Exception) {
+                    removeEmitter(channelId, emitter)
+                }
+            }
         }
     }
 

@@ -1,34 +1,30 @@
 plugins {
     alias(libs.plugins.kotlin.spring)
     alias(libs.plugins.spring.boot)
-    alias(libs.plugins.dependency.management)
 }
 
 dependencies {
-    // Internal Module dependencies
-    implementation(project(":http-api"))
-    implementation(project(":repository-jdbi"))
-    implementation(project(":http-pipeline"))
-    implementation(project(":infrastructure"))
-    implementation(project(":service"))
+    // Internal Modules
     implementation(project(":domain"))
+    implementation(project(":repository-jdbi"))
+    implementation(project(":infrastructure"))
+    implementation(project(":http-api"))
+    implementation(project(":http-pipeline"))
 
-    // Spring Boot dependencies
+    // Spring Boot
+    implementation(libs.spring.boot.starter.jdbc)
     implementation(libs.spring.boot.starter.validation)
     implementation(libs.spring.boot.starter.web)
-
-    // Security
     implementation(libs.spring.security.core)
 
-    // Kotlin dependencies
-    implementation(libs.jackson.module.kotlin)
-    implementation(libs.kotlin.reflect)
-
-    // JDBI and Postgres dependencies
+    // Database
     implementation(libs.jdbi3.core)
     implementation(libs.postgresql)
 
-    // Test dependencies
-    testImplementation(libs.spring.boot.starter.test)
+    // Utilities
+    implementation(libs.jackson.module.kotlin)
+    implementation(libs.kotlin.reflect)
+
+    // Testing
     testImplementation(libs.spring.boot.starter.webflux)
 }

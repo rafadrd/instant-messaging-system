@@ -1,32 +1,27 @@
 package pt.isel.host
 
-import kotlinx.datetime.Clock
 import org.jdbi.v3.core.Jdbi
-import org.postgresql.ds.PGSimpleDataSource
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.SpringBootApplication
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Profile
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
+import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import pt.isel.domain.auth.PasswordPolicyConfig
 import pt.isel.repositories.jdbi.TransactionManagerJdbi
 import pt.isel.repositories.jdbi.configureWithAppRequirements
-import java.util.concurrent.Executor
+import java.time.Clock
+import javax.sql.DataSource
 
-@SpringBootApplication(
-    scanBasePackages = ["pt.isel"],
-    exclude = [DataSourceAutoConfiguration::class],
-)
+@SpringBootApplication(scanBasePackages = ["pt.isel"])
+@EnableScheduling
 class AppInstantMessaging {
     @Bean
-    fun jdbi(
-        @Value("\${spring.datasource.url}") dbUrl: String,
-    ) = Jdbi
-        .create(PGSimpleDataSource().apply { setURL(dbUrl) })
-        .configureWithAppRequirements()
+    fun jdbi(dataSource: DataSource) =
+        Jdbi
+            .create(dataSource)
+            .configureWithAppRequirements()
 
     @Bean
     @Profile("jdbi")
@@ -36,15 +31,15 @@ class AppInstantMessaging {
     fun passwordEncoder() = BCryptPasswordEncoder()
 
     @Bean
-    fun clock() = Clock.System
+    fun clock(): Clock = Clock.systemUTC()
 
     @Bean
     fun passwordPolicyConfig(
-        @Value("\${password.policy.min-length}") minLength: Int,
-        @Value("\${password.policy.requires-uppercase}") requiresUppercase: Boolean,
-        @Value("\${password.policy.requires-lowercase}") requiresLowercase: Boolean,
-        @Value("\${password.policy.requires-digit}") requiresDigit: Boolean,
-        @Value("\${password.policy.requires-special-char}") requiresSpecialChar: Boolean,
+        @Value($$"${password.policy.min-length}") minLength: Int,
+        @Value($$"${password.policy.requires-uppercase}") requiresUppercase: Boolean,
+        @Value($$"${password.policy.requires-lowercase}") requiresLowercase: Boolean,
+        @Value($$"${password.policy.requires-digit}") requiresDigit: Boolean,
+        @Value($$"${password.policy.requires-special-char}") requiresSpecialChar: Boolean,
     ): PasswordPolicyConfig =
         PasswordPolicyConfig(
             minLength = minLength,
@@ -53,21 +48,6 @@ class AppInstantMessaging {
             requiresDigit = requiresDigit,
             requiresSpecialChar = requiresSpecialChar,
         )
-
-    @Bean
-    fun sseExecutor(
-        @Value("\${sse.pool.core-size}") coreSize: Int,
-        @Value("\${sse.pool.max-size}") maxSize: Int,
-        @Value("\${sse.pool.queue-capacity}") queueCapacity: Int,
-    ): Executor {
-        val executor = ThreadPoolTaskExecutor()
-        executor.corePoolSize = coreSize
-        executor.maxPoolSize = maxSize
-        executor.queueCapacity = queueCapacity
-        executor.setThreadNamePrefix("sse-broadcaster-")
-        executor.initialize()
-        return executor
-    }
 }
 
 fun main(args: Array<String>) {

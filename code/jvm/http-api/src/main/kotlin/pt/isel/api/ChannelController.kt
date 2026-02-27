@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import pt.isel.api.model.ChannelInput
 import pt.isel.api.model.EditChannelInput
+import pt.isel.api.model.EditMemberInput
 import pt.isel.api.model.JoinByTokenInput
 import pt.isel.api.model.PageInput
-import pt.isel.domain.AccessType
 import pt.isel.domain.auth.AuthenticatedUser
 import pt.isel.services.ChannelService
 import pt.isel.services.MessageEventService
@@ -104,26 +104,27 @@ class ChannelController(
         @PathVariable channelId: Long,
     ): ResponseEntity<*> = handleResult(channelService.getAccessType(userId, channelId))
 
-    @PostMapping("/{channelId}/members/{userId}")
-    fun editMembers(
+    @PutMapping("/{channelId}/members/{userId}")
+    fun editMemberAccess(
         user: AuthenticatedUser,
         @PathVariable channelId: Long,
         @PathVariable userId: Long,
-        @RequestBody accessType: AccessType,
-    ): ResponseEntity<*> = handleResult(channelService.editUser(user.user.id, channelId, userId, accessType))
+        @RequestBody input: EditMemberInput,
+    ): ResponseEntity<*> = handleResult(channelService.editMemberAccess(user.user.id, channelId, userId, input.accessType))
 
     @GetMapping("/{channelId}/listen")
     fun listen(
         user: AuthenticatedUser,
         @PathVariable channelId: Long,
-    ): SseEmitter {
-        val emitter = SseEmitter(0L)
-        try {
-            val adapter = SseUpdatedMessageEmitterAdapter(emitter)
-            messageEventService.addEmitter(channelId, user.user.id, adapter)
-        } catch (e: Exception) {
-            emitter.completeWithError(e)
+    ): ResponseEntity<*> =
+        handleResult(channelService.getAccessType(user.user.id, channelId)) {
+            val emitter = SseEmitter(0L)
+            try {
+                val adapter = SseUpdatedMessageEmitterAdapter(emitter)
+                messageEventService.addEmitter(channelId, user.user.id, adapter)
+            } catch (e: Exception) {
+                emitter.completeWithError(e)
+            }
+            ResponseEntity.ok(emitter)
         }
-        return emitter
-    }
 }

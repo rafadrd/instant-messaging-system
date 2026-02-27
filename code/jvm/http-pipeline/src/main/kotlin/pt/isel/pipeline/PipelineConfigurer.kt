@@ -11,7 +11,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 class PipelineConfigurer(
     private val authenticationInterceptor: AuthenticationInterceptor,
     private val authenticatedUserArgumentResolver: AuthenticatedUserArgumentResolver,
-    @Value("\${cors.allowed-origins}") private val allowedOrigins: String,
+    @Value($$"${cors.allowed-origins}") private val allowedOrigins: String,
 ) : WebMvcConfigurer {
     override fun addInterceptors(registry: InterceptorRegistry) {
         registry.addInterceptor(authenticationInterceptor)

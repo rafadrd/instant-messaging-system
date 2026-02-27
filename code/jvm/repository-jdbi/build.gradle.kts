@@ -1,14 +1,13 @@
 dependencies {
-    // Module dependencies
-    implementation(project(":repository"))
-    implementation(project(":domain"))
+    // Internal Modules
+    api(project(":repository"))
 
-    // JDBI and Postgres dependencies
+    // JDBI
     implementation(libs.jdbi3.core)
     implementation(libs.jdbi3.kotlin)
     implementation(libs.jdbi3.postgres)
-    implementation(libs.postgresql)
 
-    // Kotlin dependencies
+    // Database & Utilities
+    implementation(libs.postgresql)
     implementation(libs.kotlin.reflect)
 }

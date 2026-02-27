@@ -37,12 +37,13 @@ class CustomExceptionHandler : ResponseEntityExceptionHandler() {
     }
 
     @ExceptionHandler(Exception::class)
+    @Suppress("UNCHECKED_CAST")
     fun handleAll(
         req: HttpServletRequest,
         ex: Exception,
-    ): ResponseEntity<Unit> {
-        logger.error("Request: ${req.requestURL} raised $ex")
-        return ResponseEntity.status(500).build()
+    ): ResponseEntity<Any> {
+        log.error("Request: ${req.requestURL} raised $ex", ex)
+        return Problem.InternalServerError.toResponseEntity() as ResponseEntity<Any>
     }
 
     companion object {

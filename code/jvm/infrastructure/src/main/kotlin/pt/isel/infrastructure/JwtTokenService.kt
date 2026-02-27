@@ -5,14 +5,14 @@ import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
 import io.jsonwebtoken.security.WeakKeyException
 import jakarta.annotation.PostConstruct
-import kotlinx.datetime.Instant
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import pt.isel.domain.auth.TokenExternalInfo
 import pt.isel.services.ParsedToken
 import pt.isel.services.TokenService
 import java.nio.charset.StandardCharsets
-import java.time.ZoneId
+import java.time.Instant
+import java.time.ZoneOffset
 import java.util.Date
 import java.util.UUID
 import javax.crypto.SecretKey
@@ -20,7 +20,7 @@ import kotlin.time.Duration.Companion.hours
 
 @Component
 class JwtTokenService(
-    @Value("\${jwt.secret}") private val secret: String,
+    @Value($$"${jwt.secret}") private val secret: String,
 ) : TokenService {
     private lateinit var key: SecretKey
     private val expirationTimeMillis = 24.hours.inWholeMilliseconds
@@ -49,7 +49,7 @@ class JwtTokenService(
                 .compact()
         return TokenExternalInfo(
             tokenValue,
-            Instant.fromEpochMilliseconds(expiration.time),
+            Instant.ofEpochMilli(expiration.time),
             userId,
         )
     }
@@ -70,7 +70,7 @@ class JwtTokenService(
             val expiresAt =
                 expiration
                     .toInstant()
-                    .atZone(ZoneId.systemDefault())
+                    .atZone(ZoneOffset.UTC)
                     .toLocalDateTime()
 
             ParsedToken(jti, userId, expiresAt)

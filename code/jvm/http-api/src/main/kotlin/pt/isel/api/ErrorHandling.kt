@@ -19,13 +19,12 @@ internal fun <T> handleResult(
         is Failure -> result.value.toProblem().toResponseEntity()
     }
 
-private fun AppError.toProblem(): Problem =
+internal fun AppError.toProblem(): Problem =
     when (this) {
         is UserError -> toProblem()
         is ChannelError -> toProblem()
         is MessageError -> toProblem()
         is InvitationError -> toProblem()
-        else -> Problem.InternalServerError
     }
 
 private fun UserError.toProblem(): Problem =
@@ -33,6 +32,7 @@ private fun UserError.toProblem(): Problem =
         UserError.EmptyToken -> Problem.EmptyToken
         UserError.UserNotFound -> Problem.UserNotFound
         UserError.EmptyUsername -> Problem.EmptyUsername
+        UserError.InvalidUsernameLength -> Problem.InvalidUsernameLength
         UserError.EmptyPassword -> Problem.EmptyPassword
         UserError.InsecurePassword -> Problem.InsecurePassword
         UserError.IncorrectPassword -> Problem.IncorrectPassword
@@ -58,6 +58,9 @@ private fun ChannelError.toProblem(): Problem =
         ChannelError.NoJoinedChannels -> Problem.NoJoinedChannels
         ChannelError.OwnerCannotLeave -> Problem.OwnerCannotLeave
         ChannelError.EmptyChannelName -> Problem.EmptyChannelName
+        ChannelError.InvalidChannelNameLength -> Problem.InvalidChannelNameLength
+        ChannelError.InvalidLimit -> Problem.InvalidLimit
+        ChannelError.InvalidOffset -> Problem.InvalidOffset
         ChannelError.UserNotAuthorized -> Problem.UserNotAuthorized
         ChannelError.InvitationExpired -> Problem.InvitationExpired
         ChannelError.NoMatchingChannels -> Problem.NoMatchingChannels
@@ -71,6 +74,7 @@ private fun MessageError.toProblem(): Problem =
         MessageError.UserNotFound -> Problem.UserNotFound
         MessageError.InvalidLimit -> Problem.InvalidLimit
         MessageError.EmptyMessage -> Problem.EmptyMessage
+        MessageError.InvalidMessageLength -> Problem.InvalidMessageLength
         MessageError.InvalidOffset -> Problem.InvalidOffset
         MessageError.ChannelNotFound -> Problem.ChannelNotFound
         MessageError.UserNotInChannel -> Problem.UserNotInChannel

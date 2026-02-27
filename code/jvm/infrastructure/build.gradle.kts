@@ -3,22 +3,18 @@ plugins {
 }
 
 dependencies {
-    // Internal Module Dependencies
-    implementation(project(":domain"))
+    // Internal Modules
     implementation(project(":service"))
     implementation(project(":repository"))
 
-    // Spring Security
+    // Spring
+    implementation(libs.spring.boot.starter.data.redis)
     implementation(libs.spring.security.core)
 
-    // Redis Implementation
-    implementation(libs.spring.boot.starter.data.redis)
-
-    // JWT Implementation
+    // Utilities / JWT
+    implementation(libs.jackson.module.kotlin)
     implementation(libs.jjwt.api)
+
     runtimeOnly(libs.jjwt.impl)
     runtimeOnly(libs.jjwt.jackson)
-
-    // JSON Handling
-    implementation(libs.jackson.module.kotlin)
 }

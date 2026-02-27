@@ -1,6 +1,6 @@
 package pt.isel.domain.auth
 
-import kotlinx.datetime.Instant
+import java.time.Instant
 
 data class TokenExternalInfo(
     val tokenValue: String,
