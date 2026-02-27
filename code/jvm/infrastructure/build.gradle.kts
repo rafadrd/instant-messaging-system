@@ -9,7 +9,7 @@ dependencies {
     implementation(project(":repository"))
 
     // Spring Security
-    api(libs.spring.security.core)
+    implementation(libs.spring.security.core)
 
     // Redis Implementation
     implementation(libs.spring.boot.starter.data.redis)

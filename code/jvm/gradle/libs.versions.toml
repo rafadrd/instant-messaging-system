@@ -16,7 +16,6 @@ slf4j = "2.0.16"
 junit-jupiter = "5.11.3"
 jackson = "2.17.2"
 jjwt = "0.13.0"
-dotenv-kotlin = "6.4.1"
 
 [libraries]
 jakarta-annotation-api = { group = "jakarta.annotation", name = "jakarta.annotation-api", version.ref = "jakarta-annotation" }
@@ -45,7 +44,6 @@ slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
 jjwt-api = { group = "io.jsonwebtoken", name = "jjwt-api", version.ref = "jjwt"}
 jjwt-impl = { group = "io.jsonwebtoken", name = "jjwt-impl", version.ref = "jjwt"}
 jjwt-jackson = { group = "io.jsonwebtoken", name = "jjwt-jackson", version.ref = "jjwt"}
-dotenv-kotlin = { group = "io.github.cdimascio", name = "dotenv-kotlin", version.ref = "dotenv-kotlin" }
 
 [plugins]
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

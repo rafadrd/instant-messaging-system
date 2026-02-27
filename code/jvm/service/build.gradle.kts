@@ -1,7 +1,7 @@
 dependencies {
     // Module dependencies
-    api(project(":repository"))
-    api(project(":domain"))
+    implementation(project(":repository"))
+    implementation(project(":domain"))
 
     // To get the DI annotation
     implementation(libs.jakarta.inject.api)

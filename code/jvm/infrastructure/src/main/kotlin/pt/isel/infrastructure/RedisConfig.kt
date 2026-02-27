@@ -23,7 +23,7 @@ class RedisConfig {
         listenerAdapter: MessageListenerAdapter,
     ): RedisMessageListenerContainer {
         val container = RedisMessageListenerContainer()
-        container.connectionFactory = connectionFactory
+        container.setConnectionFactory(connectionFactory)
         container.addMessageListener(listenerAdapter, PatternTopic("chat-events"))
         return container
     }

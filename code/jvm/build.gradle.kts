@@ -31,14 +31,10 @@ val dbTestsDown by tasks.registering(Exec::class) {
     commandLine("docker", "compose", "-f", dockerComposePath, "stop", "postgres")
 }
 
-dbTestsDown.configure {
-    mustRunAfter(subprojects.map { it.tasks.withType<Test>() })
-}
-
 fun loadEnv(project: Project): Map<String, String> {
     val envFile =
         project.rootProject.layout.projectDirectory
-            .file(".env")
+            .file("../../.env")
     val content =
         project.providers
             .fileContents(envFile)
@@ -63,10 +59,17 @@ subprojects {
 
     repositories { mavenCentral() }
 
-    configure<org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension> { jvmToolchain(21) }
+    configure<org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension> {
+        jvmToolchain(21)
+    }
+
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+        compilerOptions {
+            freeCompilerArgs.add("-Xjsr305=strict")
+        }
+    }
 
     dependencies {
-        "implementation"(kotlin("test"))
         "testImplementation"(junitApi)
         "testImplementation"(junitParams)
         "testRuntimeOnly"(junitEngine)
@@ -87,7 +90,9 @@ subprojects {
             environment("DB_URL", "jdbc:postgresql://localhost:5432/db?user=dbuser&password=isel")
         }
 
-        dependsOn(dbTestsWait)
-        finalizedBy(dbTestsDown)
+        val dbDependentModules = setOf("repository-jdbi", "service", "http-api", "host", "infrastructure")
+        if (project.name in dbDependentModules) {
+            dependsOn(dbTestsWait)
+        }
     }
 }

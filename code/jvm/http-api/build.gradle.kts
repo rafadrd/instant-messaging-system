@@ -1,6 +1,7 @@
 dependencies {
     // Module dependencies
-    api(project(":service"))
+    implementation(project(":service"))
+    implementation(project(":domain"))
 
     // To use Spring MVC and the Servlet API
     implementation(libs.spring.webmvc)
@@ -20,5 +21,3 @@ dependencies {
     // WebFlux starter
     testImplementation(libs.spring.boot.starter.webflux)
 }
-
-kotlin { compilerOptions { freeCompilerArgs.addAll("-Xjsr305=strict") } }

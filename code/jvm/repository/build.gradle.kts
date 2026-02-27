@@ -6,5 +6,5 @@ dependencies {
     implementation(libs.jakarta.inject.api)
 
     // To use Kotlin specific date and time functions
-    api(libs.kotlinx.datetime)
+    implementation(libs.kotlinx.datetime)
 }

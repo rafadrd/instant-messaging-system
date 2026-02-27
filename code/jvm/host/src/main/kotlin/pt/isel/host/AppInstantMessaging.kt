@@ -1,6 +1,5 @@
 package pt.isel.host
 
-import io.github.cdimascio.dotenv.dotenv
 import kotlinx.datetime.Clock
 import org.jdbi.v3.core.Jdbi
 import org.postgresql.ds.PGSimpleDataSource
@@ -65,18 +64,12 @@ class AppInstantMessaging {
         executor.corePoolSize = coreSize
         executor.maxPoolSize = maxSize
         executor.queueCapacity = queueCapacity
-        executor.threadNamePrefix = "sse-broadcaster-"
+        executor.setThreadNamePrefix("sse-broadcaster-")
         executor.initialize()
         return executor
     }
 }
 
 fun main(args: Array<String>) {
-    val dotenv =
-        dotenv {
-            directory = "./"
-            ignoreIfMissing = true
-        }
-    dotenv.entries().forEach { System.setProperty(it.key, it.value) }
     runApplication<AppInstantMessaging>(*args)
 }
