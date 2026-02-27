@@ -1,12 +1,12 @@
 package pt.isel.repositories.mem
 
-import pt.isel.repositories.ChannelMemberRepository
-import pt.isel.repositories.ChannelRepository
-import pt.isel.repositories.InvitationRepository
-import pt.isel.repositories.MessageRepository
-import pt.isel.repositories.TokenBlacklistRepository
 import pt.isel.repositories.Transaction
-import pt.isel.repositories.UserRepository
+import pt.isel.repositories.channels.ChannelMemberRepository
+import pt.isel.repositories.channels.ChannelRepository
+import pt.isel.repositories.invitations.InvitationRepository
+import pt.isel.repositories.messages.MessageRepository
+import pt.isel.repositories.security.TokenBlacklistRepository
+import pt.isel.repositories.users.UserRepository
 
 class TransactionInMem(
     override val repoUsers: UserRepository,

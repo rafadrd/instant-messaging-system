@@ -58,9 +58,12 @@ CREATE TABLE dbo.token_blacklist
     expires_at TIMESTAMP NOT NULL
 );
 
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
 -- Add indexes for performance
 CREATE INDEX idx_channels_owner_id ON dbo.channels(owner_id);
 CREATE INDEX idx_messages_user_id ON dbo.messages(user_id);
 CREATE INDEX idx_messages_channel_id ON dbo.messages(channel_id);
 CREATE INDEX idx_invitations_created_by ON dbo.invitations(created_by);
 CREATE INDEX idx_invitations_channel_id ON dbo.invitations(channel_id);
+CREATE INDEX idx_channels_name_trgm ON dbo.channels USING gin (name gin_trgm_ops);

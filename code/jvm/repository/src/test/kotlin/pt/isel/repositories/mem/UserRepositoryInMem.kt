@@ -2,8 +2,8 @@ package pt.isel.repositories.mem
 
 import jakarta.inject.Named
 import pt.isel.domain.security.PasswordValidationInfo
-import pt.isel.domain.user.User
-import pt.isel.repositories.UserRepository
+import pt.isel.domain.users.User
+import pt.isel.repositories.users.UserRepository
 
 /**
  * Naif in memory repository non thread-safe and basic sequential id. Useful for unit tests purpose.

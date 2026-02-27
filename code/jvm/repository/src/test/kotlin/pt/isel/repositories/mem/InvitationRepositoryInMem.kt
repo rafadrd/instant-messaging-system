@@ -1,11 +1,11 @@
 package pt.isel.repositories.mem
 
 import jakarta.inject.Named
-import pt.isel.domain.channel.AccessType
-import pt.isel.domain.channel.Channel
-import pt.isel.domain.invitation.Invitation
-import pt.isel.domain.user.UserInfo
-import pt.isel.repositories.InvitationRepository
+import pt.isel.domain.channels.AccessType
+import pt.isel.domain.channels.Channel
+import pt.isel.domain.invitations.Invitation
+import pt.isel.domain.users.UserInfo
+import pt.isel.repositories.invitations.InvitationRepository
 import java.time.LocalDateTime
 
 /**

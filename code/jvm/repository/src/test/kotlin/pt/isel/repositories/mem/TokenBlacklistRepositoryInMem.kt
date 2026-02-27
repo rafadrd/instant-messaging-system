@@ -1,7 +1,7 @@
 package pt.isel.repositories.mem
 
 import jakarta.inject.Named
-import pt.isel.repositories.TokenBlacklistRepository
+import pt.isel.repositories.security.TokenBlacklistRepository
 import java.time.LocalDateTime
 
 @Named

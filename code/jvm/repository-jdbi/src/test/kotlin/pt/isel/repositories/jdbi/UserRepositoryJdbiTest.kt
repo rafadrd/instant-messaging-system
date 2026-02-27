@@ -8,7 +8,10 @@ import org.postgresql.ds.PGSimpleDataSource
 import pt.isel.auth.Token
 import pt.isel.auth.TokenValidationInfo
 import pt.isel.domain.security.PasswordValidationInfo
-import pt.isel.domain.user.User
+import pt.isel.domain.users.User
+import pt.isel.repositories.jdbi.messages.MessageRepositoryJdbi
+import pt.isel.repositories.jdbi.users.UserRepositoryJdbi
+import pt.isel.repositories.jdbi.utils.configureWithAppRequirements
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

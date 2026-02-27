@@ -7,12 +7,18 @@ import org.postgresql.ds.PGSimpleDataSource
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import pt.isel.auth.Sha256TokenEncoder
 import pt.isel.auth.UsersDomainConfig
-import pt.isel.domain.channel.AccessType
+import pt.isel.domain.channels.AccessType
 import pt.isel.domain.security.PasswordSecurityDomain
-import pt.isel.domain.user.User
+import pt.isel.domain.users.User
 import pt.isel.mem.TransactionManagerInMem
-import pt.isel.repositories.jdbi.TransactionManagerJdbi
-import pt.isel.repositories.jdbi.configureWithAppRequirements
+import pt.isel.repositories.jdbi.transaction.TransactionManagerJdbi
+import pt.isel.repositories.jdbi.utils.configureWithAppRequirements
+import pt.isel.services.channels.ChannelService
+import pt.isel.services.common.Either
+import pt.isel.services.common.MessageError
+import pt.isel.services.invitations.InvitationService
+import pt.isel.services.messages.MessageService
+import pt.isel.services.users.UserService
 import java.time.LocalDateTime
 import java.util.stream.Stream
 import kotlin.test.assertEquals
@@ -93,7 +99,9 @@ class MessageServiceTest {
         val testClock = TestClock()
         val userService = createUserService(trxManager, testClock)
         val channelService = ChannelService(trxManager)
-        val messageEventService = MessageEventService(trxManager)
+        val messageEventService =
+            pt.isel.services.messages
+                .MessageEventService(trxManager)
         val messageService = MessageService(trxManager, messageEventService)
         val user = userService.registerUser("user", VALID_PASSWORD)
         assertTrue(user is Either.Right)
@@ -110,7 +118,9 @@ class MessageServiceTest {
         val testClock = TestClock()
         val userService = createUserService(trxManager, testClock)
         val channelService = ChannelService(trxManager)
-        val messageEventService = MessageEventService(trxManager)
+        val messageEventService =
+            pt.isel.services.messages
+                .MessageEventService(trxManager)
         val messageService = MessageService(trxManager, messageEventService)
         val user = userService.registerUser("user", VALID_PASSWORD)
         assertTrue(user is Either.Right)
@@ -127,7 +137,9 @@ class MessageServiceTest {
         val testClock = TestClock()
         val userService = createUserService(trxManager, testClock)
         val channelService = ChannelService(trxManager)
-        val messageEventService = MessageEventService(trxManager)
+        val messageEventService =
+            pt.isel.services.messages
+                .MessageEventService(trxManager)
         val messageService = MessageService(trxManager, messageEventService)
         val user = userService.registerUser("user", VALID_PASSWORD)
         assertTrue(user is Either.Right)
@@ -144,7 +156,9 @@ class MessageServiceTest {
         val testClock = TestClock()
         val userService = createUserService(trxManager, testClock)
         val channelService = ChannelService(trxManager)
-        val messageEventService = MessageEventService(trxManager)
+        val messageEventService =
+            pt.isel.services.messages
+                .MessageEventService(trxManager)
         val messageService = MessageService(trxManager, messageEventService)
         val user = userService.registerUser("user", VALID_PASSWORD)
         assertTrue(user is Either.Right)
@@ -161,7 +175,9 @@ class MessageServiceTest {
         val testClock = TestClock()
         val userService = createUserService(trxManager, testClock)
         val channelService = ChannelService(trxManager)
-        val messageEventService = MessageEventService(trxManager)
+        val messageEventService =
+            pt.isel.services.messages
+                .MessageEventService(trxManager)
         val messageService = MessageService(trxManager, messageEventService)
         val user = userService.registerUser("user", VALID_PASSWORD)
         assertTrue(user is Either.Right)
@@ -204,7 +220,9 @@ class MessageServiceTest {
         val testClock = TestClock()
         val userService = createUserService(trxManager, testClock)
         val channelService = ChannelService(trxManager)
-        val messageEventService = MessageEventService(trxManager)
+        val messageEventService =
+            pt.isel.services.messages
+                .MessageEventService(trxManager)
         val messageService = MessageService(trxManager, messageEventService)
         val user = userService.registerUser("user", VALID_PASSWORD)
         assertTrue(user is Either.Right)
@@ -224,7 +242,9 @@ class MessageServiceTest {
         val testClock = TestClock()
         val userService = createUserService(trxManager, testClock)
         val channelService = ChannelService(trxManager)
-        val messageEventService = MessageEventService(trxManager)
+        val messageEventService =
+            pt.isel.services.messages
+                .MessageEventService(trxManager)
         val messageService = MessageService(trxManager, messageEventService)
         val user = userService.registerUser("user", VALID_PASSWORD)
         assertTrue(user is Either.Right)
@@ -241,7 +261,9 @@ class MessageServiceTest {
         val testClock = TestClock()
         val userService = createUserService(trxManager, testClock)
         val channelService = ChannelService(trxManager)
-        val messageEventService = MessageEventService(trxManager)
+        val messageEventService =
+            pt.isel.services.messages
+                .MessageEventService(trxManager)
         val messageService = MessageService(trxManager, messageEventService)
         val user = userService.registerUser("user", VALID_PASSWORD)
         assertTrue(user is Either.Right)
@@ -264,7 +286,9 @@ class MessageServiceTest {
         val testClock = TestClock()
         val userService = createUserService(trxManager, testClock)
         val channelService = ChannelService(trxManager)
-        val messageEventService = MessageEventService(trxManager)
+        val messageEventService =
+            pt.isel.services.messages
+                .MessageEventService(trxManager)
         val messageService = MessageService(trxManager, messageEventService)
         val user = userService.registerUser("user", VALID_PASSWORD)
         assertTrue(user is Either.Right)
@@ -283,7 +307,9 @@ class MessageServiceTest {
         val testClock = TestClock()
         val userService = createUserService(trxManager, testClock)
         val channelService = ChannelService(trxManager)
-        val messageEventService = MessageEventService(trxManager)
+        val messageEventService =
+            pt.isel.services.messages
+                .MessageEventService(trxManager)
         val messageService = MessageService(trxManager, messageEventService)
         val user = userService.registerUser("user", VALID_PASSWORD)
         assertTrue(user is Either.Right)
@@ -299,7 +325,9 @@ class MessageServiceTest {
     @ParameterizedTest
     @MethodSource("transactionManagers")
     fun `Get messages in channel with invalid channel id`(trxManager: TransactionManager) {
-        val messageEventService = MessageEventService(trxManager)
+        val messageEventService =
+            pt.isel.services.messages
+                .MessageEventService(trxManager)
         val messageService = MessageService(trxManager, messageEventService)
         val testClock = TestClock()
         val userService = createUserService(trxManager, testClock)

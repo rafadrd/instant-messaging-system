@@ -9,8 +9,8 @@ import org.springframework.context.annotation.Profile
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import pt.isel.domain.security.PasswordPolicyConfig
-import pt.isel.repositories.jdbi.TransactionManagerJdbi
-import pt.isel.repositories.jdbi.configureWithAppRequirements
+import pt.isel.repositories.jdbi.transaction.TransactionManagerJdbi
+import pt.isel.repositories.jdbi.utils.configureWithAppRequirements
 import java.time.Clock
 import javax.sql.DataSource
 

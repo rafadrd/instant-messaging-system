@@ -4,9 +4,13 @@ import org.jdbi.v3.core.Handle
 import org.jdbi.v3.core.Jdbi
 import org.junit.jupiter.api.BeforeEach
 import org.postgresql.ds.PGSimpleDataSource
-import pt.isel.domain.channel.Channel
+import pt.isel.domain.channels.Channel
 import pt.isel.domain.security.PasswordValidationInfo
-import pt.isel.domain.user.User
+import pt.isel.domain.users.User
+import pt.isel.repositories.jdbi.channels.ChannelRepositoryJdbi
+import pt.isel.repositories.jdbi.messages.MessageRepositoryJdbi
+import pt.isel.repositories.jdbi.users.UserRepositoryJdbi
+import pt.isel.repositories.jdbi.utils.configureWithAppRequirements
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

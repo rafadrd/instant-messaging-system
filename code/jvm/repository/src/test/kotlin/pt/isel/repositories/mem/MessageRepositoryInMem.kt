@@ -1,10 +1,10 @@
 package pt.isel.repositories.mem
 
 import jakarta.inject.Named
-import pt.isel.domain.channel.Channel
-import pt.isel.domain.message.Message
-import pt.isel.domain.user.UserInfo
-import pt.isel.repositories.MessageRepository
+import pt.isel.domain.channels.Channel
+import pt.isel.domain.messages.Message
+import pt.isel.domain.users.UserInfo
+import pt.isel.repositories.messages.MessageRepository
 
 /**
  * Naif in memory repository non thread-safe and basic sequential id. Useful for unit tests purpose.
