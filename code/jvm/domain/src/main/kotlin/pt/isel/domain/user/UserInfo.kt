@@ -1,4 +1,4 @@
-package pt.isel.domain
+package pt.isel.domain.user
 
 data class UserInfo(
     val id: Long,

@@ -16,7 +16,7 @@ import pt.isel.api.model.EditChannelInput
 import pt.isel.api.model.EditMemberInput
 import pt.isel.api.model.JoinByTokenInput
 import pt.isel.api.model.PageInput
-import pt.isel.domain.auth.AuthenticatedUser
+import pt.isel.domain.security.AuthenticatedUser
 import pt.isel.services.ChannelService
 import pt.isel.services.MessageEventService
 

@@ -1,7 +1,7 @@
 package pt.isel.pipeline
 
 import org.springframework.stereotype.Component
-import pt.isel.domain.auth.AuthenticatedUser
+import pt.isel.domain.security.AuthenticatedUser
 import pt.isel.services.UserService
 
 @Component

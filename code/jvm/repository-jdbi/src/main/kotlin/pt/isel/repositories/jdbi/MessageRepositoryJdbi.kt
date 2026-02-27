@@ -1,9 +1,9 @@
 package pt.isel.repositories.jdbi
 
 import org.jdbi.v3.core.Handle
-import pt.isel.domain.Channel
-import pt.isel.domain.Message
-import pt.isel.domain.UserInfo
+import pt.isel.domain.channel.Channel
+import pt.isel.domain.message.Message
+import pt.isel.domain.user.UserInfo
 import pt.isel.repositories.MessageRepository
 import java.sql.ResultSet
 import java.time.LocalDateTime

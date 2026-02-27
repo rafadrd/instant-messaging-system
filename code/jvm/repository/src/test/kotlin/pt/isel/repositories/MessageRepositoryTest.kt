@@ -1,10 +1,10 @@
 package pt.isel.repositories
 
 import org.junit.jupiter.api.Assertions.assertNull
-import pt.isel.domain.Channel
-import pt.isel.domain.Message
-import pt.isel.domain.User
-import pt.isel.domain.auth.PasswordValidationInfo
+import pt.isel.domain.channel.Channel
+import pt.isel.domain.message.Message
+import pt.isel.domain.security.PasswordValidationInfo
+import pt.isel.domain.user.User
 import pt.isel.mem.MessageRepositoryInMem
 import kotlin.test.Test
 import kotlin.test.assertEquals

@@ -1,6 +1,6 @@
-package pt.isel.domain.auth
+package pt.isel.domain.security
 
-import pt.isel.domain.User
+import pt.isel.domain.user.User
 
 class AuthenticatedUser(
     val user: User,

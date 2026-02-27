@@ -1,4 +1,4 @@
-package pt.isel.domain.auth
+package pt.isel.domain.security
 
 interface PasswordEncoder {
     fun encode(rawPassword: String): String

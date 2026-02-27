@@ -4,10 +4,10 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
-import pt.isel.domain.AccessType
-import pt.isel.domain.Channel
-import pt.isel.domain.User
-import pt.isel.domain.auth.PasswordValidationInfo
+import pt.isel.domain.channel.AccessType
+import pt.isel.domain.channel.Channel
+import pt.isel.domain.security.PasswordValidationInfo
+import pt.isel.domain.user.User
 import pt.isel.mem.InvitationRepositoryInMem
 import java.time.LocalDateTime
 import kotlin.test.Test

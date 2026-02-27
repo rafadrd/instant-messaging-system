@@ -15,7 +15,7 @@ import pt.isel.api.model.RegisterInput
 import pt.isel.api.model.UpdateUsernameInput
 import pt.isel.api.model.UserHomeOutput
 import pt.isel.api.model.UserInput
-import pt.isel.domain.auth.AuthenticatedUser
+import pt.isel.domain.security.AuthenticatedUser
 import pt.isel.services.ChannelService
 import pt.isel.services.UserService
 

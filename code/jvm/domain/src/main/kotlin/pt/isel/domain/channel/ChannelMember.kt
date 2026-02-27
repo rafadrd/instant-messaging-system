@@ -1,4 +1,6 @@
-package pt.isel.domain
+package pt.isel.domain.channel
+
+import pt.isel.domain.user.UserInfo
 
 data class ChannelMember(
     val id: Long,

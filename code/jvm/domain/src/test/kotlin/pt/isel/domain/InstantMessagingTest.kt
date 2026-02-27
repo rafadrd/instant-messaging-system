@@ -3,7 +3,17 @@ package pt.isel.domain
 import kotlinx.datetime.Clock
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
-import org.springframework.security.crypto.password.PasswordEncoder
+import pt.isel.domain.channel.AccessType
+import pt.isel.domain.channel.Channel
+import pt.isel.domain.channel.ChannelMember
+import pt.isel.domain.invitation.Invitation
+import pt.isel.domain.invitation.InvitationStatus
+import pt.isel.domain.message.Message
+import pt.isel.domain.security.AuthenticatedUser
+import pt.isel.domain.security.PasswordEncoder
+import pt.isel.domain.security.PasswordSecurityDomain
+import pt.isel.domain.security.PasswordValidationInfo
+import pt.isel.domain.user.User
 import java.time.LocalDateTime
 import kotlin.math.abs
 import kotlin.random.Random
@@ -85,7 +95,7 @@ class InstantMessagingTest {
         assertEquals(user, invitation.createdBy)
         assertEquals(channel, invitation.channel)
         assertEquals(AccessType.READ_WRITE, invitation.accessType)
-        assertEquals(Status.PENDING, invitation.status) // default value
+        assertEquals(InvitationStatus.PENDING, invitation.status) // default value
     }
 
     @Test

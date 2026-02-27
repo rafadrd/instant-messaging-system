@@ -1,5 +1,8 @@
-package pt.isel.domain
+package pt.isel.domain.invitation
 
+import pt.isel.domain.channel.AccessType
+import pt.isel.domain.channel.Channel
+import pt.isel.domain.user.UserInfo
 import java.time.LocalDateTime
 
 data class Invitation(
@@ -9,5 +12,5 @@ data class Invitation(
     val channel: Channel,
     val accessType: AccessType,
     val expiresAt: LocalDateTime,
-    val status: Status = Status.PENDING,
+    val status: InvitationStatus = InvitationStatus.PENDING,
 )

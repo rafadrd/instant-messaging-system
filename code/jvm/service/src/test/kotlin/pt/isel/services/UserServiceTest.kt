@@ -8,8 +8,8 @@ import org.postgresql.ds.PGSimpleDataSource
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import pt.isel.auth.Sha256TokenEncoder
 import pt.isel.auth.UsersDomainConfig
-import pt.isel.domain.AccessType
-import pt.isel.domain.auth.PasswordSecurityDomain
+import pt.isel.domain.channel.AccessType
+import pt.isel.domain.security.PasswordSecurityDomain
 import pt.isel.mem.TransactionManagerInMem
 import pt.isel.repositories.jdbi.TransactionManagerJdbi
 import pt.isel.repositories.jdbi.configureWithAppRequirements

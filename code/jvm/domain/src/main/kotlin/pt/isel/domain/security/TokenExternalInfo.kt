@@ -1,4 +1,4 @@
-package pt.isel.domain.auth
+package pt.isel.domain.security
 
 import java.time.Instant
 

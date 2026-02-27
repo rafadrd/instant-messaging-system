@@ -1,5 +1,7 @@
-package pt.isel.domain
+package pt.isel.domain.message
 
+import pt.isel.domain.channel.Channel
+import pt.isel.domain.user.UserInfo
 import java.time.LocalDateTime
 
 data class Message(

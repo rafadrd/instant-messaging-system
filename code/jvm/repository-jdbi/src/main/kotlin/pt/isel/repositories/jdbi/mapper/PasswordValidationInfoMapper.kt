@@ -2,7 +2,7 @@ package pt.isel.repositories.jdbi.mapper
 
 import org.jdbi.v3.core.mapper.ColumnMapper
 import org.jdbi.v3.core.statement.StatementContext
-import pt.isel.domain.auth.PasswordValidationInfo
+import pt.isel.domain.security.PasswordValidationInfo
 import java.sql.ResultSet
 import java.sql.SQLException
 

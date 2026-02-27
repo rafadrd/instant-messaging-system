@@ -1,11 +1,11 @@
 package pt.isel.services
 
 import jakarta.inject.Named
-import pt.isel.domain.AccessType
-import pt.isel.domain.Channel
-import pt.isel.domain.Invitation
-import pt.isel.domain.Status
-import pt.isel.domain.UserInfo
+import pt.isel.domain.channel.AccessType
+import pt.isel.domain.channel.Channel
+import pt.isel.domain.invitation.Invitation
+import pt.isel.domain.invitation.InvitationStatus
+import pt.isel.domain.user.UserInfo
 import pt.isel.repositories.Transaction
 import pt.isel.repositories.TransactionManager
 import java.time.LocalDateTime
@@ -79,7 +79,7 @@ class InvitationService(
                 repoInvitations.findById(invitationId)
                     ?: return@run failure(InvitationError.InvitationNotFound)
 
-            repoInvitations.save(invitation.copy(status = Status.REJECTED))
+            repoInvitations.save(invitation.copy(status = InvitationStatus.REJECTED))
             success("Invitation revoked.")
         }
 

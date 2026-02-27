@@ -1,11 +1,11 @@
 package pt.isel.services
 
 import jakarta.inject.Named
-import pt.isel.domain.Status
-import pt.isel.domain.User
-import pt.isel.domain.UserInfo
-import pt.isel.domain.auth.PasswordSecurityDomain
-import pt.isel.domain.auth.TokenExternalInfo
+import pt.isel.domain.invitation.InvitationStatus
+import pt.isel.domain.security.PasswordSecurityDomain
+import pt.isel.domain.security.TokenExternalInfo
+import pt.isel.domain.user.User
+import pt.isel.domain.user.UserInfo
 import pt.isel.repositories.Transaction
 import pt.isel.repositories.TransactionManager
 import java.time.LocalDateTime
@@ -33,7 +33,7 @@ class UserService(
                     if (invitation.expiresAt.isBefore(LocalDateTime.now())) {
                         return@run failure(UserError.InvitationExpired)
                     }
-                    if (invitation.status != Status.PENDING) {
+                    if (invitation.status != InvitationStatus.PENDING) {
                         return@run failure(UserError.InvitationAlreadyUsed)
                     }
 
@@ -49,7 +49,7 @@ class UserService(
                         invitation.channel,
                         invitation.accessType,
                     )
-                    repoInvitations.save(invitation.copy(status = Status.ACCEPTED))
+                    repoInvitations.save(invitation.copy(status = InvitationStatus.ACCEPTED))
                     newUserResult
                 }
 

@@ -11,10 +11,10 @@ import pt.isel.api.model.RegisterInput
 import pt.isel.api.model.UserInput
 import pt.isel.auth.Sha256TokenEncoder
 import pt.isel.auth.UsersDomainConfig
-import pt.isel.domain.User
-import pt.isel.domain.auth.AuthenticatedUser
-import pt.isel.domain.auth.PasswordSecurityDomain
-import pt.isel.domain.auth.PasswordValidationInfo
+import pt.isel.domain.security.AuthenticatedUser
+import pt.isel.domain.security.PasswordSecurityDomain
+import pt.isel.domain.security.PasswordValidationInfo
+import pt.isel.domain.user.User
 import pt.isel.mem.TransactionManagerInMem
 import pt.isel.repositories.TransactionManager
 import pt.isel.repositories.jdbi.TransactionManagerJdbi

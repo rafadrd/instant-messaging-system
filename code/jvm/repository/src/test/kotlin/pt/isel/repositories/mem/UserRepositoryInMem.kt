@@ -1,8 +1,8 @@
 package pt.isel.repositories.mem
 
 import jakarta.inject.Named
-import pt.isel.domain.User
-import pt.isel.domain.auth.PasswordValidationInfo
+import pt.isel.domain.security.PasswordValidationInfo
+import pt.isel.domain.user.User
 import pt.isel.repositories.UserRepository
 
 /**

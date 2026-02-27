@@ -6,9 +6,9 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import pt.isel.domain.KeepAlive
-import pt.isel.domain.NewMessage
-import pt.isel.domain.UpdatedMessage
+import pt.isel.domain.message.KeepAlive
+import pt.isel.domain.message.NewMessage
+import pt.isel.domain.message.UpdatedMessage
 
 @Configuration
 class JacksonConfig {

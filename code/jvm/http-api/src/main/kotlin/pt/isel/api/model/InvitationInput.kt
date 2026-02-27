@@ -1,6 +1,6 @@
 package pt.isel.api.model
 
-import pt.isel.domain.AccessType
+import pt.isel.domain.channel.AccessType
 import java.time.LocalDateTime
 
 data class InvitationInput(

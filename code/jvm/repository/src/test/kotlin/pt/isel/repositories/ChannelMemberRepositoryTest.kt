@@ -3,8 +3,8 @@ package pt.isel.repositories
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
-import pt.isel.domain.AccessType
-import pt.isel.domain.auth.PasswordValidationInfo
+import pt.isel.domain.channel.AccessType
+import pt.isel.domain.security.PasswordValidationInfo
 import pt.isel.mem.ChannelMemberRepositoryInMem
 import pt.isel.mem.ChannelRepositoryInMem
 import pt.isel.mem.UserRepositoryInMem

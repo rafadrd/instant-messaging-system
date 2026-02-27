@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import pt.isel.api.model.MessageRequest
 import pt.isel.api.model.PageInput
-import pt.isel.domain.auth.AuthenticatedUser
+import pt.isel.domain.security.AuthenticatedUser
 import pt.isel.services.MessageService
 
 @RestController

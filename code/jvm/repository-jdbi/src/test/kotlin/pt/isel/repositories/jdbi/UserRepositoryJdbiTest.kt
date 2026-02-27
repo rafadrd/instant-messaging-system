@@ -7,8 +7,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.postgresql.ds.PGSimpleDataSource
 import pt.isel.auth.Token
 import pt.isel.auth.TokenValidationInfo
-import pt.isel.domain.User
-import pt.isel.domain.auth.PasswordValidationInfo
+import pt.isel.domain.security.PasswordValidationInfo
+import pt.isel.domain.user.User
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith

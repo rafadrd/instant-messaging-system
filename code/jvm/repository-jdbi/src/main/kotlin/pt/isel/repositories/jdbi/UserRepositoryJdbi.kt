@@ -2,8 +2,8 @@ package pt.isel.repositories.jdbi
 
 import org.jdbi.v3.core.Handle
 import org.slf4j.LoggerFactory
-import pt.isel.domain.User
-import pt.isel.domain.auth.PasswordValidationInfo
+import pt.isel.domain.security.PasswordValidationInfo
+import pt.isel.domain.user.User
 import pt.isel.repositories.UserRepository
 import java.sql.ResultSet
 

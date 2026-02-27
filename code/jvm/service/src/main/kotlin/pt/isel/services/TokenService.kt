@@ -1,6 +1,6 @@
 package pt.isel.services
 
-import pt.isel.domain.auth.TokenExternalInfo
+import pt.isel.domain.security.TokenExternalInfo
 import java.time.LocalDateTime
 
 data class ParsedToken(

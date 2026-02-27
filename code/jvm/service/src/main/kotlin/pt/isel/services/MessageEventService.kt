@@ -1,7 +1,7 @@
 package pt.isel.services
 
-import pt.isel.domain.UpdatedMessage
-import pt.isel.domain.UpdatedMessageEmitter
+import pt.isel.domain.message.UpdatedMessage
+import pt.isel.domain.message.UpdatedMessageEmitter
 
 interface MessageEventService {
     fun addEmitter(

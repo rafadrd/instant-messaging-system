@@ -1,4 +1,4 @@
-package pt.isel.domain
+package pt.isel.domain.message
 
 interface UpdatedMessageEmitter {
     fun emit(signal: UpdatedMessage)

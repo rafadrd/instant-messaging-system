@@ -1,9 +1,9 @@
 package pt.isel.repositories
 
-import pt.isel.domain.AccessType
-import pt.isel.domain.Channel
-import pt.isel.domain.Invitation
-import pt.isel.domain.UserInfo
+import pt.isel.domain.channel.AccessType
+import pt.isel.domain.channel.Channel
+import pt.isel.domain.invitation.Invitation
+import pt.isel.domain.user.UserInfo
 import java.time.LocalDateTime
 
 /** Repository interface for managing invitations, extends the generic Repository */

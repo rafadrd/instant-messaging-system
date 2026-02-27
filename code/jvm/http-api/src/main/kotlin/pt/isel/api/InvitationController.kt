@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import pt.isel.api.model.InvitationInput
-import pt.isel.domain.auth.AuthenticatedUser
+import pt.isel.domain.security.AuthenticatedUser
 import pt.isel.services.InvitationService
 
 @RestController

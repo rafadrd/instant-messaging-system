@@ -1,10 +1,10 @@
 package pt.isel.api
 
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
-import pt.isel.domain.KeepAlive
-import pt.isel.domain.NewMessage
-import pt.isel.domain.UpdatedMessage
-import pt.isel.domain.UpdatedMessageEmitter
+import pt.isel.domain.message.KeepAlive
+import pt.isel.domain.message.NewMessage
+import pt.isel.domain.message.UpdatedMessage
+import pt.isel.domain.message.UpdatedMessageEmitter
 
 class SseUpdatedMessageEmitterAdapter(
     private val sseEmitter: SseEmitter,

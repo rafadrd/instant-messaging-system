@@ -1,11 +1,11 @@
 package pt.isel.services
 
 import jakarta.inject.Named
-import pt.isel.domain.AccessType
-import pt.isel.domain.Channel
-import pt.isel.domain.Message
-import pt.isel.domain.NewMessage
-import pt.isel.domain.UserInfo
+import pt.isel.domain.channel.AccessType
+import pt.isel.domain.channel.Channel
+import pt.isel.domain.message.Message
+import pt.isel.domain.message.NewMessage
+import pt.isel.domain.user.UserInfo
 import pt.isel.repositories.Transaction
 import pt.isel.repositories.TransactionManager
 

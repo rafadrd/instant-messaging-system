@@ -1,6 +1,6 @@
 package pt.isel.repositories
 
-import pt.isel.domain.auth.PasswordValidationInfo
+import pt.isel.domain.security.PasswordValidationInfo
 import pt.isel.mem.ChannelRepositoryInMem
 import pt.isel.mem.UserRepositoryInMem
 import kotlin.test.Test

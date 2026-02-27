@@ -1,7 +1,7 @@
 package pt.isel.repositories
 
-import pt.isel.domain.User
-import pt.isel.domain.auth.PasswordValidationInfo
+import pt.isel.domain.security.PasswordValidationInfo
+import pt.isel.domain.user.User
 
 /** Repository interface for managing users, extends the generic Repository */
 interface UserRepository : Repository<User> {

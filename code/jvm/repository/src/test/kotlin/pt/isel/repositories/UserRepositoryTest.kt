@@ -4,7 +4,7 @@ import kotlinx.datetime.Clock
 import org.junit.jupiter.api.Assertions.assertNull
 import pt.isel.auth.Token
 import pt.isel.auth.TokenValidationInfo
-import pt.isel.domain.auth.PasswordValidationInfo
+import pt.isel.domain.security.PasswordValidationInfo
 import pt.isel.mem.UserRepositoryInMem
 import kotlin.test.Test
 import kotlin.test.assertEquals

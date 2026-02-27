@@ -4,11 +4,11 @@ import org.jdbi.v3.core.Handle
 import org.jdbi.v3.core.Jdbi
 import org.junit.jupiter.api.BeforeEach
 import org.postgresql.ds.PGSimpleDataSource
-import pt.isel.domain.AccessType
-import pt.isel.domain.Channel
-import pt.isel.domain.Status
-import pt.isel.domain.User
-import pt.isel.domain.auth.PasswordValidationInfo
+import pt.isel.domain.channel.AccessType
+import pt.isel.domain.channel.Channel
+import pt.isel.domain.invitation.InvitationStatus
+import pt.isel.domain.security.PasswordValidationInfo
+import pt.isel.domain.user.User
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import kotlin.math.abs
@@ -232,11 +232,11 @@ class InvitationRepositoryJdbiTest {
                 )
 
             invitationRepo.save(
-                invitation.copy(status = Status.REJECTED),
+                invitation.copy(status = InvitationStatus.REJECTED),
             )
 
             val updatedInvitation = invitationRepo.findById(invitation.id)
-            assertEquals(Status.REJECTED, updatedInvitation?.status)
+            assertEquals(InvitationStatus.REJECTED, updatedInvitation?.status)
         }
     }
 

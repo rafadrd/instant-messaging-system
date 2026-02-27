@@ -1,12 +1,12 @@
 package pt.isel.services
 
 import jakarta.inject.Named
-import pt.isel.domain.AccessType
-import pt.isel.domain.Channel
-import pt.isel.domain.ChannelMember
-import pt.isel.domain.Status
-import pt.isel.domain.User
-import pt.isel.domain.UserInfo
+import pt.isel.domain.channel.AccessType
+import pt.isel.domain.channel.Channel
+import pt.isel.domain.channel.ChannelMember
+import pt.isel.domain.invitation.InvitationStatus
+import pt.isel.domain.user.User
+import pt.isel.domain.user.UserInfo
 import pt.isel.repositories.Transaction
 import pt.isel.repositories.TransactionManager
 import java.time.LocalDateTime
@@ -221,7 +221,7 @@ class ChannelService(
             if (invitation.expiresAt.isBefore(LocalDateTime.now())) {
                 return@run failure(ChannelError.InvitationExpired)
             }
-            if (invitation.status != Status.PENDING) {
+            if (invitation.status != InvitationStatus.PENDING) {
                 return@run failure(ChannelError.InvitationAlreadyUsed)
             }
 
@@ -234,7 +234,7 @@ class ChannelService(
             }
             val userInfo = UserInfo(user.id, user.username)
             repoMemberships.addUserToChannel(userInfo, channel, invitation.accessType)
-            repoInvitations.save(invitation.copy(status = Status.ACCEPTED))
+            repoInvitations.save(invitation.copy(status = InvitationStatus.ACCEPTED))
             success("Joined private channel '${channel.name}'")
         }
 

@@ -6,9 +6,9 @@ import org.slf4j.LoggerFactory
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
-import pt.isel.domain.KeepAlive
-import pt.isel.domain.UpdatedMessage
-import pt.isel.domain.UpdatedMessageEmitter
+import pt.isel.domain.message.KeepAlive
+import pt.isel.domain.message.UpdatedMessage
+import pt.isel.domain.message.UpdatedMessageEmitter
 import pt.isel.repositories.TransactionManager
 import pt.isel.services.MessageEventService
 import java.time.Instant

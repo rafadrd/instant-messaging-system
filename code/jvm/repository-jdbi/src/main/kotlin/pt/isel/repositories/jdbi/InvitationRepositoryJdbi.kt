@@ -1,11 +1,11 @@
 package pt.isel.repositories.jdbi
 
 import org.jdbi.v3.core.Handle
-import pt.isel.domain.AccessType
-import pt.isel.domain.Channel
-import pt.isel.domain.Invitation
-import pt.isel.domain.Status
-import pt.isel.domain.UserInfo
+import pt.isel.domain.channel.AccessType
+import pt.isel.domain.channel.Channel
+import pt.isel.domain.invitation.Invitation
+import pt.isel.domain.invitation.InvitationStatus
+import pt.isel.domain.user.UserInfo
 import pt.isel.repositories.InvitationRepository
 import java.sql.ResultSet
 import java.time.LocalDateTime
@@ -128,7 +128,7 @@ class InvitationRepositoryJdbi(
             channel,
             AccessType.valueOf(rs.getString("access_type")),
             rs.getTimestamp("expires_at").toLocalDateTime().truncatedTo(ChronoUnit.MILLIS),
-            Status.valueOf(rs.getString("status")),
+            InvitationStatus.valueOf(rs.getString("status")),
         )
     }
 }
