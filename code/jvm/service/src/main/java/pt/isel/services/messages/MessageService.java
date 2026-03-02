@@ -25,23 +25,16 @@ public class MessageService {
 
     public Either<MessageError, Message> createMessage(String content, Long userId, Long channelId) {
         if (content == null || content.isBlank()) return Either.failure(new MessageError.EmptyMessage());
-        if (content.length() < 1 || content.length() > 1000)
-            return Either.failure(new MessageError.InvalidMessageLength());
+        if (content.length() > 1000) return Either.failure(new MessageError.InvalidMessageLength());
 
-        var result = trxManager.run(trx -> {
-            return switch (checkUserCanPostMessage(trx, userId, channelId)) {
-                case Either.Left<MessageError, UserChannelPair> left ->
-                        Either.<MessageError, Message>failure(left.value());
-                case Either.Right<MessageError, UserChannelPair> right -> {
-                    var pair = right.value();
+        var result = trxManager.run(trx -> checkUserCanPostMessage(trx, userId, channelId)
+                .flatMap(pair -> {
                     var message = trx.repoMessages().create(content, pair.userInfo(), pair.channel());
-                    yield Either.<MessageError, Message>success(message);
-                }
-            };
-        });
+                    return Either.success(message);
+                }));
 
-        if (result instanceof Either.Right<MessageError, Message>(Message value)) {
-            messageEventService.broadcastMessage(channelId, new UpdatedMessage.NewMessage(value));
+        if (result instanceof Either.Right<MessageError, Message>(var message)) {
+            messageEventService.broadcastMessage(channelId, new UpdatedMessage.NewMessage(message));
         }
 
         return result;

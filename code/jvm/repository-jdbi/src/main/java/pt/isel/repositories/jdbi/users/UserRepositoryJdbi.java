@@ -21,7 +21,7 @@ public class UserRepositoryJdbi implements UserRepository {
     @Override
     public User create(String username, PasswordValidationInfo passwordValidationInfo) {
         Long id = JdbiUtils.executeUpdateAndReturnId(handle, """
-                INSERT INTO dbo.users (username, password_validation)
+                INSERT INTO users (username, password_validation)
                 VALUES (:username, :password_validation)
                 """, JdbiUtils.params(
                 "username", username,
@@ -32,19 +32,19 @@ public class UserRepositoryJdbi implements UserRepository {
 
     @Override
     public User findById(Long id) {
-        return JdbiUtils.executeQueryToSingle(handle, "SELECT * FROM dbo.users WHERE id = :id",
+        return JdbiUtils.executeQueryToSingle(handle, "SELECT * FROM users WHERE id = :id",
                 Map.of("id", id), this::mapRowToUser);
     }
 
     @Override
     public User findByUsername(String username) {
-        return JdbiUtils.executeQueryToSingle(handle, "SELECT * FROM dbo.users WHERE username = :username",
+        return JdbiUtils.executeQueryToSingle(handle, "SELECT * FROM users WHERE username = :username",
                 Map.of("username", username), this::mapRowToUser);
     }
 
     @Override
     public boolean hasUsers() {
-        return handle.createQuery("SELECT 1 FROM dbo.users LIMIT 1")
+        return handle.createQuery("SELECT 1 FROM users LIMIT 1")
                 .mapTo(Integer.class)
                 .findOne()
                 .isPresent();
@@ -52,13 +52,13 @@ public class UserRepositoryJdbi implements UserRepository {
 
     @Override
     public List<User> findAll() {
-        return JdbiUtils.executeQueryToList(handle, "SELECT * FROM dbo.users", Map.of(), this::mapRowToUser);
+        return JdbiUtils.executeQueryToList(handle, "SELECT * FROM users", Map.of(), this::mapRowToUser);
     }
 
     @Override
     public void save(User entity) {
         JdbiUtils.executeUpdate(handle, """
-                UPDATE dbo.users
+                UPDATE users
                 SET username = :username, password_validation = :password_validation
                 WHERE id = :id
                 """, JdbiUtils.params(
@@ -70,12 +70,12 @@ public class UserRepositoryJdbi implements UserRepository {
 
     @Override
     public void deleteById(Long id) {
-        JdbiUtils.executeUpdate(handle, "DELETE FROM dbo.users WHERE id = :id", Map.of("id", id));
+        JdbiUtils.executeUpdate(handle, "DELETE FROM users WHERE id = :id", Map.of("id", id));
     }
 
     @Override
     public void clear() {
-        JdbiUtils.executeUpdate(handle, "DELETE FROM dbo.users", Map.of());
+        JdbiUtils.executeUpdate(handle, "DELETE FROM users", Map.of());
     }
 
     private User mapRowToUser(ResultSet rs) throws SQLException {

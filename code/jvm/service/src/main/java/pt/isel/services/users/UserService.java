@@ -1,7 +1,6 @@
 package pt.isel.services.users;
 
 import jakarta.inject.Named;
-import org.springframework.scheduling.annotation.Scheduled;
 import pt.isel.domain.common.Either;
 import pt.isel.domain.common.UserError;
 import pt.isel.domain.invitations.Invitation;
@@ -32,7 +31,7 @@ public class UserService {
 
     public Either<UserError, TokenExternalInfo> registerUser(String username, String password, String token) {
         return trxManager.run(trx -> {
-            Invitation invitation = null;
+            Invitation invitation;
 
             if (token != null && !token.isBlank()) {
                 invitation = trx.repoInvitations().findByToken(token);
@@ -44,33 +43,30 @@ public class UserService {
                 if (invitation.status() != InvitationStatus.PENDING) {
                     return Either.failure(new UserError.InvitationAlreadyUsed());
                 }
+            } else {
+                invitation = null;
             }
 
-            var newUserResult = createUser(trx, username, password);
-            if (newUserResult instanceof Either.Left<UserError, User>(UserError value)) return Either.failure(value);
-
-            User user = ((Either.Right<UserError, User>) newUserResult).value();
-
-            if (invitation != null) {
-                trx.repoMemberships().addUserToChannel(
-                        new UserInfo(user.id(), user.username()),
-                        invitation.channel(),
-                        invitation.accessType()
-                );
-                trx.repoInvitations().save(new Invitation(
-                        invitation.id(), invitation.token(), invitation.createdBy(),
-                        invitation.channel(), invitation.accessType(), invitation.expiresAt(), InvitationStatus.ACCEPTED
-                ));
-            }
-
-            return Either.success(tokenService.createToken(user.id()));
+            return createUser(trx, username, password).flatMap(user -> {
+                if (invitation != null) {
+                    trx.repoMemberships().addUserToChannel(
+                            new UserInfo(user.id(), user.username()),
+                            invitation.channel(),
+                            invitation.accessType()
+                    );
+                    trx.repoInvitations().save(new Invitation(
+                            invitation.id(), invitation.token(), invitation.createdBy(),
+                            invitation.channel(), invitation.accessType(), invitation.expiresAt(), InvitationStatus.ACCEPTED
+                    ));
+                }
+                return Either.success(tokenService.createToken(user.id()));
+            });
         });
     }
 
     private Either<UserError, User> createUser(Transaction trx, String username, String password) {
         if (username == null || username.isBlank()) return Either.failure(new UserError.EmptyUsername());
-        if (username.length() < 1 || username.length() > 30)
-            return Either.failure(new UserError.InvalidUsernameLength());
+        if (username.length() > 30) return Either.failure(new UserError.InvalidUsernameLength());
         if (password == null || password.isBlank()) return Either.failure(new UserError.EmptyPassword());
 
         if (trx.repoUsers().findByUsername(username) != null) {
@@ -86,6 +82,7 @@ public class UserService {
         return Either.success(newUser);
     }
 
+
     public Either<UserError, User> getUserById(Long userId) {
         return trxManager.run(trx -> {
             User user = trx.repoUsers().findById(userId);
@@ -95,8 +92,7 @@ public class UserService {
 
     public Either<UserError, User> updateUsername(Long userId, String newUsername, String password) {
         if (newUsername == null || newUsername.isBlank()) return Either.failure(new UserError.EmptyUsername());
-        if (newUsername.length() < 1 || newUsername.length() > 30)
-            return Either.failure(new UserError.InvalidUsernameLength());
+        if (newUsername.length() > 30) return Either.failure(new UserError.InvalidUsernameLength());
 
         return trxManager.run(trx -> {
             User user = trx.repoUsers().findById(userId);
@@ -192,7 +188,6 @@ public class UserService {
         });
     }
 
-    @Scheduled(fixedRate = 3600000)
     public void cleanupExpiredTokens() {
         trxManager.run(trx -> {
             trx.repoTokenBlacklist().cleanupExpired();

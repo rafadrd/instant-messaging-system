@@ -9,17 +9,23 @@ import pt.isel.api.common.ErrorHandling;
 import pt.isel.domain.users.AuthenticatedUser;
 import pt.isel.services.channels.ChannelService;
 import pt.isel.services.messages.MessageEventService;
+import pt.isel.services.users.TicketService;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/channels")
 public class ChannelController {
     private final ChannelService channelService;
     private final MessageEventService messageEventService;
+    private final TicketService ticketService;
 
-    public ChannelController(ChannelService channelService, MessageEventService messageEventService) {
+    public ChannelController(ChannelService channelService, MessageEventService messageEventService, TicketService ticketService) {
         this.channelService = channelService;
         this.messageEventService = messageEventService;
+        this.ticketService = ticketService;
     }
+
 
     @GetMapping
     public ResponseEntity<?> getChannels(
@@ -85,10 +91,22 @@ public class ChannelController {
         return ErrorHandling.handleResult(channelService.editMemberAccess(user.user().id(), channelId, userId, input.accessType()));
     }
 
+    @PostMapping("/{channelId}/socket-ticket")
+    public ResponseEntity<?> getSocketTicket(AuthenticatedUser user, @PathVariable Long channelId) {
+        return ErrorHandling.handleResult(
+                channelService.getAccessType(user.user().id(), user.user().id(), channelId),
+                access -> {
+                    String ticket = ticketService.createTicket(user.user().id());
+                    return ResponseEntity.ok(Map.of("ticket", ticket));
+                }
+        );
+    }
+
     @GetMapping("/{channelId}/listen")
     public ResponseEntity<?> listen(AuthenticatedUser user, @PathVariable Long channelId) {
         return ErrorHandling.handleResult(channelService.getAccessType(user.user().id(), user.user().id(), channelId), accessType -> {
             SseEmitter emitter = new SseEmitter(30 * 60 * 1000L);
+            emitter.onTimeout(emitter::complete);
             try {
                 var adapter = new SseUpdatedMessageEmitterAdapter(emitter);
                 messageEventService.addEmitter(channelId, user.user().id(), adapter);

@@ -27,7 +27,7 @@ public class ChannelService {
 
     public Either<ChannelError, Channel> createChannel(String name, Long ownerId, boolean isPublic) {
         if (name == null || name.isBlank()) return Either.failure(new ChannelError.EmptyChannelName());
-        if (name.length() < 1 || name.length() > 30) return Either.failure(new ChannelError.InvalidChannelNameLength());
+        if (name.length() > 30) return Either.failure(new ChannelError.InvalidChannelNameLength());
 
         return trxManager.run(trx -> {
             User owner = trx.repoUsers().findById(ownerId);
@@ -52,15 +52,11 @@ public class ChannelService {
     }
 
     public Either<ChannelError, String> deleteChannel(Long ownerId, Long channelId) {
-        return trxManager.run(trx -> {
-            return switch (checkUserIsOwner(trx, ownerId, channelId)) {
-                case Either.Left<ChannelError, UserChannelPair> left -> Either.failure(left.value());
-                case Either.Right<ChannelError, UserChannelPair> right -> {
-                    trx.repoChannels().deleteById(right.value().channel().id());
-                    yield Either.success("Channel '" + right.value().channel().name() + "' was deleted successfully.");
-                }
-            };
-        });
+        return trxManager.run(trx -> checkUserIsOwner(trx, ownerId, channelId)
+                .flatMap(pair -> {
+                    trx.repoChannels().deleteById(pair.channel().id());
+                    return Either.success("Channel '" + pair.channel().name() + "' was deleted successfully.");
+                }));
     }
 
     public Either<ChannelError, List<Channel>> getJoinedChannels(Long userId, int limit, int offset) {
@@ -86,19 +82,15 @@ public class ChannelService {
 
     public Either<ChannelError, Channel> editChannel(Long ownerId, Long channelId, String name, boolean isPublic) {
         if (name == null || name.isBlank()) return Either.failure(new ChannelError.EmptyChannelName());
-        if (name.length() < 1 || name.length() > 30) return Either.failure(new ChannelError.InvalidChannelNameLength());
+        if (name.length() > 30) return Either.failure(new ChannelError.InvalidChannelNameLength());
 
-        return trxManager.run(trx -> {
-            return switch (checkUserIsOwner(trx, ownerId, channelId)) {
-                case Either.Left<ChannelError, UserChannelPair> left -> Either.failure(left.value());
-                case Either.Right<ChannelError, UserChannelPair> right -> {
-                    Channel channel = right.value().channel();
+        return trxManager.run(trx -> checkUserIsOwner(trx, ownerId, channelId)
+                .flatMap(pair -> {
+                    Channel channel = pair.channel();
                     Channel updatedChannel = new Channel(channel.id(), name, channel.owner(), isPublic);
                     trx.repoChannels().save(updatedChannel);
-                    yield Either.success(updatedChannel);
-                }
-            };
-        });
+                    return Either.success(updatedChannel);
+                }));
     }
 
     public Either<MessageError, AccessType> getAccessType(Long requesterId, Long targetUserId, Long channelId) {
@@ -116,17 +108,13 @@ public class ChannelService {
     }
 
     public Either<ChannelError, ChannelMember> editMemberAccess(Long ownerId, Long channelId, Long userId, AccessType accessType) {
-        return trxManager.run(trx -> {
-            return switch (checkUserCanEditMember(trx, ownerId, channelId, userId)) {
-                case Either.Left<ChannelError, MemberEditTriple> left -> Either.failure(left.value());
-                case Either.Right<ChannelError, MemberEditTriple> right -> {
-                    var userMembership = right.value().userMembership();
+        return trxManager.run(trx -> checkUserCanEditMember(trx, ownerId, channelId, userId)
+                .flatMap(triple -> {
+                    var userMembership = triple.userMembership();
                     ChannelMember updatedMembership = new ChannelMember(userMembership.id(), userMembership.user(), userMembership.channel(), accessType);
                     trx.repoMemberships().save(updatedMembership);
-                    yield Either.success(updatedMembership);
-                }
-            };
-        });
+                    return Either.success(updatedMembership);
+                }));
     }
 
     public Either<ChannelError, List<Channel>> searchChannels(String query, int limit, int offset) {

@@ -22,10 +22,10 @@ public class MessageRepositoryJdbi implements MessageRepository {
                 author.id AS author_id, author.username AS author_username,
                 c.id AS channel_id, c.name AS channel_name, c.is_public AS channel_is_public,
                 owner.id AS owner_id, owner.username AS owner_username
-            FROM dbo.messages m
-            LEFT JOIN dbo.users author ON m.user_id = author.id
-            JOIN dbo.channels c ON m.channel_id = c.id
-            JOIN dbo.users owner ON c.owner_id = owner.id
+            FROM messages m
+            LEFT JOIN users author ON m.user_id = author.id
+            JOIN channels c ON m.channel_id = c.id
+            JOIN users owner ON c.owner_id = owner.id
             """;
 
     public MessageRepositoryJdbi(Handle handle) {
@@ -36,7 +36,7 @@ public class MessageRepositoryJdbi implements MessageRepository {
     public Message create(String content, UserInfo user, Channel channel) {
         LocalDateTime createdAt = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
         String sql = """
-                INSERT INTO dbo.messages (content, user_id, channel_id, created_at)
+                INSERT INTO messages (content, user_id, channel_id, created_at)
                 VALUES (:content, :user_id, :channel_id, :created_at)
                 """;
         Long id = JdbiUtils.executeUpdateAndReturnId(handle, sql, JdbiUtils.params(
@@ -74,7 +74,7 @@ public class MessageRepositoryJdbi implements MessageRepository {
     @Override
     public void save(Message entity) {
         JdbiUtils.executeUpdate(handle, """
-                UPDATE dbo.messages
+                UPDATE messages
                 SET content = :content
                 WHERE id = :id
                 """, JdbiUtils.params("id", entity.id(), "content", entity.content()));
@@ -82,12 +82,12 @@ public class MessageRepositoryJdbi implements MessageRepository {
 
     @Override
     public void deleteById(Long id) {
-        JdbiUtils.executeUpdate(handle, "DELETE FROM dbo.messages WHERE id = :id", Map.of("id", id));
+        JdbiUtils.executeUpdate(handle, "DELETE FROM messages WHERE id = :id", Map.of("id", id));
     }
 
     @Override
     public void clear() {
-        JdbiUtils.executeUpdate(handle, "DELETE FROM dbo.messages", Map.of());
+        JdbiUtils.executeUpdate(handle, "DELETE FROM messages", Map.of());
     }
 
     private Message mapRowToMessage(ResultSet rs) throws SQLException {

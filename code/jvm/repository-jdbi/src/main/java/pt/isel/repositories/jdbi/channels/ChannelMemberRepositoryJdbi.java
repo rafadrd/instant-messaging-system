@@ -21,10 +21,10 @@ public class ChannelMemberRepositoryJdbi implements ChannelMemberRepository {
                 member.id AS member_id, member.username AS member_username,
                 c.id AS channel_id, c.name AS channel_name, c.is_public AS channel_is_public,
                 owner.id AS owner_id, owner.username AS owner_username
-            FROM dbo.channel_members cm
-            JOIN dbo.users member ON cm.user_id = member.id
-            JOIN dbo.channels c ON cm.channel_id = c.id
-            JOIN dbo.users owner ON c.owner_id = owner.id
+            FROM channel_members cm
+            JOIN users member ON cm.user_id = member.id
+            JOIN channels c ON cm.channel_id = c.id
+            JOIN users owner ON c.owner_id = owner.id
             """;
 
     public ChannelMemberRepositoryJdbi(Handle handle) {
@@ -34,7 +34,7 @@ public class ChannelMemberRepositoryJdbi implements ChannelMemberRepository {
     @Override
     public ChannelMember addUserToChannel(UserInfo userInfo, Channel channel, AccessType accessType) {
         String sql = """
-                INSERT INTO dbo.channel_members (user_id, channel_id, access_type)
+                INSERT INTO channel_members (user_id, channel_id, access_type)
                 VALUES (:user_id, :channel_id, :access_type)
                 """;
         Long id = JdbiUtils.executeUpdateAndReturnId(handle, sql, JdbiUtils.params(
@@ -83,7 +83,7 @@ public class ChannelMemberRepositoryJdbi implements ChannelMemberRepository {
     @Override
     public void save(ChannelMember entity) {
         JdbiUtils.executeUpdate(handle, """
-                UPDATE dbo.channel_members
+                UPDATE channel_members
                 SET access_type = :accessType
                 WHERE id = :id
                 """, JdbiUtils.params("id", entity.id(), "accessType", entity.accessType().name()));
@@ -92,24 +92,24 @@ public class ChannelMemberRepositoryJdbi implements ChannelMemberRepository {
     @Override
     public void removeUserFromChannel(Long userId, Long channelId) {
         JdbiUtils.executeUpdate(handle, """
-                DELETE FROM dbo.channel_members
+                DELETE FROM channel_members
                 WHERE user_id = :user_id AND channel_id = :channel_id
                 """, JdbiUtils.params("user_id", userId, "channel_id", channelId));
     }
 
     @Override
     public void deleteById(Long id) {
-        JdbiUtils.executeUpdate(handle, "DELETE FROM dbo.channel_members WHERE id = :id", Map.of("id", id));
+        JdbiUtils.executeUpdate(handle, "DELETE FROM channel_members WHERE id = :id", Map.of("id", id));
     }
 
     @Override
     public void removeAllMembershipsForUser(Long userId) {
-        JdbiUtils.executeUpdate(handle, "DELETE FROM dbo.channel_members WHERE user_id = :user_id", Map.of("user_id", userId));
+        JdbiUtils.executeUpdate(handle, "DELETE FROM channel_members WHERE user_id = :user_id", Map.of("user_id", userId));
     }
 
     @Override
     public void clear() {
-        JdbiUtils.executeUpdate(handle, "DELETE FROM dbo.channel_members", Map.of());
+        JdbiUtils.executeUpdate(handle, "DELETE FROM channel_members", Map.of());
     }
 
     private ChannelMember mapRowToChannelMember(ResultSet rs) throws SQLException {

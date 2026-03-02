@@ -24,10 +24,10 @@ public class InvitationRepositoryJdbi implements InvitationRepository {
                 creator.id AS creator_id, creator.username AS creator_username,
                 c.id AS channel_id, c.name AS channel_name, c.is_public AS channel_is_public,
                 owner.id AS owner_id, owner.username AS owner_username
-            FROM dbo.invitations i
-            JOIN dbo.users creator ON i.created_by = creator.id
-            JOIN dbo.channels c ON i.channel_id = c.id
-            JOIN dbo.users owner ON c.owner_id = owner.id
+            FROM invitations i
+            JOIN users creator ON i.created_by = creator.id
+            JOIN channels c ON i.channel_id = c.id
+            JOIN users owner ON c.owner_id = owner.id
             """;
 
     public InvitationRepositoryJdbi(Handle handle) {
@@ -38,7 +38,7 @@ public class InvitationRepositoryJdbi implements InvitationRepository {
     public Invitation create(String token, UserInfo createdBy, Channel channel, AccessType accessType, LocalDateTime expiresAt) {
         LocalDateTime expiration = expiresAt.truncatedTo(ChronoUnit.MILLIS);
         String sql = """
-                INSERT INTO dbo.invitations (token, created_by, channel_id, access_type, expires_at) 
+                INSERT INTO invitations (token, created_by, channel_id, access_type, expires_at) 
                 VALUES (:token, :created_by, :channel_id, :access_type, :expires_at)
                 """;
         Long id = JdbiUtils.executeUpdateAndReturnId(handle, sql, JdbiUtils.params(
@@ -77,7 +77,7 @@ public class InvitationRepositoryJdbi implements InvitationRepository {
     @Override
     public void save(Invitation entity) {
         JdbiUtils.executeUpdate(handle, """
-                UPDATE dbo.invitations
+                UPDATE invitations
                 SET status = :status
                 WHERE id = :id
                 """, JdbiUtils.params("id", entity.id(), "status", entity.status().name()));
@@ -85,12 +85,12 @@ public class InvitationRepositoryJdbi implements InvitationRepository {
 
     @Override
     public void deleteById(Long id) {
-        JdbiUtils.executeUpdate(handle, "DELETE FROM dbo.invitations WHERE id = :id", Map.of("id", id));
+        JdbiUtils.executeUpdate(handle, "DELETE FROM invitations WHERE id = :id", Map.of("id", id));
     }
 
     @Override
     public void clear() {
-        JdbiUtils.executeUpdate(handle, "DELETE FROM dbo.invitations", Map.of());
+        JdbiUtils.executeUpdate(handle, "DELETE FROM invitations", Map.of());
     }
 
     private Invitation mapRowToInvitation(ResultSet rs) throws SQLException {

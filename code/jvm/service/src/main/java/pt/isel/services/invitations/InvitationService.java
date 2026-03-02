@@ -28,28 +28,20 @@ public class InvitationService {
             return Either.failure(new InvitationError.InvalidExpirationTime());
         }
 
-        return trxManager.run(trx -> {
-            return switch (checkUserCanManageInvitations(trx, creatorId, channelId)) {
-                case Either.Left<InvitationError, CreatorChannelPair> left -> Either.failure(left.value());
-                case Either.Right<InvitationError, CreatorChannelPair> right -> {
+        return trxManager.run(trx -> checkUserCanManageInvitations(trx, creatorId, channelId)
+                .flatMap(pair -> {
                     String token = UUID.randomUUID().toString();
-                    var invitation = trx.repoInvitations().create(token, right.value().creator(), right.value().channel(), accessType, expiresAt);
-                    yield Either.success(invitation);
-                }
-            };
-        });
+                    var invitation = trx.repoInvitations().create(token, pair.creator(), pair.channel(), accessType, expiresAt);
+                    return Either.success(invitation);
+                }));
     }
 
     public Either<InvitationError, List<Invitation>> getInvitationsForChannel(Long requesterId, Long channelId) {
-        return trxManager.run(trx -> {
-            return switch (checkUserCanManageInvitations(trx, requesterId, channelId)) {
-                case Either.Left<InvitationError, CreatorChannelPair> left -> Either.failure(left.value());
-                case Either.Right<InvitationError, CreatorChannelPair> right -> {
+        return trxManager.run(trx -> checkUserCanManageInvitations(trx, requesterId, channelId)
+                .flatMap(pair -> {
                     List<Invitation> invitations = trx.repoInvitations().findByChannelId(channelId);
-                    yield Either.success(invitations);
-                }
-            };
-        });
+                    return Either.success(invitations);
+                }));
     }
 
     public Either<InvitationError, String> revokeInvitation(Long userId, Long channelId, Long invitationId) {

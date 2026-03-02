@@ -24,10 +24,10 @@ public class JdbiUtils {
         return map;
     }
 
-    public static int executeUpdate(Handle handle, String query, Map<String, Object> params) {
+    public static void executeUpdate(Handle handle, String query, Map<String, Object> params) {
         var update = handle.createUpdate(query);
         params.forEach(update::bind);
-        return update.execute();
+        update.execute();
     }
 
     public static Long executeUpdateAndReturnId(Handle handle, String query, Map<String, Object> params) {

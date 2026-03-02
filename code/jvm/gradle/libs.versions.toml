@@ -15,9 +15,6 @@ spring-boot-starter-web = { group = "org.springframework.boot", name = "spring-b
 spring-boot-starter-test = { group = "org.springframework.boot", name = "spring-boot-starter-test" }
 spring-boot-starter-data-redis = { group = "org.springframework.boot", name = "spring-boot-starter-data-redis" }
 
-# Spring Framework
-spring-context = { group = "org.springframework", name = "spring-context" }
-
 # Spring Security
 spring-security-core = { group = "org.springframework.security", name = "spring-security-core" }
 

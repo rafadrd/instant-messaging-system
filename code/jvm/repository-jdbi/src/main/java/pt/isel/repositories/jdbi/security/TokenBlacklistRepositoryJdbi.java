@@ -17,7 +17,7 @@ public class TokenBlacklistRepositoryJdbi implements TokenBlacklistRepository {
     @Override
     public void add(String jti, LocalDateTime expiresAt) {
         JdbiUtils.executeUpdate(handle, """
-                INSERT INTO dbo.token_blacklist (jti, expires_at)
+                INSERT INTO token_blacklist (jti, expires_at)
                 VALUES (:jti, :expires_at)
                 ON CONFLICT (jti) DO NOTHING
                 """, JdbiUtils.params("jti", jti, "expires_at", expiresAt));
@@ -25,7 +25,7 @@ public class TokenBlacklistRepositoryJdbi implements TokenBlacklistRepository {
 
     @Override
     public boolean exists(String jti) {
-        return handle.createQuery("SELECT 1 FROM dbo.token_blacklist WHERE jti = :jti")
+        return handle.createQuery("SELECT 1 FROM token_blacklist WHERE jti = :jti")
                 .bind("jti", jti)
                 .mapTo(Integer.class)
                 .findOne()
@@ -34,11 +34,11 @@ public class TokenBlacklistRepositoryJdbi implements TokenBlacklistRepository {
 
     @Override
     public void cleanupExpired() {
-        JdbiUtils.executeUpdate(handle, "DELETE FROM dbo.token_blacklist WHERE expires_at < CURRENT_TIMESTAMP", Map.of());
+        JdbiUtils.executeUpdate(handle, "DELETE FROM token_blacklist WHERE expires_at < CURRENT_TIMESTAMP", Map.of());
     }
 
     @Override
     public void clear() {
-        JdbiUtils.executeUpdate(handle, "DELETE FROM dbo.token_blacklist", Map.of());
+        JdbiUtils.executeUpdate(handle, "DELETE FROM token_blacklist", Map.of());
     }
 }

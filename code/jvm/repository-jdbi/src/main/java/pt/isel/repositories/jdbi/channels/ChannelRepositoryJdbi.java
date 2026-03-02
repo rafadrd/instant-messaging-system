@@ -21,7 +21,7 @@ public class ChannelRepositoryJdbi implements ChannelRepository {
     @Override
     public Channel create(String name, UserInfo owner, boolean isPublic) {
         String sql = """
-                INSERT INTO dbo.channels (name, owner_id, is_public)
+                INSERT INTO channels (name, owner_id, is_public)
                 VALUES (:name, :owner_id, :is_public)
                 """;
         Long id = JdbiUtils.executeUpdateAndReturnId(handle, sql, JdbiUtils.params(
@@ -36,8 +36,8 @@ public class ChannelRepositoryJdbi implements ChannelRepository {
     public Channel findById(Long id) {
         return JdbiUtils.executeQueryToSingle(handle, """
                 SELECT c.id as channel_id, c.name, c.is_public, u.id as owner_id, u.username 
-                FROM dbo.channels c
-                JOIN dbo.users u ON c.owner_id = u.id
+                FROM channels c
+                JOIN users u ON c.owner_id = u.id
                 WHERE c.id = :id
                 """, Map.of("id", id), this::mapRowToChannel);
     }
@@ -46,8 +46,8 @@ public class ChannelRepositoryJdbi implements ChannelRepository {
     public Channel findByName(String name) {
         return JdbiUtils.executeQueryToSingle(handle, """
                 SELECT c.id as channel_id, c.name, c.is_public, u.id as owner_id, u.username 
-                FROM dbo.channels c
-                JOIN dbo.users u ON c.owner_id = u.id
+                FROM channels c
+                JOIN users u ON c.owner_id = u.id
                 WHERE c.name = :name
                 """, Map.of("name", name), this::mapRowToChannel);
     }
@@ -56,8 +56,8 @@ public class ChannelRepositoryJdbi implements ChannelRepository {
     public List<Channel> findAllByOwner(Long ownerId) {
         return JdbiUtils.executeQueryToList(handle, """
                 SELECT c.id as channel_id, c.name, c.is_public, u.id as owner_id, u.username 
-                FROM dbo.channels c
-                JOIN dbo.users u ON c.owner_id = u.id
+                FROM channels c
+                JOIN users u ON c.owner_id = u.id
                 WHERE owner_id = :owner_id
                 """, Map.of("owner_id", ownerId), this::mapRowToChannel);
     }
@@ -66,8 +66,8 @@ public class ChannelRepositoryJdbi implements ChannelRepository {
     public List<Channel> findAllPublicChannels(int limit, int offset) {
         return JdbiUtils.executeQueryToList(handle, """
                 SELECT c.id as channel_id, c.name, c.is_public, u.id as owner_id, u.username 
-                FROM dbo.channels c
-                JOIN dbo.users u ON c.owner_id = u.id
+                FROM channels c
+                JOIN users u ON c.owner_id = u.id
                 WHERE c.is_public = TRUE
                 ORDER BY c.id ASC
                 OFFSET :offset
@@ -79,8 +79,8 @@ public class ChannelRepositoryJdbi implements ChannelRepository {
     public List<Channel> findAll() {
         return JdbiUtils.executeQueryToList(handle, """
                 SELECT c.id as channel_id, c.name, c.is_public, u.id as owner_id, u.username 
-                FROM dbo.channels c
-                JOIN dbo.users u ON c.owner_id = u.id
+                FROM channels c
+                JOIN users u ON c.owner_id = u.id
                 """, Map.of(), this::mapRowToChannel);
     }
 
@@ -89,8 +89,8 @@ public class ChannelRepositoryJdbi implements ChannelRepository {
         String escapedQuery = query.replace("%", "\\%").replace("_", "\\_");
         return JdbiUtils.executeQueryToList(handle, """
                 SELECT c.id as channel_id, c.name, c.is_public, u.id as owner_id, u.username 
-                FROM dbo.channels c
-                JOIN dbo.users u ON c.owner_id = u.id
+                FROM channels c
+                JOIN users u ON c.owner_id = u.id
                 WHERE c.name ILIKE '%' || :query || '%' ESCAPE '\\' AND c.is_public = TRUE
                 ORDER BY c.id ASC
                 OFFSET :offset
@@ -101,7 +101,7 @@ public class ChannelRepositoryJdbi implements ChannelRepository {
     @Override
     public void save(Channel entity) {
         JdbiUtils.executeUpdate(handle, """
-                UPDATE dbo.channels
+                UPDATE channels
                 SET name = :name, is_public = :is_public
                 WHERE id = :id
                 """, JdbiUtils.params(
@@ -113,12 +113,12 @@ public class ChannelRepositoryJdbi implements ChannelRepository {
 
     @Override
     public void deleteById(Long id) {
-        JdbiUtils.executeUpdate(handle, "DELETE FROM dbo.channels WHERE id = :id", Map.of("id", id));
+        JdbiUtils.executeUpdate(handle, "DELETE FROM channels WHERE id = :id", Map.of("id", id));
     }
 
     @Override
     public void clear() {
-        JdbiUtils.executeUpdate(handle, "DELETE FROM dbo.channels", Map.of());
+        JdbiUtils.executeUpdate(handle, "DELETE FROM channels", Map.of());
     }
 
     private Channel mapRowToChannel(ResultSet rs) throws SQLException {

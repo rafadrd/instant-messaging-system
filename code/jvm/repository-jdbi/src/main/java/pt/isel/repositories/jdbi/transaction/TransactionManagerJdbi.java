@@ -17,14 +17,19 @@ public class TransactionManagerJdbi implements TransactionManager {
     @Override
     public <R> R run(Function<Transaction, R> block) {
         return jdbi.inTransaction((handle) -> {
-            Transaction transaction = new TransactionJdbi(handle);
-            R result = block.apply(transaction);
+            try {
+                Transaction transaction = new TransactionJdbi(handle);
+                R result = block.apply(transaction);
 
-            if (result instanceof Either.Left<?, ?>) {
+                if (result instanceof Either.Left<?, ?>) {
+                    handle.rollback();
+                }
+
+                return result;
+            } catch (Exception e) {
                 handle.rollback();
+                throw e;
             }
-
-            return result;
         });
     }
 }
