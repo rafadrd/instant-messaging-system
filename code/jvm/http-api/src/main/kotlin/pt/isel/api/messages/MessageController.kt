@@ -1,12 +1,13 @@
 package pt.isel.api.messages
 
+import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import pt.isel.api.common.PageInput
 import pt.isel.api.common.handleResult
@@ -22,7 +23,7 @@ class MessageController(
     fun createMessage(
         user: AuthenticatedUser,
         @PathVariable channelId: Long,
-        @RequestBody request: MessageRequest,
+        @Valid @RequestBody request: MessageRequest,
     ): ResponseEntity<*> =
         handleResult(
             messageService.createMessage(
@@ -30,13 +31,15 @@ class MessageController(
                 userId = user.user.id,
                 channelId = channelId,
             ),
-        )
+        ) { message ->
+            ResponseEntity.status(HttpStatus.CREATED).body(message)
+        }
 
     @GetMapping
     fun getMessages(
         user: AuthenticatedUser,
         @PathVariable channelId: Long,
-        @RequestParam page: PageInput = PageInput(),
+        page: PageInput = PageInput(),
     ): ResponseEntity<*> =
         handleResult(
             messageService.getMessagesInChannel(

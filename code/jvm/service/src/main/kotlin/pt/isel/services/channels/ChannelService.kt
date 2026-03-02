@@ -4,18 +4,18 @@ import jakarta.inject.Named
 import pt.isel.domain.channels.AccessType
 import pt.isel.domain.channels.Channel
 import pt.isel.domain.channels.ChannelMember
+import pt.isel.domain.common.ChannelError
+import pt.isel.domain.common.Either
+import pt.isel.domain.common.Failure
+import pt.isel.domain.common.MessageError
+import pt.isel.domain.common.Success
+import pt.isel.domain.common.failure
+import pt.isel.domain.common.success
 import pt.isel.domain.invitations.InvitationStatus
 import pt.isel.domain.users.User
 import pt.isel.domain.users.UserInfo
 import pt.isel.repositories.Transaction
 import pt.isel.repositories.TransactionManager
-import pt.isel.services.common.ChannelError
-import pt.isel.services.common.Either
-import pt.isel.services.common.Failure
-import pt.isel.services.common.MessageError
-import pt.isel.services.common.Success
-import pt.isel.services.common.failure
-import pt.isel.services.common.success
 import java.time.LocalDateTime
 
 @Named
@@ -124,15 +124,21 @@ class ChannelService(
     }
 
     fun getAccessType(
-        userId: Long,
+        requesterId: Long,
+        targetUserId: Long,
         channelId: Long,
     ): Either<MessageError, AccessType> {
         return trxManager.run {
-            val membership =
-                repoMemberships.findUserInChannel(userId, channelId)
+            val targetMembership =
+                repoMemberships.findUserInChannel(targetUserId, channelId)
                     ?: return@run failure(MessageError.UserNotInChannel)
 
-            success(membership.accessType)
+            if (requesterId != targetUserId) {
+                repoMemberships.findUserInChannel(requesterId, channelId)
+                    ?: return@run failure(MessageError.UserNotAuthorized)
+            }
+
+            success(targetMembership.accessType)
         }
     }
 
@@ -170,9 +176,7 @@ class ChannelService(
                 if (query.isBlank()) {
                     repoChannels.findAllPublicChannels(limit, offset)
                 } else {
-                    repoChannels.searchByName(query, limit, offset).filter {
-                        it.name.contains(query, ignoreCase = true)
-                    }
+                    repoChannels.searchByName(query, limit, offset)
                 }
             success(channels)
         }
@@ -186,6 +190,10 @@ class ChannelService(
             val user = repoUsers.findById(userId) ?: return@run failure(ChannelError.UserNotFound)
             val channel =
                 repoChannels.findById(channelId) ?: return@run failure(ChannelError.ChannelNotFound)
+
+            if (!channel.isPublic) {
+                return@run failure(ChannelError.ChannelIsPrivate)
+            }
 
             if (repoMemberships.findUserInChannel(user.id, channel.id) != null) {
                 return@run failure(ChannelError.UserAlreadyInChannel)

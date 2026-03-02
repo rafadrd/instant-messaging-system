@@ -1,14 +1,14 @@
 package pt.isel.api.common
 
 import org.springframework.http.ResponseEntity
-import pt.isel.services.common.AppError
-import pt.isel.services.common.ChannelError
-import pt.isel.services.common.Either
-import pt.isel.services.common.Failure
-import pt.isel.services.common.InvitationError
-import pt.isel.services.common.MessageError
-import pt.isel.services.common.Success
-import pt.isel.services.common.UserError
+import pt.isel.domain.common.AppError
+import pt.isel.domain.common.ChannelError
+import pt.isel.domain.common.Either
+import pt.isel.domain.common.Failure
+import pt.isel.domain.common.InvitationError
+import pt.isel.domain.common.MessageError
+import pt.isel.domain.common.Success
+import pt.isel.domain.common.UserError
 
 internal fun <T> handleResult(
     result: Either<AppError, T>,
@@ -58,6 +58,7 @@ private fun ChannelError.toProblem(): Problem =
         ChannelError.NoJoinedChannels -> Problem.NoJoinedChannels
         ChannelError.OwnerCannotLeave -> Problem.OwnerCannotLeave
         ChannelError.EmptyChannelName -> Problem.EmptyChannelName
+        ChannelError.ChannelIsPrivate -> Problem.ChannelIsPrivate
         ChannelError.InvalidChannelNameLength -> Problem.InvalidChannelNameLength
         ChannelError.InvalidLimit -> Problem.InvalidLimit
         ChannelError.InvalidOffset -> Problem.InvalidOffset

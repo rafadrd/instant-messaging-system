@@ -10,5 +10,7 @@ interface TokenBlacklistRepository {
 
     fun exists(jti: String): Boolean
 
+    fun cleanupExpired()
+
     fun clear()
 }

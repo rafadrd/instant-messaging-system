@@ -1,6 +1,14 @@
 package pt.isel.services.users
 
 import jakarta.inject.Named
+import org.springframework.scheduling.annotation.Scheduled
+import pt.isel.domain.common.Either
+import pt.isel.domain.common.Failure
+import pt.isel.domain.common.Success
+import pt.isel.domain.common.UserError
+import pt.isel.domain.common.failure
+import pt.isel.domain.common.success
+import pt.isel.domain.invitations.Invitation
 import pt.isel.domain.invitations.InvitationStatus
 import pt.isel.domain.security.PasswordSecurityDomain
 import pt.isel.domain.security.TokenExternalInfo
@@ -8,12 +16,6 @@ import pt.isel.domain.users.User
 import pt.isel.domain.users.UserInfo
 import pt.isel.repositories.Transaction
 import pt.isel.repositories.TransactionManager
-import pt.isel.services.common.Either
-import pt.isel.services.common.Failure
-import pt.isel.services.common.Success
-import pt.isel.services.common.UserError
-import pt.isel.services.common.failure
-import pt.isel.services.common.success
 import java.time.Clock
 import java.time.LocalDateTime
 
@@ -30,24 +32,26 @@ class UserService(
         token: String? = null,
     ): Either<UserError, TokenExternalInfo> =
         trxManager.run {
+            var invitation: Invitation? = null
+
+            if (!token.isNullOrBlank()) {
+                invitation = repoInvitations.findByToken(token)
+                    ?: return@run failure(UserError.InvitationNotFound)
+
+                if (invitation.expiresAt.isBefore(LocalDateTime.now(clock))) {
+                    return@run failure(UserError.InvitationExpired)
+                }
+                if (invitation.status != InvitationStatus.PENDING) {
+                    return@run failure(UserError.InvitationAlreadyUsed)
+                }
+            }
+
             val newUserResult = createUser(username, password)
             if (newUserResult is Failure) return@run newUserResult
 
             val user = (newUserResult as Success).value
 
-            if (!token.isNullOrBlank()) {
-                val invitation =
-                    repoInvitations.findByToken(token)
-                        ?: return@run failure(UserError.InvitationNotFound).also { rollback() }
-
-                if (invitation.expiresAt.isBefore(LocalDateTime.now(clock))) {
-                    return@run failure(UserError.InvitationExpired).also { rollback() }
-                }
-
-                if (invitation.status != InvitationStatus.PENDING) {
-                    return@run failure(UserError.InvitationAlreadyUsed).also { rollback() }
-                }
-
+            if (invitation != null) {
                 repoMemberships.addUserToChannel(
                     UserInfo(user.id, user.username),
                     invitation.channel,
@@ -106,7 +110,8 @@ class UserService(
         return trxManager.run {
             val user = repoUsers.findById(userId) ?: return@run failure(UserError.UserNotFound)
 
-            if (repoUsers.findByUsername(newUsername) != null) {
+            val existing = repoUsers.findByUsername(newUsername)
+            if (existing != null && existing.id != userId) {
                 return@run failure(UserError.UsernameAlreadyInUse)
             }
             if (!passwordSecurityDomain.validatePassword(password, user.passwordValidation)) {
@@ -121,6 +126,7 @@ class UserService(
 
     fun updatePassword(
         userId: Long,
+        oldPassword: String,
         newPassword: String,
     ): Either<UserError, User> {
         if (newPassword.isBlank()) return failure(UserError.EmptyPassword)
@@ -130,6 +136,10 @@ class UserService(
 
         return trxManager.run {
             val user = repoUsers.findById(userId) ?: return@run failure(UserError.UserNotFound)
+
+            if (!passwordSecurityDomain.validatePassword(oldPassword, user.passwordValidation)) {
+                return@run failure(UserError.IncorrectPassword)
+            }
 
             if (passwordSecurityDomain.validatePassword(newPassword, user.passwordValidation)) {
                 return@run failure(UserError.PasswordSameAsPrevious)
@@ -190,6 +200,13 @@ class UserService(
         val parsedToken = tokenService.validateToken(token) ?: return
         trxManager.run {
             repoTokenBlacklist.add(parsedToken.jti, parsedToken.expiresAt)
+        }
+    }
+
+    @Scheduled(fixedRate = 3600000) // Cleanup every 1 hour
+    fun cleanupExpiredTokens() {
+        trxManager.run {
+            repoTokenBlacklist.cleanupExpired()
         }
     }
 }

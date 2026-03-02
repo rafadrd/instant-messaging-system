@@ -18,10 +18,7 @@ import javax.sql.DataSource
 @EnableScheduling
 class AppInstantMessaging {
     @Bean
-    fun jdbi(dataSource: DataSource) =
-        Jdbi
-            .create(dataSource)
-            .configureWithAppRequirements()
+    fun jdbi(dataSource: DataSource) = Jdbi.create(dataSource).configureWithAppRequirements()
 
     @Bean
     @Profile("jdbi")

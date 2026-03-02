@@ -5,6 +5,7 @@ dependencies {
 
     // Libraries
     implementation(libs.jakarta.inject.api)
+    implementation(libs.spring.context)
 
     // Testing
     testImplementation(project(":repository-jdbi"))

@@ -70,7 +70,7 @@ class ChannelMemberRepositoryJdbi(
         offset: Int,
     ): List<ChannelMember> =
         handle.executeQueryToList(
-            "$baseQuery WHERE cm.user_id = :user_id OFFSET :offset LIMIT :limit",
+            "$baseQuery WHERE cm.user_id = :user_id ORDER BY cm.id ASC OFFSET :offset LIMIT :limit",
             mapOf("user_id" to userId, "offset" to offset, "limit" to limit),
             ::mapRowToChannelMember,
         )
@@ -81,7 +81,7 @@ class ChannelMemberRepositoryJdbi(
         offset: Int,
     ): List<ChannelMember> =
         handle.executeQueryToList(
-            "$baseQuery WHERE cm.channel_id = :channel_id OFFSET :offset LIMIT :limit",
+            "$baseQuery WHERE cm.channel_id = :channel_id ORDER BY cm.id ASC OFFSET :offset LIMIT :limit",
             mapOf("channel_id" to channelId, "offset" to offset, "limit" to limit),
             ::mapRowToChannelMember,
         )

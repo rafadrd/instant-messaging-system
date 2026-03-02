@@ -2,9 +2,9 @@ package pt.isel.api.users
 
 import jakarta.validation.constraints.NotBlank
 
-data class UserInput(
+data class UpdatePasswordInput(
     @field:NotBlank
-    val username: String,
+    val oldPassword: String,
     @field:NotBlank
-    val password: String,
+    val newPassword: String,
 )

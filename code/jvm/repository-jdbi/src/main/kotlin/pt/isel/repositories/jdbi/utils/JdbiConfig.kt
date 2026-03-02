@@ -10,6 +10,5 @@ fun Jdbi.configureWithAppRequirements(): Jdbi {
     installPlugin(KotlinPlugin())
     installPlugin(PostgresPlugin())
     registerColumnMapper(PasswordValidationInfo::class.java, PasswordValidationInfoMapper())
-    registerColumnMapper(Instant::class.java, InstantMapper())
     return this
 }

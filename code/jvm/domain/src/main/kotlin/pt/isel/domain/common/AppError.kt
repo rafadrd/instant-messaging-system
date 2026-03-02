@@ -1,4 +1,4 @@
-package pt.isel.services.common
+package pt.isel.domain.common
 
 sealed interface AppError
 
@@ -72,6 +72,8 @@ sealed class ChannelError : AppError {
     data object UserNotOwner : ChannelError()
 
     data object UserIsOwner : ChannelError()
+
+    data object ChannelIsPrivate : ChannelError()
 
     data object InvitationAlreadyUsed : ChannelError()
 

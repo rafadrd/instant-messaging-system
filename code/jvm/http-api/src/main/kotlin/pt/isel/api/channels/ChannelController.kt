@@ -1,5 +1,7 @@
 package pt.isel.api.channels
 
+import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
@@ -27,13 +29,13 @@ class ChannelController(
     fun getChannels(
         user: AuthenticatedUser,
         @RequestParam query: String = "",
-        @RequestParam page: PageInput = PageInput(),
+        page: PageInput = PageInput(),
     ): ResponseEntity<*> = handleResult(channelService.searchChannels(query, page.limit, page.offset))
 
     @PostMapping
     fun createChannel(
         user: AuthenticatedUser,
-        @RequestBody channel: ChannelInput,
+        @Valid @RequestBody channel: ChannelInput,
     ): ResponseEntity<*> =
         handleResult(
             channelService.createChannel(
@@ -41,7 +43,9 @@ class ChannelController(
                 ownerId = user.user.id,
                 isPublic = channel.isPublic,
             ),
-        )
+        ) { createdChannel ->
+            ResponseEntity.status(HttpStatus.CREATED).body(createdChannel)
+        }
 
     @GetMapping("/{channelId}")
     fun getChannelById(
@@ -53,7 +57,7 @@ class ChannelController(
     fun editChannel(
         user: AuthenticatedUser,
         @PathVariable channelId: Long,
-        @RequestBody input: EditChannelInput,
+        @Valid @RequestBody input: EditChannelInput,
     ): ResponseEntity<*> =
         handleResult(
             channelService.editChannel(
@@ -79,7 +83,7 @@ class ChannelController(
     @PostMapping("/join-by-token")
     fun joinChannelByToken(
         user: AuthenticatedUser,
-        @RequestBody input: JoinByTokenInput,
+        @Valid @RequestBody input: JoinByTokenInput,
     ): ResponseEntity<*> = handleResult(channelService.joinPrivateChannel(userId = user.user.id, token = input.token))
 
     @PostMapping("/{channelId}/leave")
@@ -92,21 +96,22 @@ class ChannelController(
     fun getMembers(
         user: AuthenticatedUser,
         @PathVariable channelId: Long,
-        @RequestParam page: PageInput = PageInput(),
+        page: PageInput = PageInput(),
     ): ResponseEntity<*> = handleResult(channelService.getUsersInChannel(channelId, page.limit, page.offset))
 
     @GetMapping("/{channelId}/members/{userId}")
     fun getAccessType(
-        @PathVariable userId: Long,
+        user: AuthenticatedUser,
         @PathVariable channelId: Long,
-    ): ResponseEntity<*> = handleResult(channelService.getAccessType(userId, channelId))
+        @PathVariable userId: Long,
+    ): ResponseEntity<*> = handleResult(channelService.getAccessType(user.user.id, userId, channelId))
 
     @PutMapping("/{channelId}/members/{userId}")
     fun editMemberAccess(
         user: AuthenticatedUser,
         @PathVariable channelId: Long,
         @PathVariable userId: Long,
-        @RequestBody input: EditMemberInput,
+        @Valid @RequestBody input: EditMemberInput,
     ): ResponseEntity<*> = handleResult(channelService.editMemberAccess(user.user.id, channelId, userId, input.accessType))
 
     @GetMapping("/{channelId}/listen")
@@ -114,8 +119,8 @@ class ChannelController(
         user: AuthenticatedUser,
         @PathVariable channelId: Long,
     ): ResponseEntity<*> =
-        handleResult(channelService.getAccessType(user.user.id, channelId)) {
-            val emitter = SseEmitter(0L)
+        handleResult(channelService.getAccessType(user.user.id, user.user.id, channelId)) {
+            val emitter = SseEmitter(30 * 60 * 1000L)
             try {
                 val adapter = SseUpdatedMessageEmitterAdapter(emitter)
                 messageEventService.addEmitter(channelId, user.user.id, adapter)

@@ -1,4 +1,4 @@
-package pt.isel.services.common
+package pt.isel.domain.common
 
 sealed class Either<out L, out R> {
     data class Left<out L>(

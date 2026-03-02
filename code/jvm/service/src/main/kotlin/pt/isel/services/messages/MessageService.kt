@@ -3,17 +3,17 @@ package pt.isel.services.messages
 import jakarta.inject.Named
 import pt.isel.domain.channels.AccessType
 import pt.isel.domain.channels.Channel
+import pt.isel.domain.common.Either
+import pt.isel.domain.common.Failure
+import pt.isel.domain.common.MessageError
+import pt.isel.domain.common.Success
+import pt.isel.domain.common.failure
+import pt.isel.domain.common.success
 import pt.isel.domain.messages.Message
 import pt.isel.domain.messages.NewMessage
 import pt.isel.domain.users.UserInfo
 import pt.isel.repositories.Transaction
 import pt.isel.repositories.TransactionManager
-import pt.isel.services.common.Either
-import pt.isel.services.common.Failure
-import pt.isel.services.common.MessageError
-import pt.isel.services.common.Success
-import pt.isel.services.common.failure
-import pt.isel.services.common.success
 
 @Named
 class MessageService(

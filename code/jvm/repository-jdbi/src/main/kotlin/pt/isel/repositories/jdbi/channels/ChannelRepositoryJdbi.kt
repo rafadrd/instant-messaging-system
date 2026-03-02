@@ -75,6 +75,7 @@ class ChannelRepositoryJdbi(
             FROM dbo.channels c
             JOIN dbo.users u ON c.owner_id = u.id
             WHERE c.is_public = TRUE
+            ORDER BY c.id ASC
             OFFSET :offset
             LIMIT :limit
             """,
@@ -96,19 +97,22 @@ class ChannelRepositoryJdbi(
         query: String,
         limit: Int,
         offset: Int,
-    ): List<Channel> =
-        handle.executeQueryToList(
+    ): List<Channel> {
+        val escapedQuery = query.replace("%", "\\%").replace("_", "\\_")
+        return handle.executeQueryToList(
             """
             SELECT c.id as channel_id, c.name, c.is_public, u.id as owner_id, u.username 
             FROM dbo.channels c
             JOIN dbo.users u ON c.owner_id = u.id
-            WHERE c.name ILIKE '%' || :query || '%' AND c.is_public = TRUE
+            WHERE c.name ILIKE '%' || :query || '%' ESCAPE '\' AND c.is_public = TRUE
+            ORDER BY c.id ASC
             OFFSET :offset
             LIMIT :limit
             """,
-            mapOf("query" to query, "offset" to offset, "limit" to limit),
+            mapOf("query" to escapedQuery, "offset" to offset, "limit" to limit),
             ::mapRowToChannel,
         )
+    }
 
     override fun save(entity: Channel) {
         handle.executeUpdate(

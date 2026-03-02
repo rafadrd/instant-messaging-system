@@ -27,6 +27,7 @@ class PipelineConfigurer(
         registry
             .addMapping("/api/**")
             .allowedOrigins(*allowedOrigins.split(",").toTypedArray())
+            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
             .allowCredentials(true)
     }
 }

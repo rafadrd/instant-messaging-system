@@ -8,6 +8,7 @@ dependencies {
 
     // Spring
     implementation(libs.spring.boot.starter.web)
+    implementation(libs.spring.boot.starter.validation)
 
     // Testing
     testImplementation(project(":repository-jdbi"))

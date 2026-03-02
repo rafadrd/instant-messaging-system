@@ -1,6 +1,7 @@
 package pt.isel.repositories.jdbi.transaction
 
 import org.jdbi.v3.core.Jdbi
+import pt.isel.domain.common.Either
 import pt.isel.repositories.Transaction
 import pt.isel.repositories.TransactionManager
 
@@ -10,6 +11,8 @@ class TransactionManagerJdbi(
     override fun <R> run(block: (Transaction) -> R): R =
         jdbi.inTransaction<R, Exception> { handle ->
             val transaction = TransactionJdbi(handle)
-            block(transaction)
+            val result = block(transaction)
+            if (result is Either.Left<*>) handle.rollback()
+            result
         }
 }

@@ -8,14 +8,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import pt.isel.auth.Sha256TokenEncoder
 import pt.isel.auth.UsersDomainConfig
 import pt.isel.domain.channels.AccessType
+import pt.isel.domain.common.Either
+import pt.isel.domain.common.MessageError
 import pt.isel.domain.security.PasswordSecurityDomain
 import pt.isel.domain.users.User
 import pt.isel.mem.TransactionManagerInMem
 import pt.isel.repositories.jdbi.transaction.TransactionManagerJdbi
 import pt.isel.repositories.jdbi.utils.configureWithAppRequirements
 import pt.isel.services.channels.ChannelService
-import pt.isel.services.common.Either
-import pt.isel.services.common.MessageError
 import pt.isel.services.invitations.InvitationService
 import pt.isel.services.messages.MessageService
 import pt.isel.services.users.UserService

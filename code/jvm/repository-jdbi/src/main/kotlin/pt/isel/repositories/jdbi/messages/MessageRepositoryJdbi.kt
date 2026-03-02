@@ -45,7 +45,7 @@ class MessageRepositoryJdbi(
             c.id AS channel_id, c.name AS channel_name, c.is_public AS channel_is_public,
             owner.id AS owner_id, owner.username AS owner_username
         FROM dbo.messages m
-        JOIN dbo.users author ON m.user_id = author.id
+        LEFT JOIN dbo.users author ON m.user_id = author.id
         JOIN dbo.channels c ON m.channel_id = c.id
         JOIN dbo.users owner ON c.owner_id = owner.id
     """
@@ -66,7 +66,7 @@ class MessageRepositoryJdbi(
             """
             $baseQuery
             WHERE m.channel_id = :channel_id
-            ORDER BY m.created_at ASC
+            ORDER BY m.created_at DESC
             OFFSET :offset
             LIMIT :limit
             """,
@@ -100,11 +100,16 @@ class MessageRepositoryJdbi(
     }
 
     private fun mapRowToMessage(rs: ResultSet): Message {
+        val authorId = rs.getLong("author_id")
         val author =
-            UserInfo(
-                rs.getLong("author_id"),
-                rs.getString("author_username"),
-            )
+            if (rs.wasNull()) {
+                null
+            } else {
+                UserInfo(
+                    authorId,
+                    rs.getString("author_username"),
+                )
+            }
 
         val owner =
             UserInfo(

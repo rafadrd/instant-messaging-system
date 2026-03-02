@@ -23,7 +23,7 @@ CREATE TABLE dbo.messages
 (
     id         SERIAL PRIMARY KEY,
     content    TEXT NOT NULL CHECK (LENGTH(content) BETWEEN 1 AND 1000),
-    user_id    INT  REFERENCES dbo.users (id) ON DELETE CASCADE,
+    user_id    INT  REFERENCES dbo.users (id) ON DELETE SET NULL,
     channel_id INT  NOT NULL REFERENCES dbo.channels (id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

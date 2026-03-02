@@ -22,7 +22,7 @@ class AuthenticationInterceptor(
         ) {
             var authorizationValue = request.getHeader(NAME_AUTHORIZATION_HEADER)
 
-            if (authorizationValue == null) {
+            if (authorizationValue == null && request.requestURI.endsWith("/listen")) {
                 val accessToken = request.getParameter("access_token")
                 if (accessToken != null) {
                     authorizationValue = "$SCHEME $accessToken"

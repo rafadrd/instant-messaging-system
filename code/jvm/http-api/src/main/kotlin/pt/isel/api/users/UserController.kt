@@ -1,5 +1,6 @@
 package pt.isel.api.users
 
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -8,7 +9,6 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import pt.isel.api.common.PageInput
 import pt.isel.api.common.handleResult
@@ -24,7 +24,7 @@ class UserController(
 ) {
     @PostMapping("/auth/register")
     fun registerUser(
-        @RequestBody user: RegisterInput,
+        @Valid @RequestBody user: RegisterInput,
     ): ResponseEntity<*> =
         handleResult(
             userService.registerUser(user.username, user.password, user.invitationToken),
@@ -36,7 +36,7 @@ class UserController(
 
     @PostMapping("/auth/login")
     fun loginUser(
-        @RequestBody user: UserInput,
+        @Valid @RequestBody user: UserInput,
     ): ResponseEntity<*> =
         handleResult(userService.createToken(user.username, user.password)) { tokenInfo ->
             ResponseEntity.ok(UserHomeOutput(tokenInfo.userId, user.username, tokenInfo.tokenValue))
@@ -55,13 +55,25 @@ class UserController(
     @PutMapping("/users/me")
     fun editUser(
         user: AuthenticatedUser,
-        @RequestBody input: UpdateUsernameInput,
-    ): ResponseEntity<*> = handleResult(userService.updateUsername(user.user.id, input.newUsername, input.password))
+        @Valid @RequestBody input: UpdateUsernameInput,
+    ): ResponseEntity<*> =
+        handleResult(userService.updateUsername(user.user.id, input.newUsername, input.password)) { updatedUser ->
+            ResponseEntity.ok(UserHomeOutput(updatedUser.id, updatedUser.username))
+        }
+
+    @PutMapping("/users/me/password")
+    fun updatePassword(
+        user: AuthenticatedUser,
+        @Valid @RequestBody input: UpdatePasswordInput,
+    ): ResponseEntity<*> =
+        handleResult(userService.updatePassword(user.user.id, input.oldPassword, input.newPassword)) { updatedUser ->
+            ResponseEntity.ok(UserHomeOutput(updatedUser.id, updatedUser.username))
+        }
 
     @GetMapping("/users/me/channels")
     fun getUserChannels(
         user: AuthenticatedUser,
-        @RequestParam page: PageInput = PageInput(),
+        page: PageInput = PageInput(),
     ): ResponseEntity<*> = handleResult(channelService.getJoinedChannels(user.user.id, page.limit, page.offset))
 
     @DeleteMapping("/users/me")

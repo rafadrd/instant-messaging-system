@@ -45,6 +45,13 @@ sealed class Problem(
         detail = "The channel was not found.",
     )
 
+    data object ChannelIsPrivate : Problem(
+        type = createUri("channel-is-private"),
+        title = "Channel Is Private",
+        status = HttpStatus.FORBIDDEN,
+        detail = "The channel is private and requires an invitation to join.",
+    )
+
     data object EmptyAccessType : Problem(
         type = createUri("empty-access-type"),
         title = "Empty Access Type",

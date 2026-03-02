@@ -30,6 +30,10 @@ class TokenBlacklistRepositoryJdbi(
             .findOne()
             .isPresent
 
+    override fun cleanupExpired() {
+        handle.executeUpdate("DELETE FROM dbo.token_blacklist WHERE expires_at < CURRENT_TIMESTAMP")
+    }
+
     override fun clear() {
         handle.executeUpdate("DELETE FROM dbo.token_blacklist")
     }

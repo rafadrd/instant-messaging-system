@@ -3,17 +3,17 @@ package pt.isel.services.invitations
 import jakarta.inject.Named
 import pt.isel.domain.channels.AccessType
 import pt.isel.domain.channels.Channel
+import pt.isel.domain.common.Either
+import pt.isel.domain.common.Failure
+import pt.isel.domain.common.InvitationError
+import pt.isel.domain.common.Success
+import pt.isel.domain.common.failure
+import pt.isel.domain.common.success
 import pt.isel.domain.invitations.Invitation
 import pt.isel.domain.invitations.InvitationStatus
 import pt.isel.domain.users.UserInfo
 import pt.isel.repositories.Transaction
 import pt.isel.repositories.TransactionManager
-import pt.isel.services.common.Either
-import pt.isel.services.common.Failure
-import pt.isel.services.common.InvitationError
-import pt.isel.services.common.Success
-import pt.isel.services.common.failure
-import pt.isel.services.common.success
 import java.time.LocalDateTime
 import java.util.UUID
 
