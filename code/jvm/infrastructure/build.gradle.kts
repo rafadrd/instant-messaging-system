@@ -1,7 +1,3 @@
-plugins {
-    alias(libs.plugins.kotlin.spring)
-}
-
 dependencies {
     // Internal Modules
     implementation(project(":service"))
@@ -11,10 +7,11 @@ dependencies {
     implementation(libs.spring.boot.starter.data.redis)
     implementation(libs.spring.security.core)
 
-    // Utilities / JWT
-    implementation(libs.jackson.module.kotlin)
-    implementation(libs.jjwt.api)
+    // Jackson
+    implementation(libs.jackson.databind)
 
+    // JWT
+    implementation(libs.jjwt.api)
     runtimeOnly(libs.jjwt.impl)
     runtimeOnly(libs.jjwt.jackson)
 }

@@ -1,12 +1,8 @@
-import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import java.util.Properties
+import java.util.*
 
 plugins {
-    alias(libs.plugins.kotlin.jvm) apply false
-    alias(libs.plugins.kotlin.spring) apply false
+    java
     alias(libs.plugins.spring.boot) apply false
-    alias(libs.plugins.ktlint) apply false
 }
 
 allprojects {
@@ -18,7 +14,7 @@ allprojects {
     }
 }
 
-// Environment & Docker Configuration
+// Environment and docker configuration
 val envFile = file("../../.env")
 val dockerComposePath: String = file("../../docker-compose.yml").absolutePath
 
@@ -51,19 +47,13 @@ val dbTestsDown by tasks.registering(Exec::class) {
     commandLine("docker", "compose", "-f", dockerComposePath, "stop", "postgres")
 }
 
-// Subprojects Configuration
+// Subprojects configuration
 subprojects {
-    apply(plugin = "org.jetbrains.kotlin.jvm")
     apply(plugin = "java-library")
-    apply(plugin = "org.jlleitschuh.gradle.ktlint")
 
-    configure<KotlinProjectExtension> {
-        jvmToolchain(21)
-    }
-
-    tasks.withType<KotlinCompile>().configureEach {
-        compilerOptions {
-            freeCompilerArgs.addAll("-Xjsr305=strict", "-Xannotation-default-target=param-property")
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(21))
         }
     }
 

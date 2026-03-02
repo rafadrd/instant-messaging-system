@@ -1,7 +1,3 @@
-plugins {
-    alias(libs.plugins.kotlin.spring)
-}
-
 dependencies {
     // Internal Modules
     implementation(project(":service"))

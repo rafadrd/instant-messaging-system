@@ -1,5 +1,5 @@
 plugins {
-    alias(libs.plugins.kotlin.spring)
+    java
     alias(libs.plugins.spring.boot)
 }
 
@@ -20,11 +20,4 @@ dependencies {
     // Database
     implementation(libs.jdbi3.core)
     implementation(libs.postgresql)
-
-    // Utilities
-    implementation(libs.jackson.module.kotlin)
-    implementation(libs.kotlin.reflect)
-
-    // Testing
-    testImplementation(libs.spring.boot.starter.webflux)
 }
