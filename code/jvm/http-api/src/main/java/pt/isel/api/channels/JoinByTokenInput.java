@@ -1,4 +1,6 @@
 package pt.isel.api.channels;
 
-public record JoinByTokenInput(String token) {
+import jakarta.validation.constraints.NotBlank;
+
+public record JoinByTokenInput(@NotBlank String token) {
 }

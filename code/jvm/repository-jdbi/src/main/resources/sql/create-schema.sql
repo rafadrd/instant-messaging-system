@@ -28,7 +28,7 @@ CREATE TABLE messages
     content    TEXT NOT NULL CHECK (LENGTH(content) BETWEEN 1 AND 1000),
     user_id    INT  REFERENCES users (id) ON DELETE SET NULL,
     channel_id INT  NOT NULL REFERENCES channels (id) ON DELETE CASCADE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Create table for invitations
@@ -39,7 +39,7 @@ CREATE TABLE invitations
     created_by  INT                 NOT NULL REFERENCES users (id) ON DELETE CASCADE,
     channel_id  INT                 NOT NULL REFERENCES channels (id) ON DELETE CASCADE,
     access_type VARCHAR(20)         NOT NULL CHECK (access_type IN ('READ_ONLY', 'READ_WRITE')),
-    expires_at  TIMESTAMP           NOT NULL CHECK (expires_at > CURRENT_TIMESTAMP),
+    expires_at  TIMESTAMPTZ         NOT NULL CHECK (expires_at > CURRENT_TIMESTAMP),
     status      VARCHAR(20)         NOT NULL CHECK (status IN ('PENDING', 'ACCEPTED', 'REJECTED')) DEFAULT 'PENDING'
 );
 
@@ -58,7 +58,7 @@ CREATE TABLE channel_members
 CREATE TABLE token_blacklist
 (
     jti        VARCHAR(255) PRIMARY KEY,
-    expires_at TIMESTAMP NOT NULL
+    expires_at TIMESTAMPTZ NOT NULL
 );
 
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
