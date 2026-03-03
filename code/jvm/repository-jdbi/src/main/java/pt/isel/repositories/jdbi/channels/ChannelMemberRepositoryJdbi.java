@@ -103,11 +103,6 @@ public class ChannelMemberRepositoryJdbi implements ChannelMemberRepository {
     }
 
     @Override
-    public void removeAllMembershipsForUser(Long userId) {
-        JdbiUtils.executeUpdate(handle, "DELETE FROM channel_members WHERE user_id = :user_id", Map.of("user_id", userId));
-    }
-
-    @Override
     public void clear() {
         JdbiUtils.executeUpdate(handle, "DELETE FROM channel_members", Map.of());
     }

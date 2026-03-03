@@ -3,9 +3,18 @@ package pt.isel.api.channels;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import pt.isel.api.common.ErrorHandling;
+import pt.isel.api.common.PageInput;
 import pt.isel.domain.users.AuthenticatedUser;
 import pt.isel.services.channels.ChannelService;
 import pt.isel.services.messages.MessageEventService;
@@ -26,14 +35,12 @@ public class ChannelController {
         this.ticketService = ticketService;
     }
 
-
     @GetMapping
     public ResponseEntity<?> getChannels(
             AuthenticatedUser user,
             @RequestParam(defaultValue = "") String query,
-            @RequestParam(defaultValue = "50") int limit,
-            @RequestParam(defaultValue = "0") int offset) {
-        return ErrorHandling.handleResult(channelService.searchChannels(query, limit, offset));
+            PageInput page) {
+        return ErrorHandling.handleResult(channelService.searchChannels(query, page.limit(), page.offset()));
     }
 
     @PostMapping
@@ -75,10 +82,8 @@ public class ChannelController {
     }
 
     @GetMapping("/{channelId}/members")
-    public ResponseEntity<?> getMembers(AuthenticatedUser user, @PathVariable Long channelId,
-                                        @RequestParam(defaultValue = "50") int limit,
-                                        @RequestParam(defaultValue = "0") int offset) {
-        return ErrorHandling.handleResult(channelService.getUsersInChannel(channelId, limit, offset));
+    public ResponseEntity<?> getMembers(AuthenticatedUser user, @PathVariable Long channelId, PageInput page) {
+        return ErrorHandling.handleResult(channelService.getUsersInChannel(channelId, page.limit(), page.offset()));
     }
 
     @GetMapping("/{channelId}/members/{userId}")

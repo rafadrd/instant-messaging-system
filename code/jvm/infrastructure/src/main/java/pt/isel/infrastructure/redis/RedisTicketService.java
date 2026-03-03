@@ -10,7 +10,7 @@ import java.util.UUID;
 @Service
 public class RedisTicketService implements TicketService {
     private static final String PREFIX = "ticket:";
-    private static final Duration TICKET_TTL = Duration.ofSeconds(15);
+    private static final Duration TICKET_TTL = Duration.ofSeconds(30);
 
     private final StringRedisTemplate redisTemplate;
 

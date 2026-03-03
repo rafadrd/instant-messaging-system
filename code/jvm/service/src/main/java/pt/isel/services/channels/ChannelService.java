@@ -7,7 +7,6 @@ import pt.isel.domain.channels.ChannelMember;
 import pt.isel.domain.common.ChannelError;
 import pt.isel.domain.common.Either;
 import pt.isel.domain.common.MessageError;
-import pt.isel.domain.invitations.Invitation;
 import pt.isel.domain.invitations.InvitationStatus;
 import pt.isel.domain.users.User;
 import pt.isel.domain.users.UserInfo;
@@ -15,6 +14,7 @@ import pt.isel.repositories.Transaction;
 import pt.isel.repositories.TransactionManager;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Named
@@ -33,14 +33,18 @@ public class ChannelService {
             User owner = trx.repoUsers().findById(ownerId);
             if (owner == null) return Either.failure(new ChannelError.UserNotFound());
 
-            if (trx.repoChannels().findByName(name) != null) {
-                return Either.failure(new ChannelError.ChannelAlreadyExists());
-            }
-
             UserInfo ownerInfo = new UserInfo(owner.id(), owner.username());
-            Channel newChannel = trx.repoChannels().create(name, ownerInfo, isPublic);
-            trx.repoMemberships().addUserToChannel(ownerInfo, newChannel, AccessType.READ_WRITE);
-            return Either.success(newChannel);
+
+            try {
+                Channel newChannel = trx.repoChannels().create(name, ownerInfo, isPublic);
+                trx.repoMemberships().addUserToChannel(ownerInfo, newChannel, AccessType.READ_WRITE);
+                return Either.success(newChannel);
+            } catch (Exception e) {
+                if (e.getMessage() != null && e.getMessage().contains("channels_name_key")) {
+                    return Either.failure(new ChannelError.ChannelAlreadyExists());
+                }
+                throw e;
+            }
         });
     }
 
@@ -60,9 +64,6 @@ public class ChannelService {
     }
 
     public Either<ChannelError, List<Channel>> getJoinedChannels(Long userId, int limit, int offset) {
-        if (limit <= 0) return Either.failure(new ChannelError.InvalidLimit());
-        if (offset < 0) return Either.failure(new ChannelError.InvalidOffset());
-
         return trxManager.run(trx -> {
             if (trx.repoUsers().findById(userId) == null) return Either.failure(new ChannelError.UserNotFound());
             List<Channel> channels = trx.repoMemberships().findAllChannelsForUser(userId, limit, offset).stream().map(ChannelMember::channel).toList();
@@ -71,9 +72,6 @@ public class ChannelService {
     }
 
     public Either<ChannelError, List<UserInfo>> getUsersInChannel(Long channelId, int limit, int offset) {
-        if (limit <= 0) return Either.failure(new ChannelError.InvalidLimit());
-        if (offset < 0) return Either.failure(new ChannelError.InvalidOffset());
-
         return trxManager.run(trx -> {
             List<UserInfo> users = trx.repoMemberships().findAllMembersInChannel(channelId, limit, offset).stream().map(ChannelMember::user).toList();
             return Either.success(users);
@@ -87,9 +85,16 @@ public class ChannelService {
         return trxManager.run(trx -> checkUserIsOwner(trx, ownerId, channelId)
                 .flatMap(pair -> {
                     Channel channel = pair.channel();
-                    Channel updatedChannel = new Channel(channel.id(), name, channel.owner(), isPublic);
-                    trx.repoChannels().save(updatedChannel);
-                    return Either.success(updatedChannel);
+                    try {
+                        Channel updatedChannel = new Channel(channel.id(), name, channel.owner(), isPublic);
+                        trx.repoChannels().save(updatedChannel);
+                        return Either.success(updatedChannel);
+                    } catch (Exception e) {
+                        if (e.getMessage() != null && e.getMessage().contains("channels_name_key")) {
+                            return Either.failure(new ChannelError.ChannelAlreadyExists());
+                        }
+                        throw e;
+                    }
                 }));
     }
 
@@ -118,9 +123,6 @@ public class ChannelService {
     }
 
     public Either<ChannelError, List<Channel>> searchChannels(String query, int limit, int offset) {
-        if (limit <= 0) return Either.failure(new ChannelError.InvalidLimit());
-        if (offset < 0) return Either.failure(new ChannelError.InvalidOffset());
-
         return trxManager.run(trx -> {
             List<Channel> channels = (query == null || query.isBlank())
                     ? trx.repoChannels().findAllPublicChannels(limit, offset)
@@ -156,7 +158,7 @@ public class ChannelService {
             var invitation = trx.repoInvitations().findByToken(token);
             if (invitation == null) return Either.failure(new ChannelError.TokenNotFound());
 
-            if (invitation.expiresAt().isBefore(LocalDateTime.now()))
+            if (invitation.expiresAt().isBefore(LocalDateTime.now(ZoneOffset.UTC)))
                 return Either.failure(new ChannelError.InvitationExpired());
             if (invitation.status() != InvitationStatus.PENDING)
                 return Either.failure(new ChannelError.InvitationAlreadyUsed());
@@ -168,8 +170,11 @@ public class ChannelService {
                 return Either.failure(new ChannelError.UserAlreadyInChannel());
             }
 
+            if (!trx.repoInvitations().consume(invitation.id())) {
+                return Either.failure(new ChannelError.InvitationAlreadyUsed());
+            }
+
             trx.repoMemberships().addUserToChannel(new UserInfo(user.id(), user.username()), channel, invitation.accessType());
-            trx.repoInvitations().save(new Invitation(invitation.id(), invitation.token(), invitation.createdBy(), invitation.channel(), invitation.accessType(), invitation.expiresAt(), InvitationStatus.ACCEPTED));
             return Either.success("Joined private channel '" + channel.name() + "'");
         });
     }
@@ -219,8 +224,6 @@ public class ChannelService {
 
         if (!channel.owner().id().equals(owner.id())) return Either.failure(new ChannelError.UserNotOwner());
         if (userToEdit.id().equals(channel.owner().id())) return Either.failure(new ChannelError.UserIsOwner());
-        if (ownerMembership.accessType() == AccessType.READ_ONLY)
-            return Either.failure(new ChannelError.UserNotAuthorized());
 
         return Either.success(new MemberEditTriple(owner, userToEdit, userMembership));
     }

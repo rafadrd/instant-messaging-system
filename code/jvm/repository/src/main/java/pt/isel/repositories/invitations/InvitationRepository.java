@@ -15,4 +15,6 @@ public interface InvitationRepository extends Repository<Invitation> {
     Invitation findByToken(String token);
 
     List<Invitation> findByChannelId(Long channelId);
+
+    boolean consume(Long id);
 }

@@ -18,6 +18,4 @@ public interface ChannelMemberRepository extends Repository<ChannelMember> {
     void removeUserFromChannel(Long userId, Long channelId);
 
     List<ChannelMember> findAllMembersInChannel(Long channelId, int limit, int offset);
-
-    void removeAllMembershipsForUser(Long userId);
 }

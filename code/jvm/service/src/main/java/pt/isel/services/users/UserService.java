@@ -49,15 +49,14 @@ public class UserService {
 
             return createUser(trx, username, password).flatMap(user -> {
                 if (invitation != null) {
+                    if (!trx.repoInvitations().consume(invitation.id())) {
+                        return Either.failure(new UserError.InvitationAlreadyUsed());
+                    }
                     trx.repoMemberships().addUserToChannel(
                             new UserInfo(user.id(), user.username()),
                             invitation.channel(),
                             invitation.accessType()
                     );
-                    trx.repoInvitations().save(new Invitation(
-                            invitation.id(), invitation.token(), invitation.createdBy(),
-                            invitation.channel(), invitation.accessType(), invitation.expiresAt(), InvitationStatus.ACCEPTED
-                    ));
                 }
                 return Either.success(tokenService.createToken(user.id()));
             });
@@ -69,19 +68,22 @@ public class UserService {
         if (username.length() > 30) return Either.failure(new UserError.InvalidUsernameLength());
         if (password == null || password.isBlank()) return Either.failure(new UserError.EmptyPassword());
 
-        if (trx.repoUsers().findByUsername(username) != null) {
-            return Either.failure(new UserError.UsernameAlreadyInUse());
-        }
         if (!passwordSecurityDomain.isSafePassword(password)) {
             return Either.failure(new UserError.InsecurePassword());
         }
 
         var validationInfo = passwordSecurityDomain.createPasswordValidationInformation(password);
-        User newUser = trx.repoUsers().create(username, validationInfo);
 
-        return Either.success(newUser);
+        try {
+            User newUser = trx.repoUsers().create(username, validationInfo);
+            return Either.success(newUser);
+        } catch (Exception e) {
+            if (e.getMessage() != null && e.getMessage().contains("users_username_key")) {
+                return Either.failure(new UserError.UsernameAlreadyInUse());
+            }
+            throw e;
+        }
     }
-
 
     public Either<UserError, User> getUserById(Long userId) {
         return trxManager.run(trx -> {
@@ -98,17 +100,20 @@ public class UserService {
             User user = trx.repoUsers().findById(userId);
             if (user == null) return Either.failure(new UserError.UserNotFound());
 
-            User existing = trx.repoUsers().findByUsername(newUsername);
-            if (existing != null && !existing.id().equals(userId)) {
-                return Either.failure(new UserError.UsernameAlreadyInUse());
-            }
             if (!passwordSecurityDomain.validatePassword(password, user.passwordValidation())) {
                 return Either.failure(new UserError.IncorrectPassword());
             }
 
-            User updatedUser = new User(user.id(), newUsername, user.passwordValidation());
-            trx.repoUsers().save(updatedUser);
-            return Either.success(updatedUser);
+            try {
+                User updatedUser = new User(user.id(), newUsername, user.passwordValidation());
+                trx.repoUsers().save(updatedUser);
+                return Either.success(updatedUser);
+            } catch (Exception e) {
+                if (e.getMessage() != null && e.getMessage().contains("users_username_key")) {
+                    return Either.failure(new UserError.UsernameAlreadyInUse());
+                }
+                throw e;
+            }
         });
     }
 
@@ -145,7 +150,6 @@ public class UserService {
                 return Either.failure(new UserError.UserHasOwnedChannels());
             }
 
-            trx.repoMemberships().removeAllMembershipsForUser(user.id());
             trx.repoUsers().deleteById(userId);
             return Either.success("User " + user.id() + " deleted");
         });

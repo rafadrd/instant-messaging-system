@@ -84,6 +84,14 @@ public class InvitationRepositoryJdbi implements InvitationRepository {
     }
 
     @Override
+    public boolean consume(Long id) {
+        int updated = handle.createUpdate("UPDATE invitations SET status = 'ACCEPTED' WHERE id = :id AND status = 'PENDING'")
+                .bind("id", id)
+                .execute();
+        return updated > 0;
+    }
+
+    @Override
     public void deleteById(Long id) {
         JdbiUtils.executeUpdate(handle, "DELETE FROM invitations WHERE id = :id", Map.of("id", id));
     }

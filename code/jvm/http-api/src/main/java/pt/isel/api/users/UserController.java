@@ -3,8 +3,15 @@ package pt.isel.api.users;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import pt.isel.api.common.ErrorHandling;
+import pt.isel.api.common.PageInput;
 import pt.isel.domain.users.AuthenticatedUser;
 import pt.isel.services.channels.ChannelService;
 import pt.isel.services.users.UserService;
@@ -65,10 +72,8 @@ public class UserController {
     }
 
     @GetMapping("/users/me/channels")
-    public ResponseEntity<?> getUserChannels(AuthenticatedUser user,
-                                             @RequestParam(defaultValue = "50") int limit,
-                                             @RequestParam(defaultValue = "0") int offset) {
-        return ErrorHandling.handleResult(channelService.getJoinedChannels(user.user().id(), limit, offset));
+    public ResponseEntity<?> getUserChannels(AuthenticatedUser user, PageInput page) {
+        return ErrorHandling.handleResult(channelService.getJoinedChannels(user.user().id(), page.limit(), page.offset()));
     }
 
     @DeleteMapping("/users/me")

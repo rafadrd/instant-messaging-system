@@ -10,6 +10,7 @@ import pt.isel.repositories.messages.MessageRepository;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +35,7 @@ public class MessageRepositoryJdbi implements MessageRepository {
 
     @Override
     public Message create(String content, UserInfo user, Channel channel) {
-        LocalDateTime createdAt = LocalDateTime.now().truncatedTo(ChronoUnit.MILLIS);
+        LocalDateTime createdAt = LocalDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MILLIS);
         String sql = """
                 INSERT INTO messages (content, user_id, channel_id, created_at)
                 VALUES (:content, :user_id, :channel_id, :created_at)

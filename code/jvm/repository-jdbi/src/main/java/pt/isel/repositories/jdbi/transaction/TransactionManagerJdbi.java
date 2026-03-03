@@ -22,6 +22,7 @@ public class TransactionManagerJdbi implements TransactionManager {
                 R result = block.apply(transaction);
 
                 if (result instanceof Either.Left<?, ?>) {
+                    // Manually roll back on business errors to prevent JDBI from committing the transaction.
                     handle.rollback();
                 }
 
