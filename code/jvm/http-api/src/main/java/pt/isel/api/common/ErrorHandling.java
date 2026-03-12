@@ -8,7 +8,7 @@ import java.util.function.Function;
 public class ErrorHandling {
 
     public static <E extends AppError, T> ResponseEntity<?> handleResult(Either<E, T> result) {
-        return handleResult(result, t -> ResponseEntity.ok(t));
+        return handleResult(result, ResponseEntity::ok);
     }
 
     public static <E extends AppError, T> ResponseEntity<?> handleResult(Either<E, T> result, Function<T, ResponseEntity<?>> onSuccess) {
@@ -34,7 +34,6 @@ public class ErrorHandling {
             case UserError.EmptyToken e -> Problem.EmptyToken;
             case UserError.UserNotFound e -> Problem.UserNotFound;
             case UserError.EmptyUsername e -> Problem.EmptyUsername;
-            case UserError.InvalidUsernameLength e -> Problem.InvalidUsernameLength;
             case UserError.EmptyPassword e -> Problem.EmptyPassword;
             case UserError.InsecurePassword e -> Problem.InsecurePassword;
             case UserError.IncorrectPassword e -> Problem.IncorrectPassword;
@@ -42,6 +41,7 @@ public class ErrorHandling {
             case UserError.InvitationNotFound e -> Problem.InvitationNotFound;
             case UserError.UsernameAlreadyInUse e -> Problem.UsernameAlreadyInUse;
             case UserError.UserHasOwnedChannels e -> Problem.UserHasOwnedChannels;
+            case UserError.InvalidUsernameLength e -> Problem.InvalidUsernameLength;
             case UserError.InvitationAlreadyUsed e -> Problem.InvitationAlreadyUsed;
             case UserError.PasswordSameAsPrevious e -> Problem.PasswordSameAsPrevious;
         };
@@ -62,7 +62,6 @@ public class ErrorHandling {
             case ChannelError.OwnerCannotLeave e -> Problem.OwnerCannotLeave;
             case ChannelError.EmptyChannelName e -> Problem.EmptyChannelName;
             case ChannelError.ChannelIsPrivate e -> Problem.ChannelIsPrivate;
-            case ChannelError.InvalidChannelNameLength e -> Problem.InvalidChannelNameLength;
             case ChannelError.InvalidLimit e -> Problem.InvalidLimit;
             case ChannelError.InvalidOffset e -> Problem.InvalidOffset;
             case ChannelError.UserNotAuthorized e -> Problem.UserNotAuthorized;
@@ -71,6 +70,7 @@ public class ErrorHandling {
             case ChannelError.ChannelAlreadyExists e -> Problem.ChannelAlreadyExists;
             case ChannelError.UserAlreadyInChannel e -> Problem.UserAlreadyInChannel;
             case ChannelError.InvitationAlreadyUsed e -> Problem.InvitationAlreadyUsed;
+            case ChannelError.InvalidChannelNameLength e -> Problem.InvalidChannelNameLength;
         };
     }
 
@@ -79,12 +79,12 @@ public class ErrorHandling {
             case MessageError.UserNotFound e -> Problem.UserNotFound;
             case MessageError.InvalidLimit e -> Problem.InvalidLimit;
             case MessageError.EmptyMessage e -> Problem.EmptyMessage;
-            case MessageError.InvalidMessageLength e -> Problem.InvalidMessageLength;
             case MessageError.InvalidOffset e -> Problem.InvalidOffset;
             case MessageError.ChannelNotFound e -> Problem.ChannelNotFound;
             case MessageError.UserNotInChannel e -> Problem.UserNotInChannel;
             case MessageError.MessagesNotFound e -> Problem.MessagesNotFound;
             case MessageError.UserNotAuthorized e -> Problem.UserNotAuthorized;
+            case MessageError.InvalidMessageLength e -> Problem.InvalidMessageLength;
         };
     }
 

@@ -16,21 +16,32 @@ public class TransactionManagerJdbi implements TransactionManager {
 
     @Override
     public <R> R run(Function<Transaction, R> block) {
-        return jdbi.inTransaction((handle) -> {
-            try {
+        try {
+            return jdbi.inTransaction((handle) -> {
                 Transaction transaction = new TransactionJdbi(handle);
                 R result = block.apply(transaction);
 
-                if (result instanceof Either.Left<?, ?>) {
-                    // Manually roll back on business errors to prevent JDBI from committing the transaction.
-                    handle.rollback();
+                if (result instanceof Either.Left<?, ?> left) {
+                    throw new RollbackException(left);
                 }
-
                 return result;
-            } catch (Exception e) {
-                handle.rollback();
-                throw e;
-            }
-        });
+            });
+        } catch (RollbackException e) {
+            @SuppressWarnings("unchecked")
+            R result = (R) e.getLeft();
+            return result;
+        }
+    }
+
+    private static class RollbackException extends RuntimeException {
+        private final Either.Left<?, ?> left;
+
+        public RollbackException(Either.Left<?, ?> left) {
+            this.left = left;
+        }
+
+        public Either.Left<?, ?> getLeft() {
+            return left;
+        }
     }
 }

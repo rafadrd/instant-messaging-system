@@ -33,8 +33,6 @@ public class TokenCleanupScheduler {
                 userService.cleanupExpiredTokens();
             } catch (Exception e) {
                 logger.error("Error during token cleanup", e);
-            } finally {
-                redisTemplate.delete(LOCK_KEY);
             }
         } else {
             logger.debug("Could not acquire lock. Cleanup handled by another instance.");
