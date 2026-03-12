@@ -60,6 +60,7 @@ subprojects {
     dependencies {
         add("api", platform(rootProject.libs.spring.boot.dependencies))
         add("testImplementation", rootProject.libs.spring.boot.starter.test)
+        add("testRuntimeOnly", rootProject.libs.junit.platform.launcher)
     }
 
     tasks.withType<Test>().configureEach {
