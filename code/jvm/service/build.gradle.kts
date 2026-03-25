@@ -7,6 +7,7 @@ dependencies {
     implementation(libs.jakarta.inject.api)
 
     // Testing
+    testImplementation(testFixtures(project(":repository")))
     testImplementation(project(":repository-jdbi"))
     testImplementation(libs.jdbi3.core)
     testImplementation(libs.postgresql)

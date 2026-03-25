@@ -17,6 +17,7 @@ public class InvitationRepositoryInMem implements InvitationRepository {
 
     @Override
     public Invitation create(String token, UserInfo createdBy, Channel channel, AccessType accessType, LocalDateTime expiresAt) {
+        if (findByToken(token) != null) throw new RuntimeException("invitations_token_key");
         Invitation inv = new Invitation(nextId++, token, createdBy, channel, accessType, expiresAt);
         invitations.add(inv);
         return inv;

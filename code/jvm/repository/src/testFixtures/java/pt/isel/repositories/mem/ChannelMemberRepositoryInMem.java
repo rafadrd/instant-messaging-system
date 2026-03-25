@@ -15,6 +15,8 @@ public class ChannelMemberRepositoryInMem implements ChannelMemberRepository {
 
     @Override
     public ChannelMember addUserToChannel(UserInfo userInfo, Channel channel, AccessType accessType) {
+        if (findUserInChannel(userInfo.id(), channel.id()) != null)
+            throw new RuntimeException("channel_members_user_id_channel_id_key");
         ChannelMember member = new ChannelMember(nextId++, userInfo, channel, accessType);
         members.add(member);
         return member;

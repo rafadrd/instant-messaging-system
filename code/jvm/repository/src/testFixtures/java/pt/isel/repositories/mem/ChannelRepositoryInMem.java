@@ -13,6 +13,7 @@ public class ChannelRepositoryInMem implements ChannelRepository {
 
     @Override
     public Channel create(String name, UserInfo owner, boolean isPublic) {
+        if (findByName(name) != null) throw new RuntimeException("channels_name_key");
         Channel channel = new Channel(nextId++, name, owner, isPublic);
         channels.add(channel);
         return channel;
@@ -58,6 +59,8 @@ public class ChannelRepositoryInMem implements ChannelRepository {
 
     @Override
     public void save(Channel entity) {
+        Channel existing = findByName(entity.name());
+        if (existing != null && !existing.id().equals(entity.id())) throw new RuntimeException("channels_name_key");
         channels.removeIf(c -> c.id().equals(entity.id()));
         channels.add(entity);
     }

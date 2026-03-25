@@ -13,6 +13,7 @@ public class UserRepositoryInMem implements UserRepository {
 
     @Override
     public User create(String username, PasswordValidationInfo passwordValidationInfo) {
+        if (findByUsername(username) != null) throw new RuntimeException("users_username_key");
         User user = new User(nextId++, username, passwordValidationInfo);
         users.add(user);
         return user;
@@ -40,6 +41,8 @@ public class UserRepositoryInMem implements UserRepository {
 
     @Override
     public void save(User entity) {
+        User existing = findByUsername(entity.username());
+        if (existing != null && !existing.id().equals(entity.id())) throw new RuntimeException("users_username_key");
         users.removeIf(u -> u.id().equals(entity.id()));
         users.add(entity);
     }
