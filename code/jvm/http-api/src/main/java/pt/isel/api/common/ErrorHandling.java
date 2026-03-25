@@ -38,6 +38,7 @@ public class ErrorHandling {
             case UserError.InsecurePassword e -> Problem.InsecurePassword;
             case UserError.IncorrectPassword e -> Problem.IncorrectPassword;
             case UserError.InvitationExpired e -> Problem.InvitationExpired;
+            case UserError.RateLimitExceeded e -> Problem.RateLimitExceeded;
             case UserError.InvitationNotFound e -> Problem.InvitationNotFound;
             case UserError.UsernameAlreadyInUse e -> Problem.UsernameAlreadyInUse;
             case UserError.UserHasOwnedChannels e -> Problem.UserHasOwnedChannels;
@@ -84,6 +85,7 @@ public class ErrorHandling {
             case MessageError.UserNotInChannel e -> Problem.UserNotInChannel;
             case MessageError.MessagesNotFound e -> Problem.MessagesNotFound;
             case MessageError.UserNotAuthorized e -> Problem.UserNotAuthorized;
+            case MessageError.RateLimitExceeded e -> Problem.RateLimitExceeded;
             case MessageError.InvalidMessageLength e -> Problem.InvalidMessageLength;
         };
     }

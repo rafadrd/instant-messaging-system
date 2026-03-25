@@ -39,4 +39,7 @@ public sealed interface UserError extends AppError {
 
     record PasswordSameAsPrevious() implements UserError {
     }
+
+    record RateLimitExceeded() implements UserError {
+    }
 }

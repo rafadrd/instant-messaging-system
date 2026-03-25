@@ -43,6 +43,7 @@ public class Problem {
     public static final Problem UserNotInChannel = new Problem("user-not-in-channel", "User Not In Channel", HttpStatus.FORBIDDEN, "The user is not in the channel.");
     public static final Problem UserNotOwner = new Problem("user-not-owner", "User Not Owner", HttpStatus.BAD_REQUEST, "The user is not the owner of the channel.");
     public static final Problem UsernameAlreadyInUse = new Problem("username-already-in-use", "Username Already In Use", HttpStatus.CONFLICT, "The username is already in use.");
+    public static final Problem RateLimitExceeded = new Problem("rate-limit-exceeded", "Too Many Requests", HttpStatus.TOO_MANY_REQUESTS, "You have exceeded the allowed number of requests. Please try again later.");
     public static final Problem InternalServerError = new Problem("internal-server-error", "Internal Server Error", HttpStatus.INTERNAL_SERVER_ERROR, "An internal server error occurred.");
     private static final String MEDIA_TYPE = "application/problem+json";
     private static final String PROBLEM_URI_PATH = "https://github.com/isel-leic-daw/2024-daw-leic53d-g02-53d/tree/main/docs/instantMessaging";

@@ -27,4 +27,7 @@ public sealed interface MessageError extends AppError {
 
     record UserNotInChannel() implements MessageError {
     }
+
+    record RateLimitExceeded() implements MessageError {
+    }
 }

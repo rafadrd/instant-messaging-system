@@ -10,20 +10,28 @@ import pt.isel.domain.messages.UpdatedMessage;
 import pt.isel.domain.users.UserInfo;
 import pt.isel.repositories.Transaction;
 import pt.isel.repositories.TransactionManager;
+import pt.isel.services.common.RateLimiter;
 
+import java.time.Duration;
 import java.util.List;
 
 @Named
 public class MessageService {
     private final TransactionManager trxManager;
     private final MessageEventService messageEventService;
+    private final RateLimiter rateLimiter;
 
-    public MessageService(TransactionManager trxManager, MessageEventService messageEventService) {
+    public MessageService(TransactionManager trxManager, MessageEventService messageEventService, RateLimiter rateLimiter) {
         this.trxManager = trxManager;
         this.messageEventService = messageEventService;
+        this.rateLimiter = rateLimiter;
     }
 
     public Either<MessageError, Message> createMessage(String content, Long userId, Long channelId) {
+        if (rateLimiter.isRateLimited("message", userId.toString(), 30, Duration.ofMinutes(1))) {
+            return Either.failure(new MessageError.RateLimitExceeded());
+        }
+
         if (content == null || content.isBlank()) return Either.failure(new MessageError.EmptyMessage());
         if (content.length() > 1000) return Either.failure(new MessageError.InvalidMessageLength());
 
