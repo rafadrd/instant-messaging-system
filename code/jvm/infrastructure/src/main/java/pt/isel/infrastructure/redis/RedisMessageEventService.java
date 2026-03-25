@@ -1,6 +1,7 @@
 package pt.isel.infrastructure.redis;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -103,6 +104,21 @@ public class RedisMessageEventService implements MessageEventService {
                 }
             }
         });
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        logger.info("Completing all SSE streams before shutdown...");
+        localListeners.forEach((channelId, emitters) -> {
+            for (UpdatedMessageEmitter emitter : emitters) {
+                try {
+                    emitter.complete();
+                } catch (Exception e) {
+                    logger.warn("Failed to complete emitter during shutdown", e);
+                }
+            }
+        });
+        localListeners.clear();
     }
 
     public record DistributedEvent(Long channelId, UpdatedMessage message) {

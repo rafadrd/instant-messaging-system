@@ -40,4 +40,9 @@ public class SseUpdatedMessageEmitterAdapter implements UpdatedMessageEmitter {
     public void onError(Consumer<Throwable> callback) {
         sseEmitter.onError(callback);
     }
+
+    @Override
+    public void complete() {
+        sseEmitter.complete();
+    }
 }

@@ -1,14 +1,19 @@
 package pt.isel.infrastructure.redis;
 
+import jakarta.annotation.PreDestroy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import pt.isel.services.users.TicketService;
 
 import java.time.Duration;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 public class RedisTicketService implements TicketService {
+    private static final Logger logger = LoggerFactory.getLogger(RedisTicketService.class);
     private static final String PREFIX = "ticket:";
     private static final Duration TICKET_TTL = Duration.ofSeconds(30);
 
@@ -36,6 +41,20 @@ public class RedisTicketService implements TicketService {
             return Long.parseLong(userIdStr);
         } catch (NumberFormatException e) {
             return null;
+        }
+    }
+
+    @PreDestroy
+    public void flushTickets() {
+        logger.info("Flushing Redis tickets before shutdown...");
+        try {
+            Set<String> keys = redisTemplate.keys(PREFIX + "*");
+            if (!keys.isEmpty()) {
+                redisTemplate.delete(keys);
+                logger.info("Flushed {} tickets.", keys.size());
+            }
+        } catch (Exception e) {
+            logger.error("Failed to flush Redis tickets during shutdown", e);
         }
     }
 }

@@ -8,4 +8,6 @@ public interface UpdatedMessageEmitter {
     void onCompletion(Runnable callback);
 
     void onError(Consumer<Throwable> callback);
+
+    void complete();
 }
