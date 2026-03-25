@@ -1,5 +1,9 @@
 package pt.isel.api.channels;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +28,8 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/channels")
+@Tag(name = "Channels", description = "Channels management")
+@SecurityRequirement(name = "BearerAuth")
 public class ChannelController {
     private final ChannelService channelService;
     private final MessageEventService messageEventService;
@@ -36,15 +42,17 @@ public class ChannelController {
     }
 
     @GetMapping
+    @Operation(summary = "Get list of channels", description = "Retrieves a list of channels optionally filtered by a query")
     public ResponseEntity<?> getChannels(
-            AuthenticatedUser user,
+            @Parameter(hidden = true) AuthenticatedUser user,
             @RequestParam(defaultValue = "") String query,
             PageInput page) {
         return ErrorHandling.handleResult(channelService.searchChannels(query, page.limit(), page.offset()));
     }
 
     @PostMapping
-    public ResponseEntity<?> createChannel(AuthenticatedUser user, @Valid @RequestBody ChannelInput channel) {
+    @Operation(summary = "Create a new channel")
+    public ResponseEntity<?> createChannel(@Parameter(hidden = true) AuthenticatedUser user, @Valid @RequestBody ChannelInput channel) {
         return ErrorHandling.handleResult(
                 channelService.createChannel(channel.name(), user.user().id(), channel.isPublic()),
                 createdChannel -> ResponseEntity.status(HttpStatus.CREATED).body(createdChannel)
@@ -52,52 +60,62 @@ public class ChannelController {
     }
 
     @GetMapping("/{channelId}")
-    public ResponseEntity<?> getChannelById(AuthenticatedUser user, @PathVariable Long channelId) {
+    @Operation(summary = "Get channel by ID")
+    public ResponseEntity<?> getChannelById(@Parameter(hidden = true) AuthenticatedUser user, @PathVariable Long channelId) {
         return ErrorHandling.handleResult(channelService.getChannelById(channelId));
     }
 
     @PutMapping("/{channelId}")
-    public ResponseEntity<?> editChannel(AuthenticatedUser user, @PathVariable Long channelId, @Valid @RequestBody EditChannelInput input) {
+    @Operation(summary = "Edit channel details")
+    public ResponseEntity<?> editChannel(@Parameter(hidden = true) AuthenticatedUser user, @PathVariable Long channelId, @Valid @RequestBody EditChannelInput input) {
         return ErrorHandling.handleResult(channelService.editChannel(user.user().id(), channelId, input.name(), input.isPublic()));
     }
 
     @DeleteMapping("/{channelId}")
-    public ResponseEntity<?> deleteChannel(AuthenticatedUser user, @PathVariable Long channelId) {
+    @Operation(summary = "Delete a channel")
+    public ResponseEntity<?> deleteChannel(@Parameter(hidden = true) AuthenticatedUser user, @PathVariable Long channelId) {
         return ErrorHandling.handleResult(channelService.deleteChannel(user.user().id(), channelId));
     }
 
     @PostMapping("/{channelId}/join")
-    public ResponseEntity<?> joinChannel(AuthenticatedUser user, @PathVariable Long channelId) {
+    @Operation(summary = "Join a public channel by ID")
+    public ResponseEntity<?> joinChannel(@Parameter(hidden = true) AuthenticatedUser user, @PathVariable Long channelId) {
         return ErrorHandling.handleResult(channelService.joinPublicChannel(user.user().id(), channelId));
     }
 
     @PostMapping("/join-by-token")
-    public ResponseEntity<?> joinChannelByToken(AuthenticatedUser user, @Valid @RequestBody JoinByTokenInput input) {
+    @Operation(summary = "Join a private channel using an invitation token")
+    public ResponseEntity<?> joinChannelByToken(@Parameter(hidden = true) AuthenticatedUser user, @Valid @RequestBody JoinByTokenInput input) {
         return ErrorHandling.handleResult(channelService.joinPrivateChannel(user.user().id(), input.token()));
     }
 
     @PostMapping("/{channelId}/leave")
-    public ResponseEntity<?> leaveChannel(AuthenticatedUser user, @PathVariable Long channelId) {
+    @Operation(summary = "Leave a channel")
+    public ResponseEntity<?> leaveChannel(@Parameter(hidden = true) AuthenticatedUser user, @PathVariable Long channelId) {
         return ErrorHandling.handleResult(channelService.leaveChannel(channelId, user.user().id()));
     }
 
     @GetMapping("/{channelId}/members")
-    public ResponseEntity<?> getMembers(AuthenticatedUser user, @PathVariable Long channelId, PageInput page) {
+    @Operation(summary = "Get members of a channel")
+    public ResponseEntity<?> getMembers(@Parameter(hidden = true) AuthenticatedUser user, @PathVariable Long channelId, PageInput page) {
         return ErrorHandling.handleResult(channelService.getUsersInChannel(channelId, page.limit(), page.offset()));
     }
 
     @GetMapping("/{channelId}/members/{userId}")
-    public ResponseEntity<?> getAccessType(AuthenticatedUser user, @PathVariable Long channelId, @PathVariable Long userId) {
+    @Operation(summary = "Get access type of a member")
+    public ResponseEntity<?> getAccessType(@Parameter(hidden = true) AuthenticatedUser user, @PathVariable Long channelId, @PathVariable Long userId) {
         return ErrorHandling.handleResult(channelService.getAccessType(user.user().id(), userId, channelId));
     }
 
     @PutMapping("/{channelId}/members/{userId}")
-    public ResponseEntity<?> editMemberAccess(AuthenticatedUser user, @PathVariable Long channelId, @PathVariable Long userId, @Valid @RequestBody EditMemberInput input) {
+    @Operation(summary = "Edit member access type")
+    public ResponseEntity<?> editMemberAccess(@Parameter(hidden = true) AuthenticatedUser user, @PathVariable Long channelId, @PathVariable Long userId, @Valid @RequestBody EditMemberInput input) {
         return ErrorHandling.handleResult(channelService.editMemberAccess(user.user().id(), channelId, userId, input.accessType()));
     }
 
     @PostMapping("/{channelId}/socket-ticket")
-    public ResponseEntity<?> getSocketTicket(AuthenticatedUser user, @PathVariable Long channelId) {
+    @Operation(summary = "Get an SSE stream connection ticket")
+    public ResponseEntity<?> getSocketTicket(@Parameter(hidden = true) AuthenticatedUser user, @PathVariable Long channelId) {
         return ErrorHandling.handleResult(
                 channelService.getAccessType(user.user().id(), user.user().id(), channelId),
                 access -> {
@@ -108,7 +126,8 @@ public class ChannelController {
     }
 
     @GetMapping("/{channelId}/listen")
-    public ResponseEntity<?> listen(AuthenticatedUser user, @PathVariable Long channelId) {
+    @Operation(summary = "Listen for real-time messages via SSE")
+    public ResponseEntity<?> listen(@Parameter(hidden = true) AuthenticatedUser user, @PathVariable Long channelId) {
         return ErrorHandling.handleResult(channelService.getAccessType(user.user().id(), user.user().id(), channelId), accessType -> {
             SseEmitter emitter = new SseEmitter(30 * 60 * 1000L);
             emitter.onTimeout(emitter::complete);

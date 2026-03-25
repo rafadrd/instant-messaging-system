@@ -20,4 +20,9 @@ dependencies {
     // Database
     implementation(libs.jdbi3.core)
     implementation(libs.postgresql)
+    implementation(libs.flyway.core)
+    implementation(libs.flyway.database.postgresql)
+
+    // Swagger UI
+    implementation(libs.springdoc.openapi.starter.webmvc.ui)
 }

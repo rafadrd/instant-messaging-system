@@ -43,7 +43,6 @@ CREATE TABLE invitations
     status      VARCHAR(20)         NOT NULL CHECK (status IN ('PENDING', 'ACCEPTED', 'REJECTED')) DEFAULT 'PENDING'
 );
 
-
 -- Create table for membership
 CREATE TABLE channel_members
 (

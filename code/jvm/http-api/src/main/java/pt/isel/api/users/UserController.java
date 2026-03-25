@@ -1,5 +1,9 @@
 package pt.isel.api.users;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,6 +22,7 @@ import pt.isel.services.users.UserService;
 
 @RestController
 @RequestMapping("/api")
+@Tag(name = "Users", description = "Users and Authentication management")
 public class UserController {
     private final UserService userService;
     private final ChannelService channelService;
@@ -28,6 +33,7 @@ public class UserController {
     }
 
     @PostMapping("/auth/register")
+    @Operation(summary = "Register a new user")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterInput user) {
         return ErrorHandling.handleResult(
                 userService.registerUser(user.username(), user.password(), user.invitationToken()),
@@ -37,6 +43,7 @@ public class UserController {
     }
 
     @PostMapping("/auth/login")
+    @Operation(summary = "Login a user")
     public ResponseEntity<?> loginUser(@Valid @RequestBody UserInput user) {
         return ErrorHandling.handleResult(
                 userService.createToken(user.username(), user.password()),
@@ -45,18 +52,24 @@ public class UserController {
     }
 
     @PostMapping("/auth/logout")
-    public ResponseEntity<Void> logout(AuthenticatedUser user) {
+    @Operation(summary = "Logout the user")
+    @SecurityRequirement(name = "BearerAuth")
+    public ResponseEntity<Void> logout(@Parameter(hidden = true) AuthenticatedUser user) {
         userService.revokeToken(user.token());
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/users/me")
-    public ResponseEntity<UserHomeOutput> userHome(AuthenticatedUser user) {
+    @Operation(summary = "Get current user information")
+    @SecurityRequirement(name = "BearerAuth")
+    public ResponseEntity<UserHomeOutput> userHome(@Parameter(hidden = true) AuthenticatedUser user) {
         return ResponseEntity.ok(new UserHomeOutput(user.user().id(), user.user().username(), null));
     }
 
     @PutMapping("/users/me")
-    public ResponseEntity<?> editUser(AuthenticatedUser user, @Valid @RequestBody UpdateUsernameInput input) {
+    @Operation(summary = "Update username")
+    @SecurityRequirement(name = "BearerAuth")
+    public ResponseEntity<?> editUser(@Parameter(hidden = true) AuthenticatedUser user, @Valid @RequestBody UpdateUsernameInput input) {
         return ErrorHandling.handleResult(
                 userService.updateUsername(user.user().id(), input.newUsername(), input.password()),
                 updatedUser -> ResponseEntity.ok(new UserHomeOutput(updatedUser.id(), updatedUser.username(), null))
@@ -64,7 +77,9 @@ public class UserController {
     }
 
     @PutMapping("/users/me/password")
-    public ResponseEntity<?> updatePassword(AuthenticatedUser user, @Valid @RequestBody UpdatePasswordInput input) {
+    @Operation(summary = "Update password")
+    @SecurityRequirement(name = "BearerAuth")
+    public ResponseEntity<?> updatePassword(@Parameter(hidden = true) AuthenticatedUser user, @Valid @RequestBody UpdatePasswordInput input) {
         return ErrorHandling.handleResult(
                 userService.updatePassword(user.user().id(), input.oldPassword(), input.newPassword()),
                 updatedUser -> ResponseEntity.ok(new UserHomeOutput(updatedUser.id(), updatedUser.username(), null))
@@ -72,12 +87,16 @@ public class UserController {
     }
 
     @GetMapping("/users/me/channels")
-    public ResponseEntity<?> getUserChannels(AuthenticatedUser user, PageInput page) {
+    @Operation(summary = "Get channels for the current user")
+    @SecurityRequirement(name = "BearerAuth")
+    public ResponseEntity<?> getUserChannels(@Parameter(hidden = true) AuthenticatedUser user, PageInput page) {
         return ErrorHandling.handleResult(channelService.getJoinedChannels(user.user().id(), page.limit(), page.offset()));
     }
 
     @DeleteMapping("/users/me")
-    public ResponseEntity<?> deleteUser(AuthenticatedUser user) {
+    @Operation(summary = "Delete user account")
+    @SecurityRequirement(name = "BearerAuth")
+    public ResponseEntity<?> deleteUser(@Parameter(hidden = true) AuthenticatedUser user) {
         return ErrorHandling.handleResult(userService.deleteUser(user.user().id()));
     }
 }

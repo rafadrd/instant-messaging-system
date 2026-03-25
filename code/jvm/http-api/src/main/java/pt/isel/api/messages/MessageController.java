@@ -1,5 +1,9 @@
 package pt.isel.api.messages;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +20,8 @@ import pt.isel.services.messages.MessageService;
 
 @RestController
 @RequestMapping("/api/channels/{channelId}/messages")
+@Tag(name = "Messages", description = "Messages management")
+@SecurityRequirement(name = "BearerAuth")
 public class MessageController {
     private final MessageService messageService;
 
@@ -24,7 +30,8 @@ public class MessageController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createMessage(AuthenticatedUser user, @PathVariable Long channelId, @Valid @RequestBody MessageRequest request) {
+    @Operation(summary = "Create a new message in a channel")
+    public ResponseEntity<?> createMessage(@Parameter(hidden = true) AuthenticatedUser user, @PathVariable Long channelId, @Valid @RequestBody MessageRequest request) {
         return ErrorHandling.handleResult(
                 messageService.createMessage(request.content(), user.user().id(), channelId),
                 message -> ResponseEntity.status(HttpStatus.CREATED).body(message)
@@ -32,7 +39,8 @@ public class MessageController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getMessages(AuthenticatedUser user, @PathVariable Long channelId, PageInput page) {
+    @Operation(summary = "Get messages in a channel")
+    public ResponseEntity<?> getMessages(@Parameter(hidden = true) AuthenticatedUser user, @PathVariable Long channelId, PageInput page) {
         return ErrorHandling.handleResult(messageService.getMessagesInChannel(user.user().id(), channelId, page.limit(), page.offset()));
     }
 }

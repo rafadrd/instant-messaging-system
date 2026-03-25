@@ -6,4 +6,7 @@ dependencies {
     implementation(libs.jdbi3.core)
     implementation(libs.jdbi3.postgres)
     implementation(libs.postgresql)
+
+    testImplementation(libs.flyway.core)
+    testImplementation(libs.flyway.database.postgresql)
 }

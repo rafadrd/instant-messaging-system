@@ -2,6 +2,7 @@
 spring-boot = "3.5.11"
 jdbi = "3.51.0"
 jjwt = "0.13.0"
+springdoc = "2.8.16"
 
 [libraries]
 # Jakarta
@@ -20,6 +21,8 @@ spring-security-core = { group = "org.springframework.security", name = "spring-
 
 # Database
 postgresql = { group = "org.postgresql", name = "postgresql" }
+flyway-core = { group = "org.flywaydb", name = "flyway-core" }
+flyway-database-postgresql = { group = "org.flywaydb", name = "flyway-database-postgresql" }
 
 # JDBI
 jdbi3-core = { group = "org.jdbi", name = "jdbi3-core", version.ref = "jdbi" }
@@ -29,6 +32,9 @@ jdbi3-postgres = { group = "org.jdbi", name = "jdbi3-postgres", version.ref = "j
 jjwt-api = { group = "io.jsonwebtoken", name = "jjwt-api", version.ref = "jjwt" }
 jjwt-impl = { group = "io.jsonwebtoken", name = "jjwt-impl", version.ref = "jjwt" }
 jjwt-jackson = { group = "io.jsonwebtoken", name = "jjwt-jackson", version.ref = "jjwt" }
+
+# Swagger UI
+springdoc-openapi-starter-webmvc-ui = { group = "org.springdoc", name = "springdoc-openapi-starter-webmvc-ui", version.ref = "springdoc" }
 
 # Jackson
 jackson-databind = { group = "com.fasterxml.jackson.core", name = "jackson-databind" }
