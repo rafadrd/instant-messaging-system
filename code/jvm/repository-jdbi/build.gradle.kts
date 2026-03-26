@@ -9,4 +9,8 @@ dependencies {
 
     testImplementation(libs.flyway.core)
     testImplementation(libs.flyway.database.postgresql)
+
+    // Testcontainers
+    testImplementation(libs.testcontainers.junit.jupiter)
+    testImplementation(libs.testcontainers.postgresql)
 }

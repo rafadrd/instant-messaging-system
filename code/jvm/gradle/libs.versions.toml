@@ -42,5 +42,9 @@ jackson-databind = { group = "com.fasterxml.jackson.core", name = "jackson-datab
 # Junit
 junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher" }
 
+# Testcontainers
+testcontainers-junit-jupiter = { group = "org.testcontainers", name = "junit-jupiter" }
+testcontainers-postgresql = { group = "org.testcontainers", name = "postgresql" }
+
 [plugins]
 spring-boot = { id = "org.springframework.boot", version.ref = "spring-boot" }
