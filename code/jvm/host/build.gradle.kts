@@ -25,4 +25,8 @@ dependencies {
 
     // Swagger UI
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
+
+    // Testing
+    testImplementation(libs.testcontainers.junit.jupiter)
+    testImplementation(libs.testcontainers.postgresql)
 }
