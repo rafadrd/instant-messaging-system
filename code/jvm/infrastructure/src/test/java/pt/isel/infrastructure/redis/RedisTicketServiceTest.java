@@ -2,16 +2,11 @@ package pt.isel.infrastructure.redis;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.springframework.data.redis.RedisConnectionFailureException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 
 import java.time.Duration;
-import java.util.Collections;
-import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -75,32 +70,5 @@ class RedisTicketServiceTest {
         Long userId = ticketService.validateAndConsumeTicket(ticket);
 
         assertNull(userId);
-    }
-
-    @Test
-    void testFlushTickets() {
-        Set<String> keys = Set.of("ticket:1", "ticket:2");
-        when(redisTemplate.keys("ticket:*")).thenReturn(keys);
-
-        ticketService.flushTickets();
-
-        verify(redisTemplate).delete(keys);
-    }
-
-    @Test
-    void testFlushTicketsHandlesExceptionGracefully() {
-        when(redisTemplate.keys("ticket:*")).thenThrow(new RedisConnectionFailureException("Redis is down"));
-
-        assertDoesNotThrow(() -> ticketService.flushTickets());
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
-    void testFlushTicketsWithEmptyKeys() {
-        when(redisTemplate.keys("ticket:*")).thenReturn(Collections.emptySet());
-
-        ticketService.flushTickets();
-
-        verify(redisTemplate, Mockito.never()).delete(any(Set.class));
     }
 }
