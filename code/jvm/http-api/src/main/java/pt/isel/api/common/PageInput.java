@@ -1,9 +1,12 @@
 package pt.isel.api.common;
 
+import java.beans.ConstructorProperties;
+
 public record PageInput(Integer limit, Integer offset) {
-    public PageInput {
-        if (limit == null || limit <= 0) limit = 50;
-        if (limit > 100) limit = 100;
-        if (offset == null || offset < 0) offset = 0;
+
+    @ConstructorProperties({"limit", "offset"})
+    public PageInput(Integer limit, Integer offset) {
+        this.limit = (limit == null || limit <= 0) ? 50 : Math.min(limit, 100);
+        this.offset = (offset == null || offset < 0) ? 0 : offset;
     }
 }

@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,7 +29,7 @@ public class InvitationController {
 
     @PostMapping
     @Operation(summary = "Create an invitation for a channel")
-    public ResponseEntity<?> createInvitation(@Parameter(hidden = true) AuthenticatedUser user, @PathVariable Long channelId, @RequestBody InvitationInput invitation) {
+    public ResponseEntity<?> createInvitation(@Parameter(hidden = true) AuthenticatedUser user, @PathVariable("channelId") Long channelId, @Valid @RequestBody InvitationInput invitation) {
         return ErrorHandling.handleResult(invitationService.createInvitation(
                 user.user().id(), channelId, invitation.accessType(), invitation.expiresAt()
         ));
@@ -36,13 +37,13 @@ public class InvitationController {
 
     @GetMapping
     @Operation(summary = "Get invitations for a channel")
-    public ResponseEntity<?> getInvitationsForChannel(@Parameter(hidden = true) AuthenticatedUser user, @PathVariable Long channelId) {
+    public ResponseEntity<?> getInvitationsForChannel(@Parameter(hidden = true) AuthenticatedUser user, @PathVariable("channelId") Long channelId) {
         return ErrorHandling.handleResult(invitationService.getInvitationsForChannel(user.user().id(), channelId));
     }
 
     @PostMapping("/{invitationId}/revoke")
     @Operation(summary = "Revoke an active invitation")
-    public ResponseEntity<?> revokeInvitation(@Parameter(hidden = true) AuthenticatedUser user, @PathVariable Long channelId, @PathVariable Long invitationId) {
+    public ResponseEntity<?> revokeInvitation(@Parameter(hidden = true) AuthenticatedUser user, @PathVariable("channelId") Long channelId, @PathVariable("invitationId") Long invitationId) {
         return ErrorHandling.handleResult(invitationService.revokeInvitation(user.user().id(), channelId, invitationId));
     }
 }

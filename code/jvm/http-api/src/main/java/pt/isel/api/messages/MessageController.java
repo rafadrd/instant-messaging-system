@@ -31,7 +31,7 @@ public class MessageController {
 
     @PostMapping
     @Operation(summary = "Create a new message in a channel")
-    public ResponseEntity<?> createMessage(@Parameter(hidden = true) AuthenticatedUser user, @PathVariable Long channelId, @Valid @RequestBody MessageRequest request) {
+    public ResponseEntity<?> createMessage(@Parameter(hidden = true) AuthenticatedUser user, @PathVariable("channelId") Long channelId, @Valid @RequestBody MessageRequest request) {
         return ErrorHandling.handleResult(
                 messageService.createMessage(request.content(), user.user().id(), channelId),
                 message -> ResponseEntity.status(HttpStatus.CREATED).body(message)
@@ -40,7 +40,7 @@ public class MessageController {
 
     @GetMapping
     @Operation(summary = "Get messages in a channel")
-    public ResponseEntity<?> getMessages(@Parameter(hidden = true) AuthenticatedUser user, @PathVariable Long channelId, PageInput page) {
+    public ResponseEntity<?> getMessages(@Parameter(hidden = true) AuthenticatedUser user, @PathVariable("channelId") Long channelId, PageInput page) {
         return ErrorHandling.handleResult(messageService.getMessagesInChannel(user.user().id(), channelId, page.limit(), page.offset()));
     }
 }
