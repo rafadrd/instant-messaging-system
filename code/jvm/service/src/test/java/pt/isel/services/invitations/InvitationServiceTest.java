@@ -97,6 +97,28 @@ class InvitationServiceTest {
     }
 
     @Test
+    void testGetInvitationsForChannel_UserNotFound() {
+        Either<InvitationError, List<Invitation>> result = invitationService.getInvitationsForChannel(999L, channel.id());
+        assertInstanceOf(Either.Left.class, result);
+        assertInstanceOf(InvitationError.UserNotFound.class, ((Either.Left<InvitationError, List<Invitation>>) result).value());
+    }
+
+    @Test
+    void testGetInvitationsForChannel_ChannelNotFound() {
+        Either<InvitationError, List<Invitation>> result = invitationService.getInvitationsForChannel(alice.id(), 999L);
+        assertInstanceOf(Either.Left.class, result);
+        assertInstanceOf(InvitationError.ChannelNotFound.class, ((Either.Left<InvitationError, List<Invitation>>) result).value());
+    }
+
+    @Test
+    void testGetInvitationsForChannel_UserNotInChannel() {
+        User dave = trxManager.run(trx -> trx.repoUsers().create("dave", new PasswordValidationInfo("hash")));
+        Either<InvitationError, List<Invitation>> result = invitationService.getInvitationsForChannel(dave.id(), channel.id());
+        assertInstanceOf(Either.Left.class, result);
+        assertInstanceOf(InvitationError.UserNotInChannel.class, ((Either.Left<InvitationError, List<Invitation>>) result).value());
+    }
+
+    @Test
     void testRevokeInvitation_SuccessByOwner() {
         Invitation inv = ((Either.Right<InvitationError, Invitation>) invitationService.createInvitation(
                 alice.id(), channel.id(), AccessType.READ_ONLY, LocalDateTime.now().plusDays(1)

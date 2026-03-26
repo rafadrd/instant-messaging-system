@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -76,6 +77,13 @@ class RedisMessageEventServiceTest {
     }
 
     @Test
+    void testAddEmitterThrowsWhenChannelNotFound() {
+        UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.addEmitter(999L, alice.id(), emitter));
+        assertTrue(exception.getMessage().contains("not found"));
+    }
+
+    @Test
     void testAddEmitterThrowsWhenUserNotInChannel() {
         User bob = trxManager.run(trx -> trx.repoUsers().create("bob", new PasswordValidationInfo("hash")));
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
@@ -84,7 +92,7 @@ class RedisMessageEventServiceTest {
     }
 
     @Test
-    void testBroadcastMessage() throws Exception {
+    void testBroadcastMessage() {
         Message msg = new Message(1L, "Hello", new UserInfo(alice.id(), alice.username()), channel);
         UpdatedMessage.NewMessage signal = new UpdatedMessage.NewMessage(msg);
 

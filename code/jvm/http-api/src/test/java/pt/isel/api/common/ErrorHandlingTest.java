@@ -3,14 +3,20 @@ package pt.isel.api.common;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import pt.isel.domain.common.AppError;
 import pt.isel.domain.common.ChannelError;
 import pt.isel.domain.common.Either;
 import pt.isel.domain.common.InvitationError;
 import pt.isel.domain.common.MessageError;
 import pt.isel.domain.common.UserError;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class ErrorHandlingTest {
 
@@ -74,5 +80,33 @@ class ErrorHandlingTest {
         assertInstanceOf(ProblemResponse.class, response.getBody());
         ProblemResponse problem = (ProblemResponse) response.getBody();
         assertEquals("Invitation Already Exists", problem.title());
+    }
+
+    @Test
+    void testExhaustiveErrorMapping() throws Exception {
+        List<Class<?>> errorClasses = getConcreteClasses(AppError.class);
+        assertFalse(errorClasses.isEmpty(), "Should find concrete error classes");
+
+        for (Class<?> errorClass : errorClasses) {
+            AppError errorInstance = (AppError) errorClass.getDeclaredConstructor().newInstance();
+            Either<AppError, String> result = Either.failure(errorInstance);
+
+            ResponseEntity<?> response = ErrorHandling.handleResult(result);
+
+            assertNotNull(response);
+            assertInstanceOf(ProblemResponse.class, response.getBody(), "Error " + errorClass.getSimpleName() + " should map to a ProblemResponse");
+        }
+    }
+
+    private List<Class<?>> getConcreteClasses(Class<?> sealedInterface) {
+        List<Class<?>> result = new ArrayList<>();
+        for (Class<?> permitted : sealedInterface.getPermittedSubclasses()) {
+            if (permitted.isSealed()) {
+                result.addAll(getConcreteClasses(permitted));
+            } else {
+                result.add(permitted);
+            }
+        }
+        return result;
     }
 }

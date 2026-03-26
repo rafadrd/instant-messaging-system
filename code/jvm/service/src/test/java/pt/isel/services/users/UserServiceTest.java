@@ -32,6 +32,7 @@ class UserServiceTest {
     private TransactionManagerInMem trxManager;
     private UserService userService;
     private boolean rateLimitTriggered = false;
+    private Clock clock;
 
     @BeforeEach
     void setUp() {
@@ -70,7 +71,7 @@ class UserServiceTest {
         };
 
         RateLimiter rateLimiter = (action, identifier, limit, window) -> rateLimitTriggered;
-        Clock clock = Clock.fixed(Instant.parse("2025-01-01T10:00:00Z"), ZoneOffset.UTC);
+        clock = Clock.fixed(Instant.parse("2025-01-01T10:00:00Z"), ZoneOffset.UTC);
 
         userService = new UserService(trxManager, securityDomain, tokenService, clock, rateLimiter);
     }
@@ -93,7 +94,7 @@ class UserServiceTest {
 
         Channel channel = trxManager.run(trx -> trx.repoChannels().create("Secret", new UserInfo(owner.id(), owner.username()), false));
         Invitation inv = trxManager.run(trx -> trx.repoInvitations().create(
-                "inv-token", new UserInfo(owner.id(), owner.username()), channel, AccessType.READ_WRITE, LocalDateTime.now(ZoneOffset.UTC).plusDays(1)
+                "inv-token", new UserInfo(owner.id(), owner.username()), channel, AccessType.READ_WRITE, LocalDateTime.now(clock).plusDays(1)
         ));
 
         Either<UserError, TokenExternalInfo> result = userService.registerUser("bob", "Strong1!", inv.token());
@@ -105,6 +106,23 @@ class UserServiceTest {
             assertNotNull(trx.repoMemberships().findUserInChannel(bobId, channel.id()));
             return null;
         });
+    }
+
+    @Test
+    void testRegisterUser_InvitationExpired() {
+        User owner = ((Either.Right<UserError, User>) userService.getUserById(
+                ((Either.Right<UserError, TokenExternalInfo>) userService.registerUser("owner", "Strong1!", null)).value().userId()
+        )).value();
+
+        Channel channel = trxManager.run(trx -> trx.repoChannels().create("Secret", new UserInfo(owner.id(), owner.username()), false));
+        Invitation inv = trxManager.run(trx -> trx.repoInvitations().create(
+                "expired-inv-token", new UserInfo(owner.id(), owner.username()), channel, AccessType.READ_WRITE, LocalDateTime.now(clock).minusDays(1)
+        ));
+
+        Either<UserError, TokenExternalInfo> result = userService.registerUser("bob", "Strong1!", inv.token());
+
+        assertInstanceOf(Either.Left.class, result);
+        assertInstanceOf(UserError.InvitationExpired.class, ((Either.Left<UserError, TokenExternalInfo>) result).value());
     }
 
     @Test
@@ -140,6 +158,17 @@ class UserServiceTest {
 
         assertInstanceOf(Either.Right.class, result);
         assertEquals("alice_new", ((Either.Right<UserError, User>) result).value().username());
+    }
+
+    @Test
+    void testUpdateUsername_UsernameAlreadyInUse() {
+        Long id1 = ((Either.Right<UserError, TokenExternalInfo>) userService.registerUser("alice", "Strong1!", null)).value().userId();
+        userService.registerUser("bob", "Strong1!", null);
+
+        Either<UserError, User> result = userService.updateUsername(id1, "bob", "Strong1!");
+
+        assertInstanceOf(Either.Left.class, result);
+        assertInstanceOf(UserError.UsernameAlreadyInUse.class, ((Either.Left<UserError, User>) result).value());
     }
 
     @Test
@@ -336,6 +365,7 @@ class UserServiceTest {
         userService.revokeToken(token);
         assertNull(userService.getUserByToken(token));
     }
+
     @Test
     void testRegisterUser_InvitationAlreadyUsed() {
         User owner = ((Either.Right<UserError, User>) userService.getUserById(
@@ -344,7 +374,7 @@ class UserServiceTest {
 
         Channel channel = trxManager.run(trx -> trx.repoChannels().create("Secret", new UserInfo(owner.id(), owner.username()), false));
         trxManager.run(trx -> trx.repoInvitations().create(
-                "inv-token", new UserInfo(owner.id(), owner.username()), channel, AccessType.READ_WRITE, LocalDateTime.now(ZoneOffset.UTC).plusDays(1)
+                "inv-token", new UserInfo(owner.id(), owner.username()), channel, AccessType.READ_WRITE, LocalDateTime.now(clock).plusDays(1)
         ));
 
         userService.registerUser("bob", "Strong1!", "inv-token");

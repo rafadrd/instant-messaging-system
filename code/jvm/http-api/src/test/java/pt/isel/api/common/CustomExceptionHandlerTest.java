@@ -59,4 +59,16 @@ class CustomExceptionHandlerTest {
                 .andExpect(jsonPath("$.title").value("Invalid Request Content"))
                 .andExpect(jsonPath("$.status").value(400));
     }
+
+    @Test
+    void testHandleMethodArgumentNotValid() throws Exception {
+        String invalidJson = "{\"username\":\"\", \"password\":\"Strong1!\"}";
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Invalid Request Content"))
+                .andExpect(jsonPath("$.status").value(400));
+    }
 }

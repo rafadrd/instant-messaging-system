@@ -60,6 +60,15 @@ class ChannelServiceTest {
     }
 
     @Test
+    void testCreateChannel_ChannelAlreadyExists() {
+        channelService.createChannel("General", alice.id(), true);
+        Either<ChannelError, Channel> result = channelService.createChannel("General", bob.id(), true);
+
+        assertInstanceOf(Either.Left.class, result);
+        assertInstanceOf(ChannelError.ChannelAlreadyExists.class, ((Either.Left<ChannelError, Channel>) result).value());
+    }
+
+    @Test
     void testCreateChannel_EmptyName() {
         assertInstanceOf(Either.Left.class, channelService.createChannel("", alice.id(), true));
         assertInstanceOf(Either.Left.class, channelService.createChannel(null, alice.id(), true));
@@ -136,6 +145,34 @@ class ChannelServiceTest {
     }
 
     @Test
+    void testEditChannel_ChannelAlreadyExists() {
+        Channel c1 = ((Either.Right<ChannelError, Channel>) channelService.createChannel("General", alice.id(), true)).value();
+        channelService.createChannel("Random", alice.id(), true);
+
+        Either<ChannelError, Channel> result = channelService.editChannel(alice.id(), c1.id(), "Random", true);
+
+        assertInstanceOf(Either.Left.class, result);
+        assertInstanceOf(ChannelError.ChannelAlreadyExists.class, ((Either.Left<ChannelError, Channel>) result).value());
+    }
+
+    @Test
+    void testEditChannel_UserNotFound() {
+        Channel c1 = ((Either.Right<ChannelError, Channel>) channelService.createChannel("General", alice.id(), true)).value();
+        Either<ChannelError, Channel> result = channelService.editChannel(999L, c1.id(), "NewName", true);
+
+        assertInstanceOf(Either.Left.class, result);
+        assertInstanceOf(ChannelError.UserNotFound.class, ((Either.Left<ChannelError, Channel>) result).value());
+    }
+
+    @Test
+    void testEditChannel_ChannelNotFound() {
+        Either<ChannelError, Channel> result = channelService.editChannel(alice.id(), 999L, "NewName", true);
+
+        assertInstanceOf(Either.Left.class, result);
+        assertInstanceOf(ChannelError.ChannelNotFound.class, ((Either.Left<ChannelError, Channel>) result).value());
+    }
+
+    @Test
     void testGetAccessType_Success() {
         Channel created = ((Either.Right<ChannelError, Channel>) channelService.createChannel("General", alice.id(), true)).value();
         channelService.joinPublicChannel(bob.id(), created.id());
@@ -162,6 +199,16 @@ class ChannelServiceTest {
 
         assertInstanceOf(Either.Left.class, result);
         assertInstanceOf(ChannelError.UserIsOwner.class, ((Either.Left<ChannelError, ChannelMember>) result).value());
+    }
+
+    @Test
+    void testEditMemberAccess_TargetNotInChannel() {
+        Channel c1 = ((Either.Right<ChannelError, Channel>) channelService.createChannel("General", alice.id(), true)).value();
+
+        Either<ChannelError, ChannelMember> result = channelService.editMemberAccess(alice.id(), c1.id(), bob.id(), AccessType.READ_WRITE);
+
+        assertInstanceOf(Either.Left.class, result);
+        assertInstanceOf(ChannelError.UserNotInChannel.class, ((Either.Left<ChannelError, ChannelMember>) result).value());
     }
 
     @Test
