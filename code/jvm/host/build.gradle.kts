@@ -28,4 +28,5 @@ dependencies {
 
     // Testing
     testImplementation(libs.testcontainers.postgresql)
+    testImplementation(libs.spring.boot.testcontainers)
 }

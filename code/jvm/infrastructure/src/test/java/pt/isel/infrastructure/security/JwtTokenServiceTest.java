@@ -8,6 +8,8 @@ import pt.isel.domain.security.TokenExternalInfo;
 import pt.isel.services.users.ParsedToken;
 
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.Date;
 import java.util.UUID;
 
@@ -18,8 +20,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class JwtTokenServiceTest {
 
-    private static final String VALID_SECRET = "V7/OT4VfmIxVLASCfFk1aYgC2lzIOwGnt0vbPg7eoJw=";
+    private static final String VALID_SECRET;
     private static final String INVALID_SECRET = "short-secret";
+
+    static {
+        byte[] keyBytes = new byte[32];
+        new SecureRandom().nextBytes(keyBytes);
+        VALID_SECRET = Base64.getEncoder().encodeToString(keyBytes);
+    }
 
     @Test
     void testInitThrowsWeakKeyExceptionForShortSecret() {
