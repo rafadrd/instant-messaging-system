@@ -4,4 +4,5 @@ plugins {
 
 dependencies {
     api(project(":domain"))
+    testFixturesImplementation(rootProject.libs.spring.boot.starter.test)
 }

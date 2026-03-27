@@ -6,6 +6,7 @@ import pt.isel.domain.users.UserInfo;
 import pt.isel.repositories.messages.MessageRepository;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class MessageRepositoryInMem implements MessageRepository {
@@ -23,6 +24,7 @@ public class MessageRepositoryInMem implements MessageRepository {
     public List<Message> findAllInChannel(Channel channel, int limit, int offset) {
         return messages.stream()
                 .filter(m -> m.channel().id().equals(channel.id()))
+                .sorted(Comparator.comparing(Message::id).reversed())
                 .skip(offset)
                 .limit(limit)
                 .toList();

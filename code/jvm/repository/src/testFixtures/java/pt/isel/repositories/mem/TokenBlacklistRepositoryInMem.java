@@ -3,24 +3,27 @@ package pt.isel.repositories.mem;
 import pt.isel.repositories.security.TokenBlacklistRepository;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.time.ZoneOffset;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class TokenBlacklistRepositoryInMem implements TokenBlacklistRepository {
-    private final Set<String> blacklist = new HashSet<>();
+    private final Map<String, LocalDateTime> blacklist = new ConcurrentHashMap<>();
 
     @Override
     public void add(String jti, LocalDateTime expiresAt) {
-        blacklist.add(jti);
+        blacklist.put(jti, expiresAt);
     }
 
     @Override
     public boolean exists(String jti) {
-        return blacklist.contains(jti);
+        return blacklist.containsKey(jti);
     }
 
     @Override
     public void cleanupExpired() {
+        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+        blacklist.entrySet().removeIf(entry -> entry.getValue().isBefore(now));
     }
 
     @Override

@@ -13,4 +13,6 @@ dependencies {
     // Testcontainers
     testImplementation(libs.testcontainers.junit.jupiter)
     testImplementation(libs.testcontainers.postgresql)
+
+    testImplementation(testFixtures(project(":repository")))
 }
