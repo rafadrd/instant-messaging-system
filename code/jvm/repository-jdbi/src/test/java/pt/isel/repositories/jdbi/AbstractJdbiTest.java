@@ -6,15 +6,11 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.postgresql.ds.PGSimpleDataSource;
 import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import pt.isel.repositories.jdbi.transaction.TransactionManagerJdbi;
 import pt.isel.repositories.jdbi.utils.JdbiConfig;
 
-@Testcontainers
 public abstract class AbstractJdbiTest {
 
-    @Container
     @SuppressWarnings("resource")
     private static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
             .withDatabaseName("testdb")
@@ -23,6 +19,10 @@ public abstract class AbstractJdbiTest {
 
     protected static Jdbi jdbi;
     protected static TransactionManagerJdbi txManager;
+
+    static {
+        postgres.start();
+    }
 
     @BeforeAll
     static void initAll() {
