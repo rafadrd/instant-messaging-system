@@ -15,4 +15,5 @@ dependencies {
     testImplementation(libs.postgresql)
     testImplementation(libs.flyway.core)
     testImplementation(libs.flyway.database.postgresql)
+    testImplementation(testFixtures(project(":domain")))
 }

@@ -2,6 +2,7 @@ package pt.isel.services.messages;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import pt.isel.domain.builders.UserInfoBuilder;
 import pt.isel.domain.channels.AccessType;
 import pt.isel.domain.channels.Channel;
 import pt.isel.domain.common.Either;
@@ -58,11 +59,11 @@ class MessageServiceTest {
         charlie = trxManager.run(trx -> trx.repoUsers().create("charlie", new PasswordValidationInfo("hash")));
 
         channel = trxManager.run(trx -> {
-            UserInfo aliceInfo = new UserInfo(alice.id(), alice.username());
+            UserInfo aliceInfo = new UserInfoBuilder().withId(alice.id()).withUsername(alice.username()).build();
             Channel c = trx.repoChannels().create("General", aliceInfo, true);
             trx.repoMemberships().addUserToChannel(aliceInfo, c, AccessType.READ_WRITE);
-            trx.repoMemberships().addUserToChannel(new UserInfo(bob.id(), bob.username()), c, AccessType.READ_WRITE);
-            trx.repoMemberships().addUserToChannel(new UserInfo(charlie.id(), charlie.username()), c, AccessType.READ_ONLY);
+            trx.repoMemberships().addUserToChannel(new UserInfoBuilder().withId(bob.id()).withUsername(bob.username()).build(), c, AccessType.READ_WRITE);
+            trx.repoMemberships().addUserToChannel(new UserInfoBuilder().withId(charlie.id()).withUsername(charlie.username()).build(), c, AccessType.READ_ONLY);
             return c;
         });
     }

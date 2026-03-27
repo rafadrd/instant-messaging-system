@@ -7,7 +7,7 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import pt.isel.domain.security.PasswordValidationInfo;
+import pt.isel.domain.builders.UserBuilder;
 import pt.isel.domain.users.AuthenticatedUser;
 import pt.isel.domain.users.User;
 
@@ -27,7 +27,7 @@ public class TestConfig implements WebMvcConfigurer {
             @Override
             public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
                                           NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
-                User mockUser = new User(1L, "testuser", new PasswordValidationInfo("hash"));
+                User mockUser = new UserBuilder().withId(1L).withUsername("testuser").build();
                 return new AuthenticatedUser(mockUser, "mock-token");
             }
         });

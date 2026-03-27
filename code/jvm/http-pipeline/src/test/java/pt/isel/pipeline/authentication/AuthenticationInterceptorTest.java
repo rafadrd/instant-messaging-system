@@ -5,9 +5,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.web.method.HandlerMethod;
+import pt.isel.domain.builders.UserBuilder;
 import pt.isel.domain.common.Either;
 import pt.isel.domain.common.UserError;
-import pt.isel.domain.security.PasswordValidationInfo;
 import pt.isel.domain.users.AuthenticatedUser;
 import pt.isel.domain.users.User;
 import pt.isel.services.users.TicketService;
@@ -65,7 +65,7 @@ class AuthenticationInterceptorTest {
 
     @Test
     void testPreHandleAuthRequiredValidToken() {
-        User user = new User(1L, "alice", new PasswordValidationInfo("hash"));
+        User user = new UserBuilder().withId(1L).withUsername("alice").build();
         AuthenticatedUser authUser = new AuthenticatedUser(user, "valid-token");
 
         when(request.getHeader(AuthenticationInterceptor.NAME_AUTHORIZATION_HEADER)).thenReturn("Bearer valid-token");
@@ -98,7 +98,7 @@ class AuthenticationInterceptorTest {
 
     @Test
     void testPreHandleAuthRequiredValidTicketForListenEndpoint() {
-        User user = new User(1L, "alice", new PasswordValidationInfo("hash"));
+        User user = new UserBuilder().withId(1L).withUsername("alice").build();
 
         when(request.getHeader(AuthenticationInterceptor.NAME_AUTHORIZATION_HEADER)).thenReturn(null);
         when(request.getRequestURI()).thenReturn("/api/channels/10/listen");

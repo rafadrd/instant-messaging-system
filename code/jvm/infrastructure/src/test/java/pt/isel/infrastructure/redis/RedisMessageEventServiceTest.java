@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import pt.isel.domain.builders.MessageBuilder;
+import pt.isel.domain.builders.UserInfoBuilder;
 import pt.isel.domain.channels.AccessType;
 import pt.isel.domain.channels.Channel;
 import pt.isel.domain.messages.Message;
@@ -97,7 +99,12 @@ class RedisMessageEventServiceTest {
 
     @Test
     void testBroadcastMessage() {
-        Message msg = new Message(1L, "Hello", new UserInfo(alice.id(), alice.username()), channel);
+        Message msg = new MessageBuilder()
+                .withId(1L)
+                .withContent("Hello")
+                .withUser(new UserInfoBuilder().withId(alice.id()).withUsername(alice.username()).build())
+                .withChannel(channel)
+                .build();
         UpdatedMessage.NewMessage signal = new UpdatedMessage.NewMessage(msg);
 
         service.broadcastMessage(channel.id(), signal);

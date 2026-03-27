@@ -1,6 +1,7 @@
 package pt.isel.repositories.jdbi.messages;
 
 import org.junit.jupiter.api.Test;
+import pt.isel.domain.builders.UserInfoBuilder;
 import pt.isel.domain.channels.Channel;
 import pt.isel.domain.messages.Message;
 import pt.isel.domain.security.PasswordValidationInfo;
@@ -22,11 +23,11 @@ class MessageRepositoryJdbiTest extends AbstractJdbiTest implements MessageRepos
     void testMessageAuthorIsNullWhenUserIsDeleted() {
         txManager.run(trx -> {
             User owner = trx.repoUsers().create("owner", new PasswordValidationInfo("hash"));
-            UserInfo ownerInfo = new UserInfo(owner.id(), owner.username());
+            UserInfo ownerInfo = new UserInfoBuilder().withId(owner.id()).withUsername(owner.username()).build();
             Channel channel = trx.repoChannels().create("General", ownerInfo, true);
 
             User author = trx.repoUsers().create("author", new PasswordValidationInfo("hash"));
-            UserInfo authorInfo = new UserInfo(author.id(), author.username());
+            UserInfo authorInfo = new UserInfoBuilder().withId(author.id()).withUsername(author.username()).build();
 
             Message msg = trx.repoMessages().create("Ghost message", authorInfo, channel);
             assertThat(msg.user()).isNotNull();

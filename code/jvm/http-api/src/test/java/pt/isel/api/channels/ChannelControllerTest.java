@@ -10,11 +10,13 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import pt.isel.api.TestConfig;
+import pt.isel.domain.builders.ChannelBuilder;
+import pt.isel.domain.builders.ChannelMemberBuilder;
+import pt.isel.domain.builders.UserInfoBuilder;
 import pt.isel.domain.channels.AccessType;
 import pt.isel.domain.channels.Channel;
 import pt.isel.domain.channels.ChannelMember;
 import pt.isel.domain.common.Either;
-import pt.isel.domain.users.UserInfo;
 import pt.isel.services.channels.ChannelService;
 import pt.isel.services.messages.MessageEventService;
 import pt.isel.services.users.TicketService;
@@ -67,7 +69,7 @@ class ChannelControllerTest {
     @Test
     void testCreateChannel() throws Exception {
         ChannelInput input = new ChannelInput("General", true);
-        Channel channel = new Channel(10L, "General", new UserInfo(1L, "testuser"), true);
+        Channel channel = new ChannelBuilder().withId(10L).withName("General").build();
 
         when(channelService.createChannel(anyString(), anyLong(), anyBoolean())).thenReturn(Either.success(channel));
 
@@ -81,7 +83,7 @@ class ChannelControllerTest {
 
     @Test
     void testGetChannelById() throws Exception {
-        Channel channel = new Channel(10L, "General", new UserInfo(1L, "testuser"), true);
+        Channel channel = new ChannelBuilder().withId(10L).build();
         when(channelService.getChannelById(10L)).thenReturn(Either.success(channel));
 
         mockMvc.perform(get("/api/channels/10"))
@@ -92,7 +94,7 @@ class ChannelControllerTest {
     @Test
     void testEditChannel() throws Exception {
         EditChannelInput input = new EditChannelInput("NewName", false);
-        Channel channel = new Channel(10L, "NewName", new UserInfo(1L, "testuser"), false);
+        Channel channel = new ChannelBuilder().withId(10L).withName("NewName").withIsPublic(false).build();
 
         when(channelService.editChannel(eq(1L), eq(10L), eq("NewName"), eq(false))).thenReturn(Either.success(channel));
 
@@ -159,7 +161,11 @@ class ChannelControllerTest {
     @Test
     void testEditMemberAccess() throws Exception {
         EditMemberInput input = new EditMemberInput(AccessType.READ_WRITE);
-        ChannelMember member = new ChannelMember(1L, new UserInfo(2L, "bob"), new Channel(10L, "General", new UserInfo(1L, "testuser")), AccessType.READ_WRITE);
+        ChannelMember member = new ChannelMemberBuilder()
+                .withId(1L)
+                .withUser(new UserInfoBuilder().withId(2L).withUsername("bob").build())
+                .withAccessType(AccessType.READ_WRITE)
+                .build();
 
         when(channelService.editMemberAccess(1L, 10L, 2L, AccessType.READ_WRITE)).thenReturn(Either.success(member));
 

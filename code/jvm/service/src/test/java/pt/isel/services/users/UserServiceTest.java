@@ -2,6 +2,7 @@ package pt.isel.services.users;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import pt.isel.domain.builders.UserInfoBuilder;
 import pt.isel.domain.channels.AccessType;
 import pt.isel.domain.channels.Channel;
 import pt.isel.domain.common.Either;
@@ -12,7 +13,6 @@ import pt.isel.domain.security.PasswordPolicyConfig;
 import pt.isel.domain.security.PasswordSecurityDomain;
 import pt.isel.domain.security.TokenExternalInfo;
 import pt.isel.domain.users.User;
-import pt.isel.domain.users.UserInfo;
 import pt.isel.repositories.mem.TransactionManagerInMem;
 import pt.isel.services.common.RateLimiter;
 
@@ -89,9 +89,9 @@ class UserServiceTest {
                 ((Either.Right<UserError, TokenExternalInfo>) userService.registerUser("owner", "Strong1!", null)).value().userId()
         )).value();
 
-        Channel channel = trxManager.run(trx -> trx.repoChannels().create("Secret", new UserInfo(owner.id(), owner.username()), false));
+        Channel channel = trxManager.run(trx -> trx.repoChannels().create("Secret", new UserInfoBuilder().withId(owner.id()).withUsername(owner.username()).build(), false));
         Invitation inv = trxManager.run(trx -> trx.repoInvitations().create(
-                "inv-token", new UserInfo(owner.id(), owner.username()), channel, AccessType.READ_WRITE, LocalDateTime.now(clock).plusDays(1)
+                "inv-token", new UserInfoBuilder().withId(owner.id()).withUsername(owner.username()).build(), channel, AccessType.READ_WRITE, LocalDateTime.now(clock).plusDays(1)
         ));
 
         Either<UserError, TokenExternalInfo> result = userService.registerUser("bob", "Strong1!", inv.token());
@@ -111,9 +111,9 @@ class UserServiceTest {
                 ((Either.Right<UserError, TokenExternalInfo>) userService.registerUser("owner", "Strong1!", null)).value().userId()
         )).value();
 
-        Channel channel = trxManager.run(trx -> trx.repoChannels().create("Secret", new UserInfo(owner.id(), owner.username()), false));
+        Channel channel = trxManager.run(trx -> trx.repoChannels().create("Secret", new UserInfoBuilder().withId(owner.id()).withUsername(owner.username()).build(), false));
         Invitation inv = trxManager.run(trx -> trx.repoInvitations().create(
-                "expired-inv-token", new UserInfo(owner.id(), owner.username()), channel, AccessType.READ_WRITE, LocalDateTime.now(clock).minusDays(1)
+                "expired-inv-token", new UserInfoBuilder().withId(owner.id()).withUsername(owner.username()).build(), channel, AccessType.READ_WRITE, LocalDateTime.now(clock).minusDays(1)
         ));
 
         Either<UserError, TokenExternalInfo> result = userService.registerUser("bob", "Strong1!", inv.token());
@@ -206,7 +206,7 @@ class UserServiceTest {
     @Test
     void testDeleteUser_HasOwnedChannels() {
         Long id = ((Either.Right<UserError, TokenExternalInfo>) userService.registerUser("alice", "Strong1!", null)).value().userId();
-        trxManager.run(trx -> trx.repoChannels().create("General", new UserInfo(id, "alice"), true));
+        trxManager.run(trx -> trx.repoChannels().create("General", new UserInfoBuilder().withId(id).withUsername("alice").build(), true));
 
         Either<UserError, String> result = userService.deleteUser(id);
 
@@ -378,9 +378,9 @@ class UserServiceTest {
                 ((Either.Right<UserError, TokenExternalInfo>) userService.registerUser("owner", "Strong1!", null)).value().userId()
         )).value();
 
-        Channel channel = trxManager.run(trx -> trx.repoChannels().create("Secret", new UserInfo(owner.id(), owner.username()), false));
+        Channel channel = trxManager.run(trx -> trx.repoChannels().create("Secret", new UserInfoBuilder().withId(owner.id()).withUsername(owner.username()).build(), false));
         trxManager.run(trx -> trx.repoInvitations().create(
-                "inv-token", new UserInfo(owner.id(), owner.username()), channel, AccessType.READ_WRITE, LocalDateTime.now(clock).plusDays(1)
+                "inv-token", new UserInfoBuilder().withId(owner.id()).withUsername(owner.username()).build(), channel, AccessType.READ_WRITE, LocalDateTime.now(clock).plusDays(1)
         ));
 
         userService.registerUser("bob", "Strong1!", "inv-token");

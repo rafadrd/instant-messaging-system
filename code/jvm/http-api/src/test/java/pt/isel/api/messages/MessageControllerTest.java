@@ -9,10 +9,9 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import pt.isel.api.TestConfig;
-import pt.isel.domain.channels.Channel;
+import pt.isel.domain.builders.MessageBuilder;
 import pt.isel.domain.common.Either;
 import pt.isel.domain.messages.Message;
-import pt.isel.domain.users.UserInfo;
 import pt.isel.services.messages.MessageService;
 
 import java.util.List;
@@ -43,7 +42,7 @@ class MessageControllerTest {
     @Test
     void testCreateMessage() throws Exception {
         MessageRequest request = new MessageRequest("Hello World");
-        Message message = new Message(100L, "Hello World", new UserInfo(1L, "testuser"), new Channel(10L, "General", new UserInfo(1L, "testuser")));
+        Message message = new MessageBuilder().withId(100L).withContent("Hello World").build();
 
         when(messageService.createMessage(anyString(), anyLong(), anyLong())).thenReturn(Either.success(message));
 

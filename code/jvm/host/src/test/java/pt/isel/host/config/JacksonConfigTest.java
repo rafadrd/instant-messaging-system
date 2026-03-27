@@ -5,10 +5,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.json.JsonTest;
 import org.springframework.test.context.ContextConfiguration;
-import pt.isel.domain.channels.Channel;
+import pt.isel.domain.builders.MessageBuilder;
+import pt.isel.domain.builders.UserInfoBuilder;
 import pt.isel.domain.messages.Message;
 import pt.isel.domain.messages.UpdatedMessage;
-import pt.isel.domain.users.UserInfo;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -24,9 +24,12 @@ class JacksonConfigTest {
 
     @Test
     void testSerializeAndDeserializeNewMessage() throws Exception {
-        UserInfo user = new UserInfo(1L, "alice");
-        Channel channel = new Channel(10L, "General", user, true);
-        Message message = new Message(100L, "Hello World", user, channel, LocalDateTime.of(2025, 1, 1, 12, 0));
+        Message message = new MessageBuilder()
+                .withId(100L)
+                .withContent("Hello World")
+                .withUser(new UserInfoBuilder().withId(1L).withUsername("alice").build())
+                .withCreatedAt(LocalDateTime.of(2025, 1, 1, 12, 0))
+                .build();
         UpdatedMessage.NewMessage newMessage = new UpdatedMessage.NewMessage(message);
 
         String json = objectMapper.writeValueAsString(newMessage);

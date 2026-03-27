@@ -1,6 +1,8 @@
 package pt.isel.repositories.contracts;
 
 import org.junit.jupiter.api.Test;
+import pt.isel.domain.builders.ChannelBuilder;
+import pt.isel.domain.builders.UserInfoBuilder;
 import pt.isel.domain.channels.Channel;
 import pt.isel.domain.security.PasswordValidationInfo;
 import pt.isel.domain.users.User;
@@ -18,7 +20,7 @@ public interface ChannelRepositoryContract {
     default void testCreateAndFindById() {
         getTxManager().run(trx -> {
             User owner = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo ownerInfo = new UserInfo(owner.id(), owner.username());
+            UserInfo ownerInfo = new UserInfoBuilder().withId(owner.id()).withUsername(owner.username()).build();
 
             Channel channel = trx.repoChannels().create("General", ownerInfo, true);
 
@@ -38,7 +40,7 @@ public interface ChannelRepositoryContract {
     default void testFindByName() {
         getTxManager().run(trx -> {
             User owner = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            trx.repoChannels().create("Random", new UserInfo(owner.id(), owner.username()), true);
+            trx.repoChannels().create("Random", new UserInfoBuilder().withId(owner.id()).withUsername(owner.username()).build(), true);
 
             Channel found = trx.repoChannels().findByName("Random");
             assertThat(found).isNotNull();
@@ -53,7 +55,7 @@ public interface ChannelRepositoryContract {
     default void testFindAll() {
         getTxManager().run(trx -> {
             User owner = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo ownerInfo = new UserInfo(owner.id(), owner.username());
+            UserInfo ownerInfo = new UserInfoBuilder().withId(owner.id()).withUsername(owner.username()).build();
 
             trx.repoChannels().create("C1", ownerInfo, true);
             trx.repoChannels().create("C2", ownerInfo, false);
@@ -70,9 +72,9 @@ public interface ChannelRepositoryContract {
             User owner1 = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
             User owner2 = trx.repoUsers().create("bob", new PasswordValidationInfo("hash"));
 
-            trx.repoChannels().create("C1", new UserInfo(owner1.id(), owner1.username()), true);
-            trx.repoChannels().create("C2", new UserInfo(owner1.id(), owner1.username()), false);
-            trx.repoChannels().create("C3", new UserInfo(owner2.id(), owner2.username()), true);
+            trx.repoChannels().create("C1", new UserInfoBuilder().withId(owner1.id()).withUsername(owner1.username()).build(), true);
+            trx.repoChannels().create("C2", new UserInfoBuilder().withId(owner1.id()).withUsername(owner1.username()).build(), false);
+            trx.repoChannels().create("C3", new UserInfoBuilder().withId(owner2.id()).withUsername(owner2.username()).build(), true);
 
             List<Channel> aliceChannels = trx.repoChannels().findAllByOwner(owner1.id());
             assertThat(aliceChannels).hasSize(2);
@@ -87,7 +89,7 @@ public interface ChannelRepositoryContract {
     default void testFindAllPublicChannelsWithPagination() {
         getTxManager().run(trx -> {
             User owner = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo ownerInfo = new UserInfo(owner.id(), owner.username());
+            UserInfo ownerInfo = new UserInfoBuilder().withId(owner.id()).withUsername(owner.username()).build();
 
             trx.repoChannels().create("Pub1", ownerInfo, true);
             trx.repoChannels().create("Priv1", ownerInfo, false);
@@ -110,7 +112,7 @@ public interface ChannelRepositoryContract {
     default void testSearchByName() {
         getTxManager().run(trx -> {
             User owner = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo ownerInfo = new UserInfo(owner.id(), owner.username());
+            UserInfo ownerInfo = new UserInfoBuilder().withId(owner.id()).withUsername(owner.username()).build();
 
             trx.repoChannels().create("Java Devs", ownerInfo, true);
             trx.repoChannels().create("JavaScript Devs", ownerInfo, true);
@@ -128,9 +130,14 @@ public interface ChannelRepositoryContract {
     default void testSaveUpdatesChannel() {
         getTxManager().run(trx -> {
             User owner = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            Channel channel = trx.repoChannels().create("OldName", new UserInfo(owner.id(), owner.username()), true);
+            Channel channel = trx.repoChannels().create("OldName", new UserInfoBuilder().withId(owner.id()).withUsername(owner.username()).build(), true);
 
-            Channel updated = new Channel(channel.id(), "NewName", channel.owner(), false);
+            Channel updated = new ChannelBuilder()
+                    .withId(channel.id())
+                    .withName("NewName")
+                    .withOwner(channel.owner())
+                    .withIsPublic(false)
+                    .build();
             trx.repoChannels().save(updated);
 
             Channel found = trx.repoChannels().findById(channel.id());
@@ -144,7 +151,7 @@ public interface ChannelRepositoryContract {
     default void testDeleteById() {
         getTxManager().run(trx -> {
             User owner = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            Channel c1 = trx.repoChannels().create("C1", new UserInfo(owner.id(), owner.username()), true);
+            Channel c1 = trx.repoChannels().create("C1", new UserInfoBuilder().withId(owner.id()).withUsername(owner.username()).build(), true);
 
             trx.repoChannels().deleteById(c1.id());
             assertThat(trx.repoChannels().findById(c1.id())).isNull();
@@ -156,7 +163,7 @@ public interface ChannelRepositoryContract {
     default void testClear() {
         getTxManager().run(trx -> {
             User owner = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            trx.repoChannels().create("C1", new UserInfo(owner.id(), owner.username()), true);
+            trx.repoChannels().create("C1", new UserInfoBuilder().withId(owner.id()).withUsername(owner.username()).build(), true);
 
             trx.repoChannels().clear();
             assertThat(trx.repoChannels().findAll()).isEmpty();

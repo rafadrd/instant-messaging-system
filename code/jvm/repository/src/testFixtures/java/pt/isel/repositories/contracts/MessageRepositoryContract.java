@@ -1,6 +1,8 @@
 package pt.isel.repositories.contracts;
 
 import org.junit.jupiter.api.Test;
+import pt.isel.domain.builders.MessageBuilder;
+import pt.isel.domain.builders.UserInfoBuilder;
 import pt.isel.domain.channels.Channel;
 import pt.isel.domain.messages.Message;
 import pt.isel.domain.security.PasswordValidationInfo;
@@ -19,7 +21,7 @@ public interface MessageRepositoryContract {
     default void testCreateAndFindById() {
         getTxManager().run(trx -> {
             User user = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo userInfo = new UserInfo(user.id(), user.username());
+            UserInfo userInfo = new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build();
             Channel channel = trx.repoChannels().create("General", userInfo, true);
 
             Message msg = trx.repoMessages().create("Hello World", userInfo, channel);
@@ -41,7 +43,7 @@ public interface MessageRepositoryContract {
     default void testFindAll() {
         getTxManager().run(trx -> {
             User user = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo userInfo = new UserInfo(user.id(), user.username());
+            UserInfo userInfo = new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build();
             Channel channel = trx.repoChannels().create("General", userInfo, true);
 
             trx.repoMessages().create("Msg 1", userInfo, channel);
@@ -57,7 +59,7 @@ public interface MessageRepositoryContract {
     default void testFindAllInChannelWithPagination() {
         getTxManager().run(trx -> {
             User user = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo userInfo = new UserInfo(user.id(), user.username());
+            UserInfo userInfo = new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build();
             Channel channel = trx.repoChannels().create("General", userInfo, true);
 
             trx.repoMessages().create("Msg 1", userInfo, channel);
@@ -83,11 +85,17 @@ public interface MessageRepositoryContract {
     default void testSaveUpdatesMessage() {
         getTxManager().run(trx -> {
             User user = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo userInfo = new UserInfo(user.id(), user.username());
+            UserInfo userInfo = new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build();
             Channel channel = trx.repoChannels().create("General", userInfo, true);
 
             Message msg = trx.repoMessages().create("Original", userInfo, channel);
-            Message updated = new Message(msg.id(), "Edited", userInfo, channel, msg.createdAt());
+            Message updated = new MessageBuilder()
+                    .withId(msg.id())
+                    .withContent("Edited")
+                    .withUser(userInfo)
+                    .withChannel(channel)
+                    .withCreatedAt(msg.createdAt())
+                    .build();
 
             trx.repoMessages().save(updated);
 
@@ -100,7 +108,7 @@ public interface MessageRepositoryContract {
     default void testDeleteById() {
         getTxManager().run(trx -> {
             User user = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo userInfo = new UserInfo(user.id(), user.username());
+            UserInfo userInfo = new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build();
             Channel channel = trx.repoChannels().create("General", userInfo, true);
 
             Message msg = trx.repoMessages().create("To Delete", userInfo, channel);
@@ -115,8 +123,8 @@ public interface MessageRepositoryContract {
     default void testClear() {
         getTxManager().run(trx -> {
             User user = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            Channel channel = trx.repoChannels().create("General", new UserInfo(user.id(), user.username()), true);
-            trx.repoMessages().create("Msg", new UserInfo(user.id(), user.username()), channel);
+            Channel channel = trx.repoChannels().create("General", new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build(), true);
+            trx.repoMessages().create("Msg", new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build(), channel);
 
             trx.repoMessages().clear();
             assertThat(trx.repoMessages().findAll()).isEmpty();

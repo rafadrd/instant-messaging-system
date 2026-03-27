@@ -4,4 +4,7 @@ dependencies {
 
     // Spring
     implementation(libs.spring.boot.starter.web)
+
+    // Testing
+    testImplementation(testFixtures(project(":domain")))
 }

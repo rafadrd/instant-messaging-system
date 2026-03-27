@@ -1,6 +1,8 @@
 package pt.isel.repositories.contracts;
 
 import org.junit.jupiter.api.Test;
+import pt.isel.domain.builders.InvitationBuilder;
+import pt.isel.domain.builders.UserInfoBuilder;
 import pt.isel.domain.channels.AccessType;
 import pt.isel.domain.channels.Channel;
 import pt.isel.domain.invitations.Invitation;
@@ -24,7 +26,7 @@ public interface InvitationRepositoryContract {
     default void testCreateAndFindByToken() {
         getTxManager().run(trx -> {
             User creator = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo creatorInfo = new UserInfo(creator.id(), creator.username());
+            UserInfo creatorInfo = new UserInfoBuilder().withId(creator.id()).withUsername(creator.username()).build();
             Channel channel = trx.repoChannels().create("Secret", creatorInfo, false);
 
             LocalDateTime expiry = LocalDateTime.now(ZoneOffset.UTC).plusDays(1).truncatedTo(ChronoUnit.MILLIS);
@@ -46,7 +48,7 @@ public interface InvitationRepositoryContract {
     default void testFindAll() {
         getTxManager().run(trx -> {
             User creator = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo creatorInfo = new UserInfo(creator.id(), creator.username());
+            UserInfo creatorInfo = new UserInfoBuilder().withId(creator.id()).withUsername(creator.username()).build();
             Channel channel = trx.repoChannels().create("Secret", creatorInfo, false);
 
             LocalDateTime expiry = LocalDateTime.now(ZoneOffset.UTC).plusDays(1);
@@ -63,7 +65,7 @@ public interface InvitationRepositoryContract {
     default void testFindByChannelId() {
         getTxManager().run(trx -> {
             User creator = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo creatorInfo = new UserInfo(creator.id(), creator.username());
+            UserInfo creatorInfo = new UserInfoBuilder().withId(creator.id()).withUsername(creator.username()).build();
             Channel channel = trx.repoChannels().create("Secret", creatorInfo, false);
 
             LocalDateTime expiry = LocalDateTime.now(ZoneOffset.UTC).plusDays(1);
@@ -80,7 +82,7 @@ public interface InvitationRepositoryContract {
     default void testConsumeInvitation() {
         getTxManager().run(trx -> {
             User creator = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo creatorInfo = new UserInfo(creator.id(), creator.username());
+            UserInfo creatorInfo = new UserInfoBuilder().withId(creator.id()).withUsername(creator.username()).build();
             Channel channel = trx.repoChannels().create("Secret", creatorInfo, false);
 
             Invitation inv = trx.repoInvitations().create("t1", creatorInfo, channel, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).plusDays(1));
@@ -99,11 +101,19 @@ public interface InvitationRepositoryContract {
     default void testSaveUpdatesInvitation() {
         getTxManager().run(trx -> {
             User creator = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo creatorInfo = new UserInfo(creator.id(), creator.username());
+            UserInfo creatorInfo = new UserInfoBuilder().withId(creator.id()).withUsername(creator.username()).build();
             Channel channel = trx.repoChannels().create("Secret", creatorInfo, false);
 
             Invitation inv = trx.repoInvitations().create("t1", creatorInfo, channel, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).plusDays(1));
-            Invitation rejected = new Invitation(inv.id(), inv.token(), inv.createdBy(), inv.channel(), inv.accessType(), inv.expiresAt(), InvitationStatus.REJECTED);
+            Invitation rejected = new InvitationBuilder()
+                    .withId(inv.id())
+                    .withToken(inv.token())
+                    .withCreatedBy(inv.createdBy())
+                    .withChannel(inv.channel())
+                    .withAccessType(inv.accessType())
+                    .withExpiresAt(inv.expiresAt())
+                    .withStatus(InvitationStatus.REJECTED)
+                    .build();
 
             trx.repoInvitations().save(rejected);
 
@@ -116,7 +126,7 @@ public interface InvitationRepositoryContract {
     default void testDeleteById() {
         getTxManager().run(trx -> {
             User creator = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo creatorInfo = new UserInfo(creator.id(), creator.username());
+            UserInfo creatorInfo = new UserInfoBuilder().withId(creator.id()).withUsername(creator.username()).build();
             Channel channel = trx.repoChannels().create("Secret", creatorInfo, false);
 
             Invitation inv = trx.repoInvitations().create("t1", creatorInfo, channel, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).plusDays(1));
@@ -131,7 +141,7 @@ public interface InvitationRepositoryContract {
     default void testClear() {
         getTxManager().run(trx -> {
             User creator = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo creatorInfo = new UserInfo(creator.id(), creator.username());
+            UserInfo creatorInfo = new UserInfoBuilder().withId(creator.id()).withUsername(creator.username()).build();
             Channel channel = trx.repoChannels().create("Secret", creatorInfo, false);
 
             trx.repoInvitations().create("t1", creatorInfo, channel, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).plusDays(1));

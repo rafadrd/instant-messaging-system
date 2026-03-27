@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import pt.isel.api.TestConfig;
+import pt.isel.domain.builders.UserBuilder;
 import pt.isel.domain.common.Either;
 import pt.isel.domain.security.PasswordValidationInfo;
 import pt.isel.domain.security.TokenExternalInfo;
@@ -109,7 +110,7 @@ class UserControllerTest {
     @Test
     void testUpdateUsername() throws Exception {
         UpdateUsernameInput input = new UpdateUsernameInput("new_alice", "Strong1!");
-        User updatedUser = new User(1L, "new_alice", new PasswordValidationInfo("hash"));
+        User updatedUser = new UserBuilder().withId(1L).withUsername("new_alice").build();
 
         when(userService.updateUsername(eq(1L), eq("new_alice"), eq("Strong1!"))).thenReturn(Either.success(updatedUser));
 
@@ -123,7 +124,7 @@ class UserControllerTest {
     @Test
     void testUpdatePassword() throws Exception {
         UpdatePasswordInput input = new UpdatePasswordInput("Strong1!", "Stronger2@");
-        User updatedUser = new User(1L, "testuser", new PasswordValidationInfo("newhash"));
+        User updatedUser = new UserBuilder().withId(1L).withPasswordValidation(new PasswordValidationInfo("newhash")).build();
 
         when(userService.updatePassword(eq(1L), eq("Strong1!"), eq("Stronger2@"))).thenReturn(Either.success(updatedUser));
 

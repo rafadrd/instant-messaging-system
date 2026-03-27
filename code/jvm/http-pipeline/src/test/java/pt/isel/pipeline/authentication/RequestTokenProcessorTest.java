@@ -2,7 +2,7 @@ package pt.isel.pipeline.authentication;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import pt.isel.domain.security.PasswordValidationInfo;
+import pt.isel.domain.builders.UserBuilder;
 import pt.isel.domain.users.AuthenticatedUser;
 import pt.isel.domain.users.User;
 import pt.isel.services.users.UserService;
@@ -43,7 +43,7 @@ class RequestTokenProcessorTest {
 
     @Test
     void testProcessAuthorizationHeaderValueValidToken() {
-        User user = new User(1L, "alice", new PasswordValidationInfo("hash"));
+        User user = new UserBuilder().withId(1L).withUsername("alice").build();
         when(userService.getUserByToken("valid-token")).thenReturn(user);
 
         AuthenticatedUser authUser = processor.processAuthorizationHeaderValue("Bearer valid-token");
@@ -55,7 +55,7 @@ class RequestTokenProcessorTest {
 
     @Test
     void testProcessAuthorizationHeaderValueValidTokenCaseInsensitiveScheme() {
-        User user = new User(1L, "alice", new PasswordValidationInfo("hash"));
+        User user = new UserBuilder().withId(1L).withUsername("alice").build();
         when(userService.getUserByToken("valid-token")).thenReturn(user);
 
         AuthenticatedUser authUser = processor.processAuthorizationHeaderValue("bEaReR valid-token");

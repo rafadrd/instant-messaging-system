@@ -1,6 +1,8 @@
 package pt.isel.repositories.contracts;
 
 import org.junit.jupiter.api.Test;
+import pt.isel.domain.builders.ChannelMemberBuilder;
+import pt.isel.domain.builders.UserInfoBuilder;
 import pt.isel.domain.channels.AccessType;
 import pt.isel.domain.channels.Channel;
 import pt.isel.domain.channels.ChannelMember;
@@ -20,7 +22,7 @@ public interface ChannelMemberRepositoryContract {
     default void testAddAndFindUserInChannel() {
         getTxManager().run(trx -> {
             User user = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo userInfo = new UserInfo(user.id(), user.username());
+            UserInfo userInfo = new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build();
             Channel channel = trx.repoChannels().create("General", userInfo, true);
 
             ChannelMember member = trx.repoMemberships().addUserToChannel(userInfo, channel, AccessType.READ_WRITE);
@@ -41,7 +43,7 @@ public interface ChannelMemberRepositoryContract {
     default void testFindAll() {
         getTxManager().run(trx -> {
             User user = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo userInfo = new UserInfo(user.id(), user.username());
+            UserInfo userInfo = new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build();
             Channel channel1 = trx.repoChannels().create("C1", userInfo, true);
             Channel channel2 = trx.repoChannels().create("C2", userInfo, true);
 
@@ -59,8 +61,8 @@ public interface ChannelMemberRepositoryContract {
         getTxManager().run(trx -> {
             User user1 = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
             User user2 = trx.repoUsers().create("bob", new PasswordValidationInfo("hash"));
-            UserInfo u1Info = new UserInfo(user1.id(), user1.username());
-            UserInfo u2Info = new UserInfo(user2.id(), user2.username());
+            UserInfo u1Info = new UserInfoBuilder().withId(user1.id()).withUsername(user1.username()).build();
+            UserInfo u2Info = new UserInfoBuilder().withId(user2.id()).withUsername(user2.username()).build();
 
             Channel channel1 = trx.repoChannels().create("General", u1Info, true);
             Channel channel2 = trx.repoChannels().create("Secret", u1Info, false);
@@ -83,8 +85,8 @@ public interface ChannelMemberRepositoryContract {
         getTxManager().run(trx -> {
             User user1 = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
             User user2 = trx.repoUsers().create("bob", new PasswordValidationInfo("hash"));
-            UserInfo u1Info = new UserInfo(user1.id(), user1.username());
-            UserInfo u2Info = new UserInfo(user2.id(), user2.username());
+            UserInfo u1Info = new UserInfoBuilder().withId(user1.id()).withUsername(user1.username()).build();
+            UserInfo u2Info = new UserInfoBuilder().withId(user2.id()).withUsername(user2.username()).build();
 
             Channel channel = trx.repoChannels().create("General", u1Info, true);
 
@@ -101,7 +103,7 @@ public interface ChannelMemberRepositoryContract {
     default void testRemoveUserFromChannel() {
         getTxManager().run(trx -> {
             User user = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo userInfo = new UserInfo(user.id(), user.username());
+            UserInfo userInfo = new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build();
             Channel channel = trx.repoChannels().create("General", userInfo, true);
 
             trx.repoMemberships().addUserToChannel(userInfo, channel, AccessType.READ_WRITE);
@@ -117,11 +119,16 @@ public interface ChannelMemberRepositoryContract {
     default void testSaveUpdatesAccessType() {
         getTxManager().run(trx -> {
             User user = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo userInfo = new UserInfo(user.id(), user.username());
+            UserInfo userInfo = new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build();
             Channel channel = trx.repoChannels().create("General", userInfo, true);
 
             ChannelMember member = trx.repoMemberships().addUserToChannel(userInfo, channel, AccessType.READ_ONLY);
-            ChannelMember updated = new ChannelMember(member.id(), userInfo, channel, AccessType.READ_WRITE);
+            ChannelMember updated = new ChannelMemberBuilder()
+                    .withId(member.id())
+                    .withUser(userInfo)
+                    .withChannel(channel)
+                    .withAccessType(AccessType.READ_WRITE)
+                    .build();
 
             trx.repoMemberships().save(updated);
 
@@ -135,7 +142,7 @@ public interface ChannelMemberRepositoryContract {
     default void testDeleteById() {
         getTxManager().run(trx -> {
             User user = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo userInfo = new UserInfo(user.id(), user.username());
+            UserInfo userInfo = new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build();
             Channel channel = trx.repoChannels().create("General", userInfo, true);
 
             ChannelMember member = trx.repoMemberships().addUserToChannel(userInfo, channel, AccessType.READ_WRITE);
@@ -150,7 +157,7 @@ public interface ChannelMemberRepositoryContract {
     default void testClear() {
         getTxManager().run(trx -> {
             User user = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo userInfo = new UserInfo(user.id(), user.username());
+            UserInfo userInfo = new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build();
             Channel channel = trx.repoChannels().create("General", userInfo, true);
 
             trx.repoMemberships().addUserToChannel(userInfo, channel, AccessType.READ_WRITE);

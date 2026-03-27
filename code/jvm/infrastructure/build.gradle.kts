@@ -17,4 +17,5 @@ dependencies {
 
     // Testing
     testImplementation(testFixtures(project(":repository")))
+    testImplementation(testFixtures(project(":domain")))
 }

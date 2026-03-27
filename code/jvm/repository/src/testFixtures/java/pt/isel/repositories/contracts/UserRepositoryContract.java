@@ -1,6 +1,7 @@
 package pt.isel.repositories.contracts;
 
 import org.junit.jupiter.api.Test;
+import pt.isel.domain.builders.UserBuilder;
 import pt.isel.domain.security.PasswordValidationInfo;
 import pt.isel.domain.users.User;
 import pt.isel.repositories.TransactionManager;
@@ -69,7 +70,11 @@ public interface UserRepositoryContract {
     default void testSaveUpdatesExistingUser() {
         getTxManager().run(trx -> {
             User user = trx.repoUsers().create("dave", new PasswordValidationInfo("h1"));
-            User updated = new User(user.id(), "dave_updated", new PasswordValidationInfo("h2"));
+            User updated = new UserBuilder()
+                    .withId(user.id())
+                    .withUsername("dave_updated")
+                    .withPasswordValidation(new PasswordValidationInfo("h2"))
+                    .build();
 
             trx.repoUsers().save(updated);
 

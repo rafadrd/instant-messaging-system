@@ -3,10 +3,9 @@ package pt.isel.api.channels;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
-import pt.isel.domain.channels.Channel;
+import pt.isel.domain.builders.MessageBuilder;
 import pt.isel.domain.messages.Message;
 import pt.isel.domain.messages.UpdatedMessage;
-import pt.isel.domain.users.UserInfo;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -24,9 +23,7 @@ class SseUpdatedMessageEmitterAdapterTest {
         SseEmitter mockEmitter = mock(SseEmitter.class);
         SseUpdatedMessageEmitterAdapter adapter = new SseUpdatedMessageEmitterAdapter(mockEmitter);
 
-        UserInfo user = new UserInfo(1L, "alice");
-        Channel channel = new Channel(1L, "General", user);
-        Message msg = new Message(10L, "Hello", user, channel);
+        Message msg = new MessageBuilder().withId(10L).withContent("Hello").build();
 
         adapter.emit(new UpdatedMessage.NewMessage(msg));
 

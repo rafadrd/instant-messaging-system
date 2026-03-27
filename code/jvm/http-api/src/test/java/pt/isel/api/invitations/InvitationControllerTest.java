@@ -9,11 +9,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import pt.isel.api.TestConfig;
+import pt.isel.domain.builders.InvitationBuilder;
 import pt.isel.domain.channels.AccessType;
-import pt.isel.domain.channels.Channel;
 import pt.isel.domain.common.Either;
 import pt.isel.domain.invitations.Invitation;
-import pt.isel.domain.users.UserInfo;
 import pt.isel.services.invitations.InvitationService;
 
 import java.time.LocalDateTime;
@@ -44,7 +43,12 @@ class InvitationControllerTest {
     void testCreateInvitation() throws Exception {
         LocalDateTime expiry = LocalDateTime.now().plusDays(1);
         InvitationInput input = new InvitationInput(AccessType.READ_ONLY, expiry);
-        Invitation invitation = new Invitation(100L, "token123", new UserInfo(1L, "testuser"), new Channel(10L, "Secret", new UserInfo(1L, "testuser")), AccessType.READ_ONLY, expiry);
+        Invitation invitation = new InvitationBuilder()
+                .withId(100L)
+                .withToken("token123")
+                .withAccessType(AccessType.READ_ONLY)
+                .withExpiresAt(expiry)
+                .build();
 
         when(invitationService.createInvitation(eq(1L), eq(10L), eq(AccessType.READ_ONLY), any())).thenReturn(Either.success(invitation));
 

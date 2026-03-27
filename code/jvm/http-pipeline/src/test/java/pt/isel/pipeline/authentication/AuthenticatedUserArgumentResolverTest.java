@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.ModelAndViewContainer;
-import pt.isel.domain.security.PasswordValidationInfo;
+import pt.isel.domain.builders.UserBuilder;
 import pt.isel.domain.users.AuthenticatedUser;
 import pt.isel.domain.users.User;
 
@@ -47,7 +47,7 @@ class AuthenticatedUserArgumentResolverTest {
         HttpServletRequest request = mock(HttpServletRequest.class);
         ModelAndViewContainer mavContainer = mock(ModelAndViewContainer.class);
 
-        User user = new User(1L, "alice", new PasswordValidationInfo("hash"));
+        User user = new UserBuilder().withId(1L).withUsername("alice").build();
         AuthenticatedUser authUser = new AuthenticatedUser(user, "token123");
 
         when(webRequest.getNativeRequest(HttpServletRequest.class)).thenReturn(request);
@@ -87,7 +87,7 @@ class AuthenticatedUserArgumentResolverTest {
     @Test
     void testAddAndGetUser() {
         HttpServletRequest request = mock(HttpServletRequest.class);
-        User user = new User(1L, "alice", new PasswordValidationInfo("hash"));
+        User user = new UserBuilder().withId(1L).withUsername("alice").build();
         AuthenticatedUser authUser = new AuthenticatedUser(user, "token123");
 
         AuthenticatedUserArgumentResolver.addUserTo(authUser, request);

@@ -13,5 +13,6 @@ dependencies {
     // Testcontainers
     testImplementation(libs.testcontainers.postgresql)
 
+    testImplementation(testFixtures(project(":domain")))
     testImplementation(testFixtures(project(":repository")))
 }
