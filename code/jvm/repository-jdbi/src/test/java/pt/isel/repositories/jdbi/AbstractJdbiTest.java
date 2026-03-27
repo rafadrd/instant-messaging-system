@@ -47,14 +47,8 @@ public abstract class AbstractJdbiTest {
 
     @BeforeEach
     void cleanUp() {
-        txManager.run(trx -> {
-            trx.repoTokenBlacklist().clear();
-            trx.repoMessages().clear();
-            trx.repoInvitations().clear();
-            trx.repoMemberships().clear();
-            trx.repoChannels().clear();
-            trx.repoUsers().clear();
-            return null;
-        });
+        jdbi.useHandle(h -> h.execute(
+                "TRUNCATE TABLE users, channels, messages, invitations, channel_members, token_blacklist RESTART IDENTITY CASCADE"
+        ));
     }
 }
