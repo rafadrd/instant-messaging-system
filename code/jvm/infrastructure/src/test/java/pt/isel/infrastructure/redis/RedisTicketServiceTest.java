@@ -7,9 +7,7 @@ import org.springframework.data.redis.core.ValueOperations;
 
 import java.time.Duration;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -37,7 +35,7 @@ class RedisTicketServiceTest {
         Long userId = 42L;
         String ticket = ticketService.createTicket(userId);
 
-        assertNotNull(ticket);
+        assertThat(ticket).isNotNull();
         verify(valueOperations).set(eq("ticket:" + ticket), eq("42"), any(Duration.class));
     }
 
@@ -48,7 +46,7 @@ class RedisTicketServiceTest {
 
         Long userId = ticketService.validateAndConsumeTicket(ticket);
 
-        assertEquals(42L, userId);
+        assertThat(userId).isEqualTo(42L);
         verify(valueOperations).getAndDelete("ticket:" + ticket);
     }
 
@@ -59,7 +57,7 @@ class RedisTicketServiceTest {
 
         Long userId = ticketService.validateAndConsumeTicket(ticket);
 
-        assertNull(userId);
+        assertThat(userId).isNull();
     }
 
     @Test
@@ -69,6 +67,6 @@ class RedisTicketServiceTest {
 
         Long userId = ticketService.validateAndConsumeTicket(ticket);
 
-        assertNull(userId);
+        assertThat(userId).isNull();
     }
 }

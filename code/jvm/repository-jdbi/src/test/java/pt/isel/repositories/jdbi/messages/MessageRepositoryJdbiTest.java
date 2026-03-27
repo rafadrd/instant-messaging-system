@@ -10,9 +10,7 @@ import pt.isel.repositories.TransactionManager;
 import pt.isel.repositories.contracts.MessageRepositoryContract;
 import pt.isel.repositories.jdbi.AbstractJdbiTest;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class MessageRepositoryJdbiTest extends AbstractJdbiTest implements MessageRepositoryContract {
     @Override
@@ -31,14 +29,14 @@ class MessageRepositoryJdbiTest extends AbstractJdbiTest implements MessageRepos
             UserInfo authorInfo = new UserInfo(author.id(), author.username());
 
             Message msg = trx.repoMessages().create("Ghost message", authorInfo, channel);
-            assertNotNull(msg.user());
+            assertThat(msg.user()).isNotNull();
 
             trx.repoUsers().deleteById(author.id());
 
             Message found = trx.repoMessages().findById(msg.id());
-            assertNotNull(found);
-            assertEquals("Ghost message", found.content());
-            assertNull(found.user(), "Author should be null because the user was deleted (ON DELETE SET NULL)");
+            assertThat(found).isNotNull();
+            assertThat(found.content()).isEqualTo("Ghost message");
+            assertThat(found.user()).as("Author should be null because the user was deleted (ON DELETE SET NULL)").isNull();
 
             return null;
         });

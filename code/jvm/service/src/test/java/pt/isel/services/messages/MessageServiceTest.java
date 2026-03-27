@@ -17,10 +17,7 @@ import pt.isel.services.common.RateLimiter;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class MessageServiceTest {
 
@@ -74,11 +71,11 @@ class MessageServiceTest {
     void testCreateMessage_Success() {
         Either<MessageError, Message> result = messageService.createMessage("Hello World", alice.id(), channel.id());
 
-        assertInstanceOf(Either.Right.class, result);
+        assertThat(result).isInstanceOf(Either.Right.class);
         Message msg = ((Either.Right<MessageError, Message>) result).value();
-        assertEquals("Hello World", msg.content());
-        assertEquals(alice.id(), msg.user().id());
-        assertTrue(broadcastTriggered);
+        assertThat(msg.content()).isEqualTo("Hello World");
+        assertThat(msg.user().id()).isEqualTo(alice.id());
+        assertThat(broadcastTriggered).isTrue();
     }
 
     @Test
@@ -86,15 +83,15 @@ class MessageServiceTest {
         rateLimitTriggered = true;
         Either<MessageError, Message> result = messageService.createMessage("Hello", alice.id(), channel.id());
 
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(MessageError.RateLimitExceeded.class, ((Either.Left<MessageError, Message>) result).value());
-        assertFalse(broadcastTriggered);
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<MessageError, Message>) result).value()).isInstanceOf(MessageError.RateLimitExceeded.class);
+        assertThat(broadcastTriggered).isFalse();
     }
 
     @Test
     void testCreateMessage_EmptyContent() {
-        assertInstanceOf(Either.Left.class, messageService.createMessage("", alice.id(), channel.id()));
-        assertInstanceOf(Either.Left.class, messageService.createMessage(null, alice.id(), channel.id()));
+        assertThat(messageService.createMessage("", alice.id(), channel.id())).isInstanceOf(Either.Left.class);
+        assertThat(messageService.createMessage(null, alice.id(), channel.id())).isInstanceOf(Either.Left.class);
     }
 
     @Test
@@ -102,16 +99,16 @@ class MessageServiceTest {
         String longMsg = "a".repeat(1001);
         Either<MessageError, Message> result = messageService.createMessage(longMsg, alice.id(), channel.id());
 
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(MessageError.InvalidMessageLength.class, ((Either.Left<MessageError, Message>) result).value());
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<MessageError, Message>) result).value()).isInstanceOf(MessageError.InvalidMessageLength.class);
     }
 
     @Test
     void testCreateMessage_UserNotAuthorized() {
         Either<MessageError, Message> result = messageService.createMessage("Hello", charlie.id(), channel.id());
 
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(MessageError.UserNotAuthorized.class, ((Either.Left<MessageError, Message>) result).value());
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<MessageError, Message>) result).value()).isInstanceOf(MessageError.UserNotAuthorized.class);
     }
 
     @Test
@@ -121,14 +118,14 @@ class MessageServiceTest {
 
         Either<MessageError, List<Message>> result = messageService.getMessagesInChannel(charlie.id(), channel.id(), 10, 0);
 
-        assertInstanceOf(Either.Right.class, result);
-        assertEquals(2, ((Either.Right<MessageError, List<Message>>) result).value().size());
+        assertThat(result).isInstanceOf(Either.Right.class);
+        assertThat(((Either.Right<MessageError, List<Message>>) result).value()).hasSize(2);
     }
 
     @Test
     void testGetMessagesInChannel_InvalidPagination() {
-        assertInstanceOf(Either.Left.class, messageService.getMessagesInChannel(alice.id(), channel.id(), 0, 0));
-        assertInstanceOf(Either.Left.class, messageService.getMessagesInChannel(alice.id(), channel.id(), 10, -1));
+        assertThat(messageService.getMessagesInChannel(alice.id(), channel.id(), 0, 0)).isInstanceOf(Either.Left.class);
+        assertThat(messageService.getMessagesInChannel(alice.id(), channel.id(), 10, -1)).isInstanceOf(Either.Left.class);
     }
 
     @Test
@@ -137,36 +134,40 @@ class MessageServiceTest {
 
         Either<MessageError, List<Message>> result = messageService.getMessagesInChannel(dave.id(), channel.id(), 10, 0);
 
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(MessageError.UserNotInChannel.class, ((Either.Left<MessageError, List<Message>>) result).value());
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<MessageError, List<Message>>) result).value()).isInstanceOf(MessageError.UserNotInChannel.class);
     }
 
     @Test
     void testCreateMessage_UserNotFound() {
         Either<MessageError, Message> result = messageService.createMessage("Hello", 999L, channel.id());
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(MessageError.UserNotFound.class, ((Either.Left<MessageError, Message>) result).value());
+
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<MessageError, Message>) result).value()).isInstanceOf(MessageError.UserNotFound.class);
     }
 
     @Test
     void testCreateMessage_ChannelNotFound() {
         Either<MessageError, Message> result = messageService.createMessage("Hello", alice.id(), 999L);
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(MessageError.ChannelNotFound.class, ((Either.Left<MessageError, Message>) result).value());
+
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<MessageError, Message>) result).value()).isInstanceOf(MessageError.ChannelNotFound.class);
     }
 
     @Test
     void testCreateMessage_UserNotInChannel() {
         User dave = trxManager.run(trx -> trx.repoUsers().create("dave", new PasswordValidationInfo("hash")));
         Either<MessageError, Message> result = messageService.createMessage("Hello", dave.id(), channel.id());
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(MessageError.UserNotInChannel.class, ((Either.Left<MessageError, Message>) result).value());
+
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<MessageError, Message>) result).value()).isInstanceOf(MessageError.UserNotInChannel.class);
     }
 
     @Test
     void testGetMessagesInChannel_ChannelNotFound() {
         Either<MessageError, List<Message>> result = messageService.getMessagesInChannel(alice.id(), 999L, 10, 0);
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(MessageError.ChannelNotFound.class, ((Either.Left<MessageError, List<Message>>) result).value());
+
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<MessageError, List<Message>>) result).value()).isInstanceOf(MessageError.ChannelNotFound.class);
     }
 }

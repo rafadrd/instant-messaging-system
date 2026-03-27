@@ -6,7 +6,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -35,7 +35,7 @@ class AppInstantMessagingIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void mainMethodStartsApplicationSuccessfully() {
-        assertDoesNotThrow(() -> AppInstantMessaging.main(new String[]{
+        assertThatCode(() -> AppInstantMessaging.main(new String[]{
                 "--spring.main.web-application-type=none",
                 "--spring.flyway.enabled=false",
                 "--jwt.secret=my-32-character-ultra-secure-secret-key-for-tests",
@@ -44,7 +44,7 @@ class AppInstantMessagingIntegrationTest extends AbstractIntegrationTest {
                 "--spring.datasource.password=" + postgres.getPassword(),
                 "--spring.data.redis.host=" + redis.getHost(),
                 "--spring.data.redis.port=" + redis.getFirstMappedPort()
-        }));
+        })).doesNotThrowAnyException();
     }
 
     @Test

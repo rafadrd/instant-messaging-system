@@ -11,10 +11,7 @@ import pt.isel.repositories.TransactionManager;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public interface ChannelMemberRepositoryContract {
     TransactionManager getTxManager();
@@ -28,14 +25,14 @@ public interface ChannelMemberRepositoryContract {
 
             ChannelMember member = trx.repoMemberships().addUserToChannel(userInfo, channel, AccessType.READ_WRITE);
 
-            assertNotNull(member);
-            assertNotNull(member.id());
-            assertEquals(user.id(), member.user().id());
-            assertEquals(channel.id(), member.channel().id());
-            assertEquals(AccessType.READ_WRITE, member.accessType());
+            assertThat(member).isNotNull();
+            assertThat(member.id()).isNotNull();
+            assertThat(member.user().id()).isEqualTo(user.id());
+            assertThat(member.channel().id()).isEqualTo(channel.id());
+            assertThat(member.accessType()).isEqualTo(AccessType.READ_WRITE);
 
             ChannelMember found = trx.repoMemberships().findUserInChannel(user.id(), channel.id());
-            assertEquals(member.id(), found.id());
+            assertThat(found.id()).isEqualTo(member.id());
             return null;
         });
     }
@@ -52,7 +49,7 @@ public interface ChannelMemberRepositoryContract {
             trx.repoMemberships().addUserToChannel(userInfo, channel2, AccessType.READ_ONLY);
 
             List<ChannelMember> allMemberships = trx.repoMemberships().findAll();
-            assertEquals(2, allMemberships.size());
+            assertThat(allMemberships).hasSize(2);
             return null;
         });
     }
@@ -73,10 +70,10 @@ public interface ChannelMemberRepositoryContract {
             trx.repoMemberships().addUserToChannel(u2Info, channel1, AccessType.READ_ONLY);
 
             List<ChannelMember> aliceChannels = trx.repoMemberships().findAllChannelsForUser(user1.id(), 10, 0);
-            assertEquals(2, aliceChannels.size());
+            assertThat(aliceChannels).hasSize(2);
 
             List<ChannelMember> bobChannels = trx.repoMemberships().findAllChannelsForUser(user2.id(), 10, 0);
-            assertEquals(1, bobChannels.size());
+            assertThat(bobChannels).hasSize(1);
             return null;
         });
     }
@@ -95,7 +92,7 @@ public interface ChannelMemberRepositoryContract {
             trx.repoMemberships().addUserToChannel(u2Info, channel, AccessType.READ_ONLY);
 
             List<ChannelMember> members = trx.repoMemberships().findAllMembersInChannel(channel.id(), 10, 0);
-            assertEquals(2, members.size());
+            assertThat(members).hasSize(2);
             return null;
         });
     }
@@ -108,10 +105,10 @@ public interface ChannelMemberRepositoryContract {
             Channel channel = trx.repoChannels().create("General", userInfo, true);
 
             trx.repoMemberships().addUserToChannel(userInfo, channel, AccessType.READ_WRITE);
-            assertNotNull(trx.repoMemberships().findUserInChannel(user.id(), channel.id()));
+            assertThat(trx.repoMemberships().findUserInChannel(user.id(), channel.id())).isNotNull();
 
             trx.repoMemberships().removeUserFromChannel(user.id(), channel.id());
-            assertNull(trx.repoMemberships().findUserInChannel(user.id(), channel.id()));
+            assertThat(trx.repoMemberships().findUserInChannel(user.id(), channel.id())).isNull();
             return null;
         });
     }
@@ -129,7 +126,7 @@ public interface ChannelMemberRepositoryContract {
             trx.repoMemberships().save(updated);
 
             ChannelMember found = trx.repoMemberships().findById(member.id());
-            assertEquals(AccessType.READ_WRITE, found.accessType());
+            assertThat(found.accessType()).isEqualTo(AccessType.READ_WRITE);
             return null;
         });
     }
@@ -144,7 +141,7 @@ public interface ChannelMemberRepositoryContract {
             ChannelMember member = trx.repoMemberships().addUserToChannel(userInfo, channel, AccessType.READ_WRITE);
 
             trx.repoMemberships().deleteById(member.id());
-            assertNull(trx.repoMemberships().findById(member.id()));
+            assertThat(trx.repoMemberships().findById(member.id())).isNull();
             return null;
         });
     }
@@ -159,7 +156,7 @@ public interface ChannelMemberRepositoryContract {
             trx.repoMemberships().addUserToChannel(userInfo, channel, AccessType.READ_WRITE);
 
             trx.repoMemberships().clear();
-            assertTrue(trx.repoMemberships().findAll().isEmpty());
+            assertThat(trx.repoMemberships().findAll()).isEmpty();
             return null;
         });
     }

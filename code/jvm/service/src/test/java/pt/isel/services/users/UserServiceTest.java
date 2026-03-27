@@ -21,11 +21,8 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 class UserServiceTest {
 
@@ -80,10 +77,10 @@ class UserServiceTest {
     void testRegisterUser_Success() {
         Either<UserError, TokenExternalInfo> result = userService.registerUser("alice", "Strong1!", null);
 
-        assertInstanceOf(Either.Right.class, result);
+        assertThat(result).isInstanceOf(Either.Right.class);
         TokenExternalInfo tokenInfo = ((Either.Right<UserError, TokenExternalInfo>) result).value();
-        assertNotNull(tokenInfo.tokenValue());
-        assertEquals(1L, tokenInfo.userId());
+        assertThat(tokenInfo.tokenValue()).isNotNull();
+        assertThat(tokenInfo.userId()).isEqualTo(1L);
     }
 
     @Test
@@ -99,11 +96,11 @@ class UserServiceTest {
 
         Either<UserError, TokenExternalInfo> result = userService.registerUser("bob", "Strong1!", inv.token());
 
-        assertInstanceOf(Either.Right.class, result);
+        assertThat(result).isInstanceOf(Either.Right.class);
         Long bobId = ((Either.Right<UserError, TokenExternalInfo>) result).value().userId();
 
         trxManager.run(trx -> {
-            assertNotNull(trx.repoMemberships().findUserInChannel(bobId, channel.id()));
+            assertThat(trx.repoMemberships().findUserInChannel(bobId, channel.id())).isNotNull();
             return null;
         });
     }
@@ -121,16 +118,16 @@ class UserServiceTest {
 
         Either<UserError, TokenExternalInfo> result = userService.registerUser("bob", "Strong1!", inv.token());
 
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(UserError.InvitationExpired.class, ((Either.Left<UserError, TokenExternalInfo>) result).value());
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<UserError, TokenExternalInfo>) result).value()).isInstanceOf(UserError.InvitationExpired.class);
     }
 
     @Test
     void testRegisterUser_InsecurePassword() {
         Either<UserError, TokenExternalInfo> result = userService.registerUser("alice", "weak", null);
 
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(UserError.InsecurePassword.class, ((Either.Left<UserError, TokenExternalInfo>) result).value());
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<UserError, TokenExternalInfo>) result).value()).isInstanceOf(UserError.InsecurePassword.class);
     }
 
     @Test
@@ -138,8 +135,8 @@ class UserServiceTest {
         userService.registerUser("alice", "Strong1!", null);
         Either<UserError, TokenExternalInfo> result = userService.registerUser("alice", "Strong2!", null);
 
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(UserError.UsernameAlreadyInUse.class, ((Either.Left<UserError, TokenExternalInfo>) result).value());
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<UserError, TokenExternalInfo>) result).value()).isInstanceOf(UserError.UsernameAlreadyInUse.class);
     }
 
     @Test
@@ -147,8 +144,8 @@ class UserServiceTest {
         Long id = ((Either.Right<UserError, TokenExternalInfo>) userService.registerUser("alice", "Strong1!", null)).value().userId();
         Either<UserError, User> result = userService.getUserById(id);
 
-        assertInstanceOf(Either.Right.class, result);
-        assertEquals("alice", ((Either.Right<UserError, User>) result).value().username());
+        assertThat(result).isInstanceOf(Either.Right.class);
+        assertThat(((Either.Right<UserError, User>) result).value().username()).isEqualTo("alice");
     }
 
     @Test
@@ -156,8 +153,8 @@ class UserServiceTest {
         Long id = ((Either.Right<UserError, TokenExternalInfo>) userService.registerUser("alice", "Strong1!", null)).value().userId();
         Either<UserError, User> result = userService.updateUsername(id, "alice_new", "Strong1!");
 
-        assertInstanceOf(Either.Right.class, result);
-        assertEquals("alice_new", ((Either.Right<UserError, User>) result).value().username());
+        assertThat(result).isInstanceOf(Either.Right.class);
+        assertThat(((Either.Right<UserError, User>) result).value().username()).isEqualTo("alice_new");
     }
 
     @Test
@@ -167,8 +164,8 @@ class UserServiceTest {
 
         Either<UserError, User> result = userService.updateUsername(id1, "bob", "Strong1!");
 
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(UserError.UsernameAlreadyInUse.class, ((Either.Left<UserError, User>) result).value());
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<UserError, User>) result).value()).isInstanceOf(UserError.UsernameAlreadyInUse.class);
     }
 
     @Test
@@ -176,8 +173,8 @@ class UserServiceTest {
         Long id = ((Either.Right<UserError, TokenExternalInfo>) userService.registerUser("alice", "Strong1!", null)).value().userId();
         Either<UserError, User> result = userService.updateUsername(id, "alice_new", "Wrong1!");
 
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(UserError.IncorrectPassword.class, ((Either.Left<UserError, User>) result).value());
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<UserError, User>) result).value()).isInstanceOf(UserError.IncorrectPassword.class);
     }
 
     @Test
@@ -185,7 +182,7 @@ class UserServiceTest {
         Long id = ((Either.Right<UserError, TokenExternalInfo>) userService.registerUser("alice", "Strong1!", null)).value().userId();
         Either<UserError, User> result = userService.updatePassword(id, "Strong1!", "Stronger2@");
 
-        assertInstanceOf(Either.Right.class, result);
+        assertThat(result).isInstanceOf(Either.Right.class);
     }
 
     @Test
@@ -193,8 +190,8 @@ class UserServiceTest {
         Long id = ((Either.Right<UserError, TokenExternalInfo>) userService.registerUser("alice", "Strong1!", null)).value().userId();
         Either<UserError, User> result = userService.updatePassword(id, "Strong1!", "Strong1!");
 
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(UserError.PasswordSameAsPrevious.class, ((Either.Left<UserError, User>) result).value());
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<UserError, User>) result).value()).isInstanceOf(UserError.PasswordSameAsPrevious.class);
     }
 
     @Test
@@ -202,8 +199,8 @@ class UserServiceTest {
         Long id = ((Either.Right<UserError, TokenExternalInfo>) userService.registerUser("alice", "Strong1!", null)).value().userId();
         Either<UserError, String> result = userService.deleteUser(id);
 
-        assertInstanceOf(Either.Right.class, result);
-        assertInstanceOf(Either.Left.class, userService.getUserById(id));
+        assertThat(result).isInstanceOf(Either.Right.class);
+        assertThat(userService.getUserById(id)).isInstanceOf(Either.Left.class);
     }
 
     @Test
@@ -213,8 +210,8 @@ class UserServiceTest {
 
         Either<UserError, String> result = userService.deleteUser(id);
 
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(UserError.UserHasOwnedChannels.class, ((Either.Left<UserError, String>) result).value());
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<UserError, String>) result).value()).isInstanceOf(UserError.UserHasOwnedChannels.class);
     }
 
     @Test
@@ -222,8 +219,8 @@ class UserServiceTest {
         userService.registerUser("alice", "Strong1!", null);
         Either<UserError, TokenExternalInfo> result = userService.createToken("alice", "Strong1!");
 
-        assertInstanceOf(Either.Right.class, result);
-        assertNotNull(((Either.Right<UserError, TokenExternalInfo>) result).value().tokenValue());
+        assertThat(result).isInstanceOf(Either.Right.class);
+        assertThat(((Either.Right<UserError, TokenExternalInfo>) result).value().tokenValue()).isNotNull();
     }
 
     @Test
@@ -232,8 +229,8 @@ class UserServiceTest {
         rateLimitTriggered = true;
         Either<UserError, TokenExternalInfo> result = userService.createToken("alice", "Strong1!");
 
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(UserError.RateLimitExceeded.class, ((Either.Left<UserError, TokenExternalInfo>) result).value());
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<UserError, TokenExternalInfo>) result).value()).isInstanceOf(UserError.RateLimitExceeded.class);
     }
 
     @Test
@@ -241,8 +238,8 @@ class UserServiceTest {
         Long id = ((Either.Right<UserError, TokenExternalInfo>) userService.registerUser("alice", "Strong1!", null)).value().userId();
         User user = userService.getUserByToken("token-" + id);
 
-        assertNotNull(user);
-        assertEquals(id, user.id());
+        assertThat(user).isNotNull();
+        assertThat(user.id()).isEqualTo(id);
     }
 
     @Test
@@ -250,111 +247,120 @@ class UserServiceTest {
         Long id = ((Either.Right<UserError, TokenExternalInfo>) userService.registerUser("alice", "Strong1!", null)).value().userId();
         String token = "token-" + id;
 
-        assertNotNull(userService.getUserByToken(token));
+        assertThat(userService.getUserByToken(token)).isNotNull();
         userService.revokeToken(token);
-        assertNull(userService.getUserByToken(token));
+        assertThat(userService.getUserByToken(token)).isNull();
     }
 
     @Test
     void testRegisterUser_EmptyUsername() {
-        assertInstanceOf(Either.Left.class, userService.registerUser("", "Strong1!", null));
-        assertInstanceOf(Either.Left.class, userService.registerUser(null, "Strong1!", null));
+        assertThat(userService.registerUser("", "Strong1!", null)).isInstanceOf(Either.Left.class);
+        assertThat(userService.registerUser(null, "Strong1!", null)).isInstanceOf(Either.Left.class);
     }
 
     @Test
     void testRegisterUser_InvalidUsernameLength() {
         String longName = "a".repeat(31);
         Either<UserError, TokenExternalInfo> result = userService.registerUser(longName, "Strong1!", null);
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(UserError.InvalidUsernameLength.class, ((Either.Left<UserError, TokenExternalInfo>) result).value());
+
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<UserError, TokenExternalInfo>) result).value()).isInstanceOf(UserError.InvalidUsernameLength.class);
     }
 
     @Test
     void testRegisterUser_EmptyPassword() {
-        assertInstanceOf(Either.Left.class, userService.registerUser("bob", "", null));
-        assertInstanceOf(Either.Left.class, userService.registerUser("bob", null, null));
+        assertThat(userService.registerUser("bob", "", null)).isInstanceOf(Either.Left.class);
+        assertThat(userService.registerUser("bob", null, null)).isInstanceOf(Either.Left.class);
     }
 
     @Test
     void testRegisterUser_InvitationNotFound() {
         Either<UserError, TokenExternalInfo> result = userService.registerUser("bob", "Strong1!", "invalid-token");
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(UserError.InvitationNotFound.class, ((Either.Left<UserError, TokenExternalInfo>) result).value());
+
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<UserError, TokenExternalInfo>) result).value()).isInstanceOf(UserError.InvitationNotFound.class);
     }
 
     @Test
     void testGetUserById_NotFound() {
         Either<UserError, User> result = userService.getUserById(999L);
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(UserError.UserNotFound.class, ((Either.Left<UserError, User>) result).value());
+
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<UserError, User>) result).value()).isInstanceOf(UserError.UserNotFound.class);
     }
 
     @Test
     void testUpdateUsername_EmptyUsername() {
         Long id = ((Either.Right<UserError, TokenExternalInfo>) userService.registerUser("alice", "Strong1!", null)).value().userId();
-        assertInstanceOf(Either.Left.class, userService.updateUsername(id, "", "Strong1!"));
+        assertThat(userService.updateUsername(id, "", "Strong1!")).isInstanceOf(Either.Left.class);
     }
 
     @Test
     void testUpdateUsername_UserNotFound() {
         Either<UserError, User> result = userService.updateUsername(999L, "new_name", "Strong1!");
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(UserError.UserNotFound.class, ((Either.Left<UserError, User>) result).value());
+
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<UserError, User>) result).value()).isInstanceOf(UserError.UserNotFound.class);
     }
 
     @Test
     void testUpdatePassword_EmptyPassword() {
         Long id = ((Either.Right<UserError, TokenExternalInfo>) userService.registerUser("alice", "Strong1!", null)).value().userId();
-        assertInstanceOf(Either.Left.class, userService.updatePassword(id, "Strong1!", ""));
+        assertThat(userService.updatePassword(id, "Strong1!", "")).isInstanceOf(Either.Left.class);
     }
 
     @Test
     void testUpdatePassword_InsecurePassword() {
         Long id = ((Either.Right<UserError, TokenExternalInfo>) userService.registerUser("alice", "Strong1!", null)).value().userId();
         Either<UserError, User> result = userService.updatePassword(id, "Strong1!", "weak");
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(UserError.InsecurePassword.class, ((Either.Left<UserError, User>) result).value());
+
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<UserError, User>) result).value()).isInstanceOf(UserError.InsecurePassword.class);
     }
 
     @Test
     void testUpdatePassword_IncorrectOldPassword() {
         Long id = ((Either.Right<UserError, TokenExternalInfo>) userService.registerUser("alice", "Strong1!", null)).value().userId();
         Either<UserError, User> result = userService.updatePassword(id, "Wrong1!", "Stronger2@");
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(UserError.IncorrectPassword.class, ((Either.Left<UserError, User>) result).value());
+
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<UserError, User>) result).value()).isInstanceOf(UserError.IncorrectPassword.class);
     }
 
     @Test
     void testDeleteUser_NotFound() {
         Either<UserError, String> result = userService.deleteUser(999L);
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(UserError.UserNotFound.class, ((Either.Left<UserError, String>) result).value());
+
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<UserError, String>) result).value()).isInstanceOf(UserError.UserNotFound.class);
     }
 
     @Test
     void testCreateToken_EmptyCredentials() {
-        assertInstanceOf(Either.Left.class, userService.createToken("", "Strong1!"));
-        assertInstanceOf(Either.Left.class, userService.createToken("alice", ""));
+        assertThat(userService.createToken("", "Strong1!")).isInstanceOf(Either.Left.class);
+        assertThat(userService.createToken("alice", "")).isInstanceOf(Either.Left.class);
     }
 
     @Test
     void testCreateToken_UserNotFound() {
         Either<UserError, TokenExternalInfo> result = userService.createToken("ghost", "Strong1!");
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(UserError.UserNotFound.class, ((Either.Left<UserError, TokenExternalInfo>) result).value());
+
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<UserError, TokenExternalInfo>) result).value()).isInstanceOf(UserError.UserNotFound.class);
     }
 
     @Test
     void testCreateToken_IncorrectPassword() {
         userService.registerUser("alice", "Strong1!", null);
         Either<UserError, TokenExternalInfo> result = userService.createToken("alice", "Wrong1!");
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(UserError.IncorrectPassword.class, ((Either.Left<UserError, TokenExternalInfo>) result).value());
+
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<UserError, TokenExternalInfo>) result).value()).isInstanceOf(UserError.IncorrectPassword.class);
     }
 
     @Test
     void testGetUserByToken_InvalidToken() {
-        assertNull(userService.getUserByToken("invalid-format"));
+        assertThat(userService.getUserByToken("invalid-format")).isNull();
     }
 
     @Test
@@ -363,7 +369,7 @@ class UserServiceTest {
         String token = "token-" + id;
 
         userService.revokeToken(token);
-        assertNull(userService.getUserByToken(token));
+        assertThat(userService.getUserByToken(token)).isNull();
     }
 
     @Test
@@ -380,8 +386,8 @@ class UserServiceTest {
         userService.registerUser("bob", "Strong1!", "inv-token");
         Either<UserError, TokenExternalInfo> result = userService.registerUser("charlie", "Strong1!", "inv-token");
 
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(UserError.InvitationAlreadyUsed.class, ((Either.Left<UserError, TokenExternalInfo>) result).value());
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<UserError, TokenExternalInfo>) result).value()).isInstanceOf(UserError.InvitationAlreadyUsed.class);
     }
 
     @Test
@@ -391,25 +397,25 @@ class UserServiceTest {
 
         Either<UserError, User> result = userService.updateUsername(id, longName, "Strong1!");
 
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(UserError.InvalidUsernameLength.class, ((Either.Left<UserError, User>) result).value());
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<UserError, User>) result).value()).isInstanceOf(UserError.InvalidUsernameLength.class);
     }
 
     @Test
     void testUpdatePassword_UserNotFound() {
         Either<UserError, User> result = userService.updatePassword(999L, "Strong1!", "Stronger2@");
 
-        assertInstanceOf(Either.Left.class, result);
-        assertInstanceOf(UserError.UserNotFound.class, ((Either.Left<UserError, User>) result).value());
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<UserError, User>) result).value()).isInstanceOf(UserError.UserNotFound.class);
     }
 
     @Test
     void testRevokeToken_InvalidToken() {
-        assertDoesNotThrow(() -> userService.revokeToken("invalid-token-format"));
+        assertThatCode(() -> userService.revokeToken("invalid-token-format")).doesNotThrowAnyException();
     }
 
     @Test
     void testCleanupExpiredTokens() {
-        assertDoesNotThrow(() -> userService.cleanupExpiredTokens());
+        assertThatCode(() -> userService.cleanupExpiredTokens()).doesNotThrowAnyException();
     }
 }

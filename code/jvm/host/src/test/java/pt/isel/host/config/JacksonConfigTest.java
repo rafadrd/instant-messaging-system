@@ -13,10 +13,7 @@ import pt.isel.domain.users.UserInfo;
 import java.time.Instant;
 import java.time.LocalDateTime;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @JsonTest
 @ContextConfiguration(classes = {JacksonConfig.class})
@@ -34,16 +31,17 @@ class JacksonConfigTest {
 
         String json = objectMapper.writeValueAsString(newMessage);
 
-        assertNotNull(json);
-        assertTrue(json.contains("\"type\":\"new-message\""), "JSON should contain the polymorphic type identifier");
+        assertThat(json).isNotNull()
+                .as("JSON should contain the polymorphic type identifier")
+                .contains("\"type\":\"new-message\"");
 
         UpdatedMessage deserialized = objectMapper.readValue(json, UpdatedMessage.class);
-        assertInstanceOf(UpdatedMessage.NewMessage.class, deserialized);
+        assertThat(deserialized).isInstanceOf(UpdatedMessage.NewMessage.class);
 
         UpdatedMessage.NewMessage deserializedNewMessage = (UpdatedMessage.NewMessage) deserialized;
-        assertEquals(100L, deserializedNewMessage.message().id());
-        assertEquals("Hello World", deserializedNewMessage.message().content());
-        assertEquals(1L, deserializedNewMessage.message().user().id());
+        assertThat(deserializedNewMessage.message().id()).isEqualTo(100L);
+        assertThat(deserializedNewMessage.message().content()).isEqualTo("Hello World");
+        assertThat(deserializedNewMessage.message().user().id()).isEqualTo(1L);
     }
 
     @Test
@@ -53,13 +51,14 @@ class JacksonConfigTest {
 
         String json = objectMapper.writeValueAsString(keepAlive);
 
-        assertNotNull(json);
-        assertTrue(json.contains("\"type\":\"keep-alive\""), "JSON should contain the polymorphic type identifier");
+        assertThat(json).isNotNull()
+                .as("JSON should contain the polymorphic type identifier")
+                .contains("\"type\":\"keep-alive\"");
 
         UpdatedMessage deserialized = objectMapper.readValue(json, UpdatedMessage.class);
-        assertInstanceOf(UpdatedMessage.KeepAlive.class, deserialized);
+        assertThat(deserialized).isInstanceOf(UpdatedMessage.KeepAlive.class);
 
         UpdatedMessage.KeepAlive deserializedKeepAlive = (UpdatedMessage.KeepAlive) deserialized;
-        assertEquals(now, deserializedKeepAlive.timestamp());
+        assertThat(deserializedKeepAlive.timestamp()).isEqualTo(now);
     }
 }

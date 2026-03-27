@@ -5,11 +5,8 @@ import pt.isel.domain.common.Either;
 import pt.isel.domain.security.PasswordValidationInfo;
 import pt.isel.repositories.jdbi.AbstractJdbiTest;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TransactionManagerJdbiTest extends AbstractJdbiTest {
 
@@ -20,11 +17,11 @@ class TransactionManagerJdbiTest extends AbstractJdbiTest {
             return "Success";
         });
 
-        assertEquals("Success", result);
+        assertThat(result).isEqualTo("Success");
 
         txManager.run(trx -> {
             // Verify data was committed
-            assertTrue(trx.repoUsers().hasUsers());
+            assertThat(trx.repoUsers().hasUsers()).isTrue();
             return null;
         });
     }
@@ -36,26 +33,26 @@ class TransactionManagerJdbiTest extends AbstractJdbiTest {
             return Either.failure("Business Error");
         });
 
-        assertInstanceOf(Either.Left.class, result);
-        assertEquals("Business Error", ((Either.Left<String, String>) result).value());
+        assertThat(result).isInstanceOf(Either.Left.class);
+        assertThat(((Either.Left<String, String>) result).value()).isEqualTo("Business Error");
 
         txManager.run(trx -> {
             // Verify data was rolled back
-            assertNull(trx.repoUsers().findByUsername("bob"));
+            assertThat(trx.repoUsers().findByUsername("bob")).isNull();
             return null;
         });
     }
 
     @Test
     void testRollbackOnException() {
-        assertThrows(RuntimeException.class, () -> txManager.run(trx -> {
+        assertThatThrownBy(() -> txManager.run(trx -> {
             trx.repoUsers().create("charlie", new PasswordValidationInfo("hash"));
             throw new RuntimeException("Unexpected Error");
-        }));
+        })).isInstanceOf(RuntimeException.class).hasMessage("Unexpected Error");
 
         txManager.run(trx -> {
             // Verify data was rolled back
-            assertNull(trx.repoUsers().findByUsername("charlie"));
+            assertThat(trx.repoUsers().findByUsername("charlie")).isNull();
             return null;
         });
     }
@@ -72,7 +69,7 @@ class TransactionManagerJdbiTest extends AbstractJdbiTest {
 
         txManager.run(trx -> {
             // Verify data was rolled back and not committed
-            assertNull(trx.repoUsers().findByUsername("dave"));
+            assertThat(trx.repoUsers().findByUsername("dave")).isNull();
             return null;
         });
     }

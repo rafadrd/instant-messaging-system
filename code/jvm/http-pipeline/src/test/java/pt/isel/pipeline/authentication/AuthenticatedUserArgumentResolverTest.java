@@ -12,11 +12,8 @@ import pt.isel.domain.users.User;
 
 import java.lang.reflect.Method;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -40,8 +37,8 @@ class AuthenticatedUserArgumentResolverTest {
 
     @Test
     void testSupportsParameter() {
-        assertTrue(resolver.supportsParameter(validParameter));
-        assertFalse(resolver.supportsParameter(invalidParameter));
+        assertThat(resolver.supportsParameter(validParameter)).isTrue();
+        assertThat(resolver.supportsParameter(invalidParameter)).isFalse();
     }
 
     @Test
@@ -58,7 +55,7 @@ class AuthenticatedUserArgumentResolverTest {
 
         Object result = resolver.resolveArgument(validParameter, mavContainer, webRequest, null);
 
-        assertEquals(authUser, result);
+        assertThat(result).isEqualTo(authUser);
     }
 
     @Test
@@ -68,11 +65,9 @@ class AuthenticatedUserArgumentResolverTest {
 
         when(webRequest.getNativeRequest(HttpServletRequest.class)).thenReturn(null);
 
-        IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
-                resolver.resolveArgument(validParameter, mavContainer, webRequest, null)
-        );
-
-        assertEquals("Failed to extract HttpServletRequest from NativeWebRequest.", exception.getMessage());
+        assertThatThrownBy(() -> resolver.resolveArgument(validParameter, mavContainer, webRequest, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Failed to extract HttpServletRequest from NativeWebRequest.");
     }
 
     @Test
@@ -84,11 +79,9 @@ class AuthenticatedUserArgumentResolverTest {
         when(webRequest.getNativeRequest(HttpServletRequest.class)).thenReturn(request);
         when(request.getAttribute("AuthenticatedUserArgumentResolver")).thenReturn(null);
 
-        IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
-                resolver.resolveArgument(validParameter, mavContainer, webRequest, null)
-        );
-
-        assertEquals("AuthenticatedUser not found in request attributes.", exception.getMessage());
+        assertThatThrownBy(() -> resolver.resolveArgument(validParameter, mavContainer, webRequest, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("AuthenticatedUser not found in request attributes.");
     }
 
     @Test
@@ -102,13 +95,13 @@ class AuthenticatedUserArgumentResolverTest {
 
         when(request.getAttribute("AuthenticatedUserArgumentResolver")).thenReturn(authUser);
         AuthenticatedUser retrievedUser = AuthenticatedUserArgumentResolver.getUserFrom(request);
-        assertEquals(authUser, retrievedUser);
+        assertThat(retrievedUser).isEqualTo(authUser);
 
         when(request.getAttribute("AuthenticatedUserArgumentResolver")).thenReturn("NotAnAuthenticatedUserObject");
-        assertNull(AuthenticatedUserArgumentResolver.getUserFrom(request));
+        assertThat(AuthenticatedUserArgumentResolver.getUserFrom(request)).isNull();
 
         when(request.getAttribute("AuthenticatedUserArgumentResolver")).thenReturn(null);
-        assertNull(AuthenticatedUserArgumentResolver.getUserFrom(request));
+        assertThat(AuthenticatedUserArgumentResolver.getUserFrom(request)).isNull();
     }
 
     private static class DummyController {

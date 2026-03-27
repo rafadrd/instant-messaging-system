@@ -15,11 +15,7 @@ import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public interface InvitationRepositoryContract {
     TransactionManager getTxManager();
@@ -34,14 +30,14 @@ public interface InvitationRepositoryContract {
             LocalDateTime expiry = LocalDateTime.now(ZoneOffset.UTC).plusDays(1).truncatedTo(ChronoUnit.MILLIS);
             Invitation inv = trx.repoInvitations().create("token-123", creatorInfo, channel, AccessType.READ_ONLY, expiry);
 
-            assertNotNull(inv);
-            assertNotNull(inv.id());
-            assertEquals("token-123", inv.token());
-            assertEquals(InvitationStatus.PENDING, inv.status());
+            assertThat(inv).isNotNull();
+            assertThat(inv.id()).isNotNull();
+            assertThat(inv.token()).isEqualTo("token-123");
+            assertThat(inv.status()).isEqualTo(InvitationStatus.PENDING);
 
             Invitation found = trx.repoInvitations().findByToken("token-123");
-            assertEquals(inv.id(), found.id());
-            assertEquals(expiry, found.expiresAt());
+            assertThat(found.id()).isEqualTo(inv.id());
+            assertThat(found.expiresAt()).isEqualTo(expiry);
             return null;
         });
     }
@@ -58,7 +54,7 @@ public interface InvitationRepositoryContract {
             trx.repoInvitations().create("t2", creatorInfo, channel, AccessType.READ_WRITE, expiry);
 
             List<Invitation> allInvitations = trx.repoInvitations().findAll();
-            assertEquals(2, allInvitations.size());
+            assertThat(allInvitations).hasSize(2);
             return null;
         });
     }
@@ -75,7 +71,7 @@ public interface InvitationRepositoryContract {
             trx.repoInvitations().create("t2", creatorInfo, channel, AccessType.READ_WRITE, expiry);
 
             List<Invitation> invs = trx.repoInvitations().findByChannelId(channel.id());
-            assertEquals(2, invs.size());
+            assertThat(invs).hasSize(2);
             return null;
         });
     }
@@ -89,12 +85,12 @@ public interface InvitationRepositoryContract {
 
             Invitation inv = trx.repoInvitations().create("t1", creatorInfo, channel, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).plusDays(1));
 
-            assertTrue(trx.repoInvitations().consume(inv.id()));
+            assertThat(trx.repoInvitations().consume(inv.id())).isTrue();
 
             Invitation updated = trx.repoInvitations().findById(inv.id());
-            assertEquals(InvitationStatus.ACCEPTED, updated.status());
+            assertThat(updated.status()).isEqualTo(InvitationStatus.ACCEPTED);
 
-            assertFalse(trx.repoInvitations().consume(inv.id()));
+            assertThat(trx.repoInvitations().consume(inv.id())).isFalse();
             return null;
         });
     }
@@ -111,7 +107,7 @@ public interface InvitationRepositoryContract {
 
             trx.repoInvitations().save(rejected);
 
-            assertEquals(InvitationStatus.REJECTED, trx.repoInvitations().findById(inv.id()).status());
+            assertThat(trx.repoInvitations().findById(inv.id()).status()).isEqualTo(InvitationStatus.REJECTED);
             return null;
         });
     }
@@ -126,7 +122,7 @@ public interface InvitationRepositoryContract {
             Invitation inv = trx.repoInvitations().create("t1", creatorInfo, channel, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).plusDays(1));
 
             trx.repoInvitations().deleteById(inv.id());
-            assertNull(trx.repoInvitations().findById(inv.id()));
+            assertThat(trx.repoInvitations().findById(inv.id())).isNull();
             return null;
         });
     }
@@ -141,7 +137,7 @@ public interface InvitationRepositoryContract {
             trx.repoInvitations().create("t1", creatorInfo, channel, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).plusDays(1));
 
             trx.repoInvitations().clear();
-            assertTrue(trx.repoInvitations().findAll().isEmpty());
+            assertThat(trx.repoInvitations().findAll()).isEmpty();
             return null;
         });
     }

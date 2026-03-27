@@ -10,10 +10,7 @@ import pt.isel.repositories.TransactionManager;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public interface MessageRepositoryContract {
     TransactionManager getTxManager();
@@ -27,15 +24,15 @@ public interface MessageRepositoryContract {
 
             Message msg = trx.repoMessages().create("Hello World", userInfo, channel);
 
-            assertNotNull(msg);
-            assertNotNull(msg.id());
-            assertEquals("Hello World", msg.content());
-            assertEquals(user.id(), msg.user().id());
-            assertEquals(channel.id(), msg.channel().id());
+            assertThat(msg).isNotNull();
+            assertThat(msg.id()).isNotNull();
+            assertThat(msg.content()).isEqualTo("Hello World");
+            assertThat(msg.user().id()).isEqualTo(user.id());
+            assertThat(msg.channel().id()).isEqualTo(channel.id());
 
             Message found = trx.repoMessages().findById(msg.id());
-            assertEquals(msg.id(), found.id());
-            assertEquals(msg.content(), found.content());
+            assertThat(found.id()).isEqualTo(msg.id());
+            assertThat(found.content()).isEqualTo(msg.content());
             return null;
         });
     }
@@ -51,7 +48,7 @@ public interface MessageRepositoryContract {
             trx.repoMessages().create("Msg 2", userInfo, channel);
 
             List<Message> allMessages = trx.repoMessages().findAll();
-            assertEquals(2, allMessages.size());
+            assertThat(allMessages).hasSize(2);
             return null;
         });
     }
@@ -71,13 +68,13 @@ public interface MessageRepositoryContract {
             trx.repoMessages().create("Other Msg", userInfo, otherChannel);
 
             List<Message> page1 = trx.repoMessages().findAllInChannel(channel, 2, 0);
-            assertEquals(2, page1.size());
-            assertEquals("Msg 3", page1.get(0).content());
-            assertEquals("Msg 2", page1.get(1).content());
+            assertThat(page1).hasSize(2);
+            assertThat(page1.get(0).content()).isEqualTo("Msg 3");
+            assertThat(page1.get(1).content()).isEqualTo("Msg 2");
 
             List<Message> page2 = trx.repoMessages().findAllInChannel(channel, 2, 2);
-            assertEquals(1, page2.size());
-            assertEquals("Msg 1", page2.getFirst().content());
+            assertThat(page2).hasSize(1);
+            assertThat(page2.getFirst().content()).isEqualTo("Msg 1");
             return null;
         });
     }
@@ -94,7 +91,7 @@ public interface MessageRepositoryContract {
 
             trx.repoMessages().save(updated);
 
-            assertEquals("Edited", trx.repoMessages().findById(msg.id()).content());
+            assertThat(trx.repoMessages().findById(msg.id()).content()).isEqualTo("Edited");
             return null;
         });
     }
@@ -109,7 +106,7 @@ public interface MessageRepositoryContract {
             Message msg = trx.repoMessages().create("To Delete", userInfo, channel);
             trx.repoMessages().deleteById(msg.id());
 
-            assertNull(trx.repoMessages().findById(msg.id()));
+            assertThat(trx.repoMessages().findById(msg.id())).isNull();
             return null;
         });
     }
@@ -122,7 +119,7 @@ public interface MessageRepositoryContract {
             trx.repoMessages().create("Msg", new UserInfo(user.id(), user.username()), channel);
 
             trx.repoMessages().clear();
-            assertTrue(trx.repoMessages().findAll().isEmpty());
+            assertThat(trx.repoMessages().findAll()).isEmpty();
             return null;
         });
     }

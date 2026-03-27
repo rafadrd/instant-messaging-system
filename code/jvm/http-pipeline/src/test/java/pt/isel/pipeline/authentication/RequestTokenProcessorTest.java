@@ -7,9 +7,7 @@ import pt.isel.domain.users.AuthenticatedUser;
 import pt.isel.domain.users.User;
 import pt.isel.services.users.UserService;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -26,21 +24,21 @@ class RequestTokenProcessorTest {
 
     @Test
     void testProcessAuthorizationHeaderValueNullOrBlank() {
-        assertNull(processor.processAuthorizationHeaderValue(null));
-        assertNull(processor.processAuthorizationHeaderValue(""));
-        assertNull(processor.processAuthorizationHeaderValue("   "));
+        assertThat(processor.processAuthorizationHeaderValue(null)).isNull();
+        assertThat(processor.processAuthorizationHeaderValue("")).isNull();
+        assertThat(processor.processAuthorizationHeaderValue("   ")).isNull();
     }
 
     @Test
     void testProcessAuthorizationHeaderValueMalformed() {
-        assertNull(processor.processAuthorizationHeaderValue("Bearer"));
-        assertNull(processor.processAuthorizationHeaderValue("Bearer token extra"));
+        assertThat(processor.processAuthorizationHeaderValue("Bearer")).isNull();
+        assertThat(processor.processAuthorizationHeaderValue("Bearer token extra")).isNull();
     }
 
     @Test
     void testProcessAuthorizationHeaderValueInvalidScheme() {
-        assertNull(processor.processAuthorizationHeaderValue("Basic dXNlcjpwYXNz"));
-        assertNull(processor.processAuthorizationHeaderValue("Token some-token"));
+        assertThat(processor.processAuthorizationHeaderValue("Basic dXNlcjpwYXNz")).isNull();
+        assertThat(processor.processAuthorizationHeaderValue("Token some-token")).isNull();
     }
 
     @Test
@@ -50,9 +48,9 @@ class RequestTokenProcessorTest {
 
         AuthenticatedUser authUser = processor.processAuthorizationHeaderValue("Bearer valid-token");
 
-        assertNotNull(authUser);
-        assertEquals(user, authUser.user());
-        assertEquals("valid-token", authUser.token());
+        assertThat(authUser).isNotNull();
+        assertThat(authUser.user()).isEqualTo(user);
+        assertThat(authUser.token()).isEqualTo("valid-token");
     }
 
     @Test
@@ -62,9 +60,9 @@ class RequestTokenProcessorTest {
 
         AuthenticatedUser authUser = processor.processAuthorizationHeaderValue("bEaReR valid-token");
 
-        assertNotNull(authUser);
-        assertEquals(user, authUser.user());
-        assertEquals("valid-token", authUser.token());
+        assertThat(authUser).isNotNull();
+        assertThat(authUser.user()).isEqualTo(user);
+        assertThat(authUser.token()).isEqualTo("valid-token");
     }
 
     @Test
@@ -73,6 +71,6 @@ class RequestTokenProcessorTest {
 
         AuthenticatedUser authUser = processor.processAuthorizationHeaderValue("Bearer invalid-token");
 
-        assertNull(authUser);
+        assertThat(authUser).isNull();
     }
 }

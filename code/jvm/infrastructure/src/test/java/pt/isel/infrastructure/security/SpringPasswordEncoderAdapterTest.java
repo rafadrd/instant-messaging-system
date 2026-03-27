@@ -4,9 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -21,7 +19,7 @@ class SpringPasswordEncoderAdapterTest {
         SpringPasswordEncoderAdapter adapter = new SpringPasswordEncoderAdapter(springEncoder);
         String result = adapter.encode("myPassword");
 
-        assertEquals("encodedPassword", result);
+        assertThat(result).isEqualTo("encodedPassword");
         verify(springEncoder).encode("myPassword");
     }
 
@@ -33,7 +31,7 @@ class SpringPasswordEncoderAdapterTest {
         SpringPasswordEncoderAdapter adapter = new SpringPasswordEncoderAdapter(springEncoder);
         boolean result = adapter.matches("myPassword", "encodedPassword");
 
-        assertTrue(result);
+        assertThat(result).isTrue();
         verify(springEncoder).matches("myPassword", "encodedPassword");
     }
 
@@ -44,7 +42,7 @@ class SpringPasswordEncoderAdapterTest {
         String rawPassword = "SecurePassword123!";
         String encoded = adapter.encode(rawPassword);
 
-        assertTrue(adapter.matches(rawPassword, encoded));
-        assertFalse(adapter.matches("WrongPassword!", encoded));
+        assertThat(adapter.matches(rawPassword, encoded)).isTrue();
+        assertThat(adapter.matches("WrongPassword!", encoded)).isFalse();
     }
 }

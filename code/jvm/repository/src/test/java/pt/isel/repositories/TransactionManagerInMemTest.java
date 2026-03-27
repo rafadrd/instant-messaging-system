@@ -4,9 +4,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import pt.isel.repositories.mem.TransactionManagerInMem;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 class TransactionManagerInMemTest {
 
@@ -20,26 +19,24 @@ class TransactionManagerInMemTest {
     @Test
     void testRunExecutesBlockAndReturnsResult() {
         String result = txManager.run(trx -> {
-            assertNotNull(trx.repoUsers());
-            assertNotNull(trx.repoChannels());
-            assertNotNull(trx.repoMessages());
-            assertNotNull(trx.repoMemberships());
-            assertNotNull(trx.repoInvitations());
-            assertNotNull(trx.repoTokenBlacklist());
+            assertThat(trx.repoUsers()).isNotNull();
+            assertThat(trx.repoChannels()).isNotNull();
+            assertThat(trx.repoMessages()).isNotNull();
+            assertThat(trx.repoMemberships()).isNotNull();
+            assertThat(trx.repoInvitations()).isNotNull();
+            assertThat(trx.repoTokenBlacklist()).isNotNull();
 
             return "Success";
         });
 
-        assertEquals("Success", result);
+        assertThat(result).isEqualTo("Success");
     }
 
     @Test
     void testRollbackIsNoOpButDoesNotCrash() {
-        assertDoesNotThrow(() -> {
-            txManager.run(trx -> {
-                trx.rollback();
-                return null;
-            });
-        });
+        assertThatCode(() -> txManager.run(trx -> {
+            trx.rollback();
+            return null;
+        })).doesNotThrowAnyException();
     }
 }

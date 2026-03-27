@@ -13,10 +13,8 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JwtTokenServiceTest {
 
@@ -32,7 +30,7 @@ class JwtTokenServiceTest {
     @Test
     void testInitThrowsWeakKeyExceptionForShortSecret() {
         JwtTokenService service = new JwtTokenService(INVALID_SECRET);
-        assertThrows(WeakKeyException.class, service::init);
+        assertThatThrownBy(service::init).isInstanceOf(WeakKeyException.class);
     }
 
     @Test
@@ -43,17 +41,17 @@ class JwtTokenServiceTest {
         Long userId = 123L;
         TokenExternalInfo tokenInfo = service.createToken(userId);
 
-        assertNotNull(tokenInfo);
-        assertNotNull(tokenInfo.tokenValue());
-        assertEquals(userId, tokenInfo.userId());
-        assertNotNull(tokenInfo.tokenExpiration());
+        assertThat(tokenInfo).isNotNull();
+        assertThat(tokenInfo.tokenValue()).isNotNull();
+        assertThat(tokenInfo.userId()).isEqualTo(userId);
+        assertThat(tokenInfo.tokenExpiration()).isNotNull();
 
         ParsedToken parsedToken = service.validateToken(tokenInfo.tokenValue());
 
-        assertNotNull(parsedToken);
-        assertEquals(userId, parsedToken.userId());
-        assertNotNull(parsedToken.jti());
-        assertNotNull(parsedToken.expiresAt());
+        assertThat(parsedToken).isNotNull();
+        assertThat(parsedToken.userId()).isEqualTo(userId);
+        assertThat(parsedToken.jti()).isNotNull();
+        assertThat(parsedToken.expiresAt()).isNotNull();
     }
 
     @Test
@@ -62,7 +60,7 @@ class JwtTokenServiceTest {
         service.init();
 
         ParsedToken parsedToken = service.validateToken("invalid.token.value");
-        assertNull(parsedToken);
+        assertThat(parsedToken).isNull();
     }
 
     @Test
@@ -74,7 +72,7 @@ class JwtTokenServiceTest {
         String tamperedToken = tokenInfo.tokenValue() + "tampered";
 
         ParsedToken parsedToken = service.validateToken(tamperedToken);
-        assertNull(parsedToken);
+        assertThat(parsedToken).isNull();
     }
 
     @Test
@@ -90,7 +88,7 @@ class JwtTokenServiceTest {
                 .compact();
 
         ParsedToken parsedToken = service.validateToken(token);
-        assertNull(parsedToken);
+        assertThat(parsedToken).isNull();
     }
 
     @Test
@@ -105,7 +103,7 @@ class JwtTokenServiceTest {
                 .compact();
 
         ParsedToken parsedToken = service.validateToken(token);
-        assertNull(parsedToken);
+        assertThat(parsedToken).isNull();
     }
 
     @Test
@@ -120,7 +118,7 @@ class JwtTokenServiceTest {
                 .compact();
 
         ParsedToken parsedToken = service.validateToken(token);
-        assertNull(parsedToken);
+        assertThat(parsedToken).isNull();
     }
 
     @Test
@@ -136,6 +134,6 @@ class JwtTokenServiceTest {
                 .compact();
 
         ParsedToken parsedToken = service.validateToken(expiredToken);
-        assertNull(parsedToken);
+        assertThat(parsedToken).isNull();
     }
 }

@@ -6,9 +6,8 @@ import pt.isel.repositories.TransactionManager;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 
 public interface TokenBlacklistRepositoryContract {
     TransactionManager getTxManager();
@@ -17,10 +16,10 @@ public interface TokenBlacklistRepositoryContract {
     default void testAddAndExists() {
         getTxManager().run(trx -> {
             String jti = "token-uuid-123";
-            assertFalse(trx.repoTokenBlacklist().exists(jti));
+            assertThat(trx.repoTokenBlacklist().exists(jti)).isFalse();
 
             trx.repoTokenBlacklist().add(jti, LocalDateTime.now(ZoneOffset.UTC).plusHours(1));
-            assertTrue(trx.repoTokenBlacklist().exists(jti));
+            assertThat(trx.repoTokenBlacklist().exists(jti)).isTrue();
             return null;
         });
     }
@@ -33,8 +32,8 @@ public interface TokenBlacklistRepositoryContract {
 
             trx.repoTokenBlacklist().clear();
 
-            assertFalse(trx.repoTokenBlacklist().exists("t1"));
-            assertFalse(trx.repoTokenBlacklist().exists("t2"));
+            assertThat(trx.repoTokenBlacklist().exists("t1")).isFalse();
+            assertThat(trx.repoTokenBlacklist().exists("t2")).isFalse();
             return null;
         });
     }
@@ -47,8 +46,8 @@ public interface TokenBlacklistRepositoryContract {
 
             trx.repoTokenBlacklist().cleanupExpired();
 
-            assertFalse(trx.repoTokenBlacklist().exists("expired-token"));
-            assertTrue(trx.repoTokenBlacklist().exists("valid-token"));
+            assertThat(trx.repoTokenBlacklist().exists("expired-token")).isFalse();
+            assertThat(trx.repoTokenBlacklist().exists("valid-token")).isTrue();
             return null;
         });
     }
@@ -59,12 +58,12 @@ public interface TokenBlacklistRepositoryContract {
             String jti = "duplicate-token";
             LocalDateTime expiry = LocalDateTime.now(ZoneOffset.UTC).plusHours(1);
 
-            assertDoesNotThrow(() -> {
+            assertThatCode(() -> {
                 trx.repoTokenBlacklist().add(jti, expiry);
                 trx.repoTokenBlacklist().add(jti, expiry); // Should ignore conflict
-            });
+            }).doesNotThrowAnyException();
 
-            assertTrue(trx.repoTokenBlacklist().exists(jti));
+            assertThat(trx.repoTokenBlacklist().exists(jti)).isTrue();
             return null;
         });
     }

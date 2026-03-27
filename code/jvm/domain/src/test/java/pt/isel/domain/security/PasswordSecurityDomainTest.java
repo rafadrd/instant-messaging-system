@@ -3,9 +3,7 @@ package pt.isel.domain.security;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class PasswordSecurityDomainTest {
 
@@ -33,50 +31,50 @@ class PasswordSecurityDomainTest {
     @Test
     void testCreatePasswordValidationInformation() {
         PasswordValidationInfo info = securityDomain.createPasswordValidationInformation("mySecret");
-        assertEquals("encoded_mySecret", info.validationInfo());
+        assertThat(info.validationInfo()).isEqualTo("encoded_mySecret");
     }
 
     @Test
     void testValidatePasswordSuccess() {
         PasswordValidationInfo info = new PasswordValidationInfo("encoded_mySecret");
-        assertTrue(securityDomain.validatePassword("mySecret", info));
+        assertThat(securityDomain.validatePassword("mySecret", info)).isTrue();
     }
 
     @Test
     void testValidatePasswordFailure() {
         PasswordValidationInfo info = new PasswordValidationInfo("encoded_mySecret");
-        assertFalse(securityDomain.validatePassword("wrongSecret", info));
+        assertThat(securityDomain.validatePassword("wrongSecret", info)).isFalse();
     }
 
     @Test
     void testIsSafePassword_Valid() {
-        assertTrue(securityDomain.isSafePassword("Strong1!"));
-        assertTrue(securityDomain.isSafePassword("Another_P@ssw0rd"));
+        assertThat(securityDomain.isSafePassword("Strong1!")).isTrue();
+        assertThat(securityDomain.isSafePassword("Another_P@ssw0rd")).isTrue();
     }
 
     @Test
     void testIsSafePassword_TooShort() {
-        assertFalse(securityDomain.isSafePassword("Stro1!a"));
+        assertThat(securityDomain.isSafePassword("Stro1!a")).isFalse();
     }
 
     @Test
     void testIsSafePassword_MissingUppercase() {
-        assertFalse(securityDomain.isSafePassword("weakpass1!"));
+        assertThat(securityDomain.isSafePassword("weakpass1!")).isFalse();
     }
 
     @Test
     void testIsSafePassword_MissingLowercase() {
-        assertFalse(securityDomain.isSafePassword("WEAKPASS1!"));
+        assertThat(securityDomain.isSafePassword("WEAKPASS1!")).isFalse();
     }
 
     @Test
     void testIsSafePassword_MissingDigit() {
-        assertFalse(securityDomain.isSafePassword("StrongPass!"));
+        assertThat(securityDomain.isSafePassword("StrongPass!")).isFalse();
     }
 
     @Test
     void testIsSafePassword_MissingSpecialChar() {
-        assertFalse(securityDomain.isSafePassword("StrongPass123"));
+        assertThat(securityDomain.isSafePassword("StrongPass123")).isFalse();
     }
 
     @Test
@@ -84,8 +82,8 @@ class PasswordSecurityDomainTest {
         PasswordPolicyConfig relaxedConfig = new PasswordPolicyConfig(4, false, false, false, false);
         PasswordSecurityDomain relaxedDomain = new PasswordSecurityDomain(fakeEncoder, relaxedConfig);
 
-        assertTrue(relaxedDomain.isSafePassword("pass")); // length 4, all lowercase
-        assertTrue(relaxedDomain.isSafePassword("1234")); // all digits
-        assertFalse(relaxedDomain.isSafePassword("abc")); // length 3, too short
+        assertThat(relaxedDomain.isSafePassword("pass")).isTrue();
+        assertThat(relaxedDomain.isSafePassword("1234")).isTrue();
+        assertThat(relaxedDomain.isSafePassword("abc")).isFalse();
     }
 }

@@ -7,8 +7,7 @@ import org.springframework.data.redis.core.script.RedisScript;
 
 import java.time.Duration;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -33,7 +32,7 @@ class RedisRateLimiterTest {
 
         boolean result = rateLimiter.isRateLimited("login", "user123", 5, Duration.ofMinutes(1));
 
-        assertTrue(result);
+        assertThat(result).isTrue();
     }
 
     @Test
@@ -43,6 +42,6 @@ class RedisRateLimiterTest {
 
         boolean result = rateLimiter.isRateLimited("login", "user123", 5, Duration.ofMinutes(1));
 
-        assertFalse(result);
+        assertThat(result).isFalse();
     }
 }

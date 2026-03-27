@@ -10,7 +10,7 @@ import pt.isel.repositories.TransactionManager;
 
 import java.time.Clock;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class AppInstantMessagingTest extends AbstractIntegrationTest {
 
@@ -19,17 +19,17 @@ class AppInstantMessagingTest extends AbstractIntegrationTest {
 
     @Test
     void contextLoads() {
-        assertNotNull(context, "The Spring application context should load successfully.");
+        assertThat(context).as("The Spring application context should load successfully.").isNotNull();
     }
 
     @Test
     void verifyCustomBeansAreLoaded() {
-        assertNotNull(context.getBean(Jdbi.class), "Jdbi bean should be present in the context");
-        assertNotNull(context.getBean(TransactionManager.class), "TransactionManager bean should be present in the context");
-        assertNotNull(context.getBean(PasswordEncoder.class), "PasswordEncoder bean should be present in the context");
-        assertNotNull(context.getBean(Clock.class), "Clock bean should be present in the context");
+        assertThat(context.getBean(Jdbi.class)).as("Jdbi bean should be present in the context").isNotNull();
+        assertThat(context.getBean(TransactionManager.class)).as("TransactionManager bean should be present in the context").isNotNull();
+        assertThat(context.getBean(PasswordEncoder.class)).as("PasswordEncoder bean should be present in the context").isNotNull();
+        assertThat(context.getBean(Clock.class)).as("Clock bean should be present in the context").isNotNull();
 
         PasswordPolicyConfig passwordPolicyConfig = context.getBean(PasswordPolicyConfig.class);
-        assertNotNull(passwordPolicyConfig, "PasswordPolicyConfig bean should be present in the context");
+        assertThat(passwordPolicyConfig).as("PasswordPolicyConfig bean should be present in the context").isNotNull();
     }
 }

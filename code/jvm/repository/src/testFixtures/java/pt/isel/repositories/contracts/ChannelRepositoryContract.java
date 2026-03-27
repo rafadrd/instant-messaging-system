@@ -9,11 +9,7 @@ import pt.isel.repositories.TransactionManager;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public interface ChannelRepositoryContract {
     TransactionManager getTxManager();
@@ -26,14 +22,14 @@ public interface ChannelRepositoryContract {
 
             Channel channel = trx.repoChannels().create("General", ownerInfo, true);
 
-            assertNotNull(channel);
-            assertNotNull(channel.id());
-            assertEquals("General", channel.name());
-            assertTrue(channel.isPublic());
+            assertThat(channel).isNotNull();
+            assertThat(channel.id()).isNotNull();
+            assertThat(channel.name()).isEqualTo("General");
+            assertThat(channel.isPublic()).isTrue();
 
             Channel found = trx.repoChannels().findById(channel.id());
-            assertEquals(channel.id(), found.id());
-            assertEquals(owner.id(), found.owner().id());
+            assertThat(found.id()).isEqualTo(channel.id());
+            assertThat(found.owner().id()).isEqualTo(owner.id());
             return null;
         });
     }
@@ -45,10 +41,10 @@ public interface ChannelRepositoryContract {
             trx.repoChannels().create("Random", new UserInfo(owner.id(), owner.username()), true);
 
             Channel found = trx.repoChannels().findByName("Random");
-            assertNotNull(found);
-            assertEquals("Random", found.name());
+            assertThat(found).isNotNull();
+            assertThat(found.name()).isEqualTo("Random");
 
-            assertNull(trx.repoChannels().findByName("Unknown"));
+            assertThat(trx.repoChannels().findByName("Unknown")).isNull();
             return null;
         });
     }
@@ -63,7 +59,7 @@ public interface ChannelRepositoryContract {
             trx.repoChannels().create("C2", ownerInfo, false);
 
             List<Channel> channels = trx.repoChannels().findAll();
-            assertEquals(2, channels.size());
+            assertThat(channels).hasSize(2);
             return null;
         });
     }
@@ -79,10 +75,10 @@ public interface ChannelRepositoryContract {
             trx.repoChannels().create("C3", new UserInfo(owner2.id(), owner2.username()), true);
 
             List<Channel> aliceChannels = trx.repoChannels().findAllByOwner(owner1.id());
-            assertEquals(2, aliceChannels.size());
+            assertThat(aliceChannels).hasSize(2);
 
             List<Channel> bobChannels = trx.repoChannels().findAllByOwner(owner2.id());
-            assertEquals(1, bobChannels.size());
+            assertThat(bobChannels).hasSize(1);
             return null;
         });
     }
@@ -99,13 +95,13 @@ public interface ChannelRepositoryContract {
             trx.repoChannels().create("Pub3", ownerInfo, true);
 
             List<Channel> page1 = trx.repoChannels().findAllPublicChannels(2, 0);
-            assertEquals(2, page1.size());
-            assertEquals("Pub1", page1.get(0).name());
-            assertEquals("Pub2", page1.get(1).name());
+            assertThat(page1).hasSize(2);
+            assertThat(page1.get(0).name()).isEqualTo("Pub1");
+            assertThat(page1.get(1).name()).isEqualTo("Pub2");
 
             List<Channel> page2 = trx.repoChannels().findAllPublicChannels(2, 2);
-            assertEquals(1, page2.size());
-            assertEquals("Pub3", page2.getFirst().name());
+            assertThat(page2).hasSize(1);
+            assertThat(page2.getFirst().name()).isEqualTo("Pub3");
             return null;
         });
     }
@@ -121,9 +117,9 @@ public interface ChannelRepositoryContract {
             trx.repoChannels().create("Secret Java", ownerInfo, false);
 
             List<Channel> results = trx.repoChannels().searchByName("java", 10, 0);
-            assertEquals(2, results.size());
-            assertTrue(results.stream().anyMatch(c -> c.name().equals("Java Devs")));
-            assertTrue(results.stream().anyMatch(c -> c.name().equals("JavaScript Devs")));
+            assertThat(results).hasSize(2)
+                    .anyMatch(c -> c.name().equals("Java Devs"))
+                    .anyMatch(c -> c.name().equals("JavaScript Devs"));
             return null;
         });
     }
@@ -138,8 +134,8 @@ public interface ChannelRepositoryContract {
             trx.repoChannels().save(updated);
 
             Channel found = trx.repoChannels().findById(channel.id());
-            assertEquals("NewName", found.name());
-            assertFalse(found.isPublic());
+            assertThat(found.name()).isEqualTo("NewName");
+            assertThat(found.isPublic()).isFalse();
             return null;
         });
     }
@@ -151,7 +147,7 @@ public interface ChannelRepositoryContract {
             Channel c1 = trx.repoChannels().create("C1", new UserInfo(owner.id(), owner.username()), true);
 
             trx.repoChannels().deleteById(c1.id());
-            assertNull(trx.repoChannels().findById(c1.id()));
+            assertThat(trx.repoChannels().findById(c1.id())).isNull();
             return null;
         });
     }
@@ -163,7 +159,7 @@ public interface ChannelRepositoryContract {
             trx.repoChannels().create("C1", new UserInfo(owner.id(), owner.username()), true);
 
             trx.repoChannels().clear();
-            assertTrue(trx.repoChannels().findAll().isEmpty());
+            assertThat(trx.repoChannels().findAll()).isEmpty();
             return null;
         });
     }

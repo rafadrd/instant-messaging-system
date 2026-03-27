@@ -20,9 +20,8 @@ import pt.isel.repositories.mem.TransactionManagerInMem;
 import java.time.Instant;
 import java.util.function.Consumer;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -64,7 +63,8 @@ class RedisMessageEventServiceTest {
     void testAddEmitterSuccess() {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
 
-        assertDoesNotThrow(() -> service.addEmitter(channel.id(), alice.id(), emitter));
+        assertThatCode(() -> service.addEmitter(channel.id(), alice.id(), emitter))
+                .doesNotThrowAnyException();
 
         service.sendKeepAlive();
         verify(emitter).emit(any(UpdatedMessage.KeepAlive.class));
@@ -73,14 +73,17 @@ class RedisMessageEventServiceTest {
     @Test
     void testAddEmitterThrowsWhenUserNotFound() {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
-        assertThrows(IllegalArgumentException.class, () -> service.addEmitter(channel.id(), 999L, emitter));
+        assertThatThrownBy(() -> service.addEmitter(channel.id(), 999L, emitter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("not found");
     }
 
     @Test
     void testAddEmitterThrowsWhenChannelNotFound() {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.addEmitter(999L, alice.id(), emitter));
-        assertTrue(exception.getMessage().contains("not found"));
+        assertThatThrownBy(() -> service.addEmitter(999L, alice.id(), emitter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("not found");
     }
 
     @Test
@@ -88,7 +91,8 @@ class RedisMessageEventServiceTest {
         User bob = trxManager.run(trx -> trx.repoUsers().create("bob", new PasswordValidationInfo("hash")));
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
 
-        assertThrows(SecurityException.class, () -> service.addEmitter(channel.id(), bob.id(), emitter));
+        assertThatThrownBy(() -> service.addEmitter(channel.id(), bob.id(), emitter))
+                .isInstanceOf(SecurityException.class);
     }
 
     @Test
@@ -183,7 +187,8 @@ class RedisMessageEventServiceTest {
 
         UpdatedMessage.KeepAlive keepAlive = new UpdatedMessage.KeepAlive(Instant.now());
 
-        assertDoesNotThrow(() -> service.broadcastMessage(channel.id(), keepAlive));
+        assertThatCode(() -> service.broadcastMessage(channel.id(), keepAlive))
+                .doesNotThrowAnyException();
         verify(redisTemplate, never()).convertAndSend(anyString(), anyString());
     }
 
@@ -193,7 +198,8 @@ class RedisMessageEventServiceTest {
                 .thenThrow(new JsonProcessingException("Deserialization error") {
                 });
 
-        assertDoesNotThrow(() -> service.handleRedisMessage("invalid-json-string"));
+        assertThatCode(() -> service.handleRedisMessage("invalid-json-string"))
+                .doesNotThrowAnyException();
     }
 
     @Test

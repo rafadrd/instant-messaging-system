@@ -4,8 +4,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JdbiUtilsTest {
 
@@ -13,18 +13,15 @@ class JdbiUtilsTest {
     void testParamsWithEvenArguments() {
         Map<String, Object> result = JdbiUtils.params("key1", "value1", "key2", 42);
 
-        assertEquals(2, result.size());
-        assertEquals("value1", result.get("key1"));
-        assertEquals(42, result.get("key2"));
+        assertThat(result).hasSize(2);
+        assertThat(result.get("key1")).isEqualTo("value1");
+        assertThat(result.get("key2")).isEqualTo(42);
     }
 
     @Test
     void testParamsThrowsIllegalArgumentExceptionOnOddArguments() {
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> JdbiUtils.params("key1", "value1", "key2")
-        );
-
-        assertEquals("Key-value array must have even length", exception.getMessage());
+        assertThatThrownBy(() -> JdbiUtils.params("key1", "value1", "key2"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Key-value array must have even length");
     }
 }

@@ -12,8 +12,7 @@ import pt.isel.pipeline.authentication.AuthenticationInterceptor;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -47,8 +46,7 @@ class PipelineConfigurerTest {
 
         configurer.addArgumentResolvers(resolvers);
 
-        assertEquals(1, resolvers.size());
-        assertTrue(resolvers.contains(resolver));
+        assertThat(resolvers).hasSize(1).contains(resolver);
     }
 
     @Test

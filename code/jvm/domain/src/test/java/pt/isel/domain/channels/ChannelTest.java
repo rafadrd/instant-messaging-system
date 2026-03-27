@@ -3,9 +3,7 @@ package pt.isel.domain.channels;
 import org.junit.jupiter.api.Test;
 import pt.isel.domain.users.UserInfo;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class ChannelTest {
 
@@ -14,10 +12,10 @@ class ChannelTest {
         UserInfo owner = new UserInfo(1L, "Alice");
         Channel channel = new Channel(10L, "Secret Room", owner, false);
 
-        assertEquals(10L, channel.id());
-        assertEquals("Secret Room", channel.name());
-        assertEquals(owner, channel.owner());
-        assertFalse(channel.isPublic());
+        assertThat(channel.id()).isEqualTo(10L);
+        assertThat(channel.name()).isEqualTo("Secret Room");
+        assertThat(channel.owner()).isEqualTo(owner);
+        assertThat(channel.isPublic()).isFalse();
     }
 
     @Test
@@ -25,9 +23,9 @@ class ChannelTest {
         UserInfo owner = new UserInfo(2L, "Bob");
         Channel channel = new Channel(20L, "Public Lobby", owner);
 
-        assertEquals(20L, channel.id());
-        assertEquals("Public Lobby", channel.name());
-        assertEquals(owner, channel.owner());
-        assertTrue(channel.isPublic());
+        assertThat(channel.id()).isEqualTo(20L);
+        assertThat(channel.name()).isEqualTo("Public Lobby");
+        assertThat(channel.owner()).isEqualTo(owner);
+        assertThat(channel.isPublic()).isTrue();
     }
 }

@@ -8,7 +8,7 @@ import pt.isel.services.users.UserService;
 
 import java.time.Duration;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -60,7 +60,7 @@ class TokenCleanupSchedulerTest {
 
         doThrow(new RuntimeException("Database connection failed")).when(userService).cleanupExpiredTokens();
 
-        assertDoesNotThrow(() -> scheduler.runCleanup());
+        assertThatCode(() -> scheduler.runCleanup()).doesNotThrowAnyException();
 
         verify(userService).cleanupExpiredTokens();
     }

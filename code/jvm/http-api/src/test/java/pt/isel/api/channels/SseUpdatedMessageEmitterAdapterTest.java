@@ -12,7 +12,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.function.Consumer;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -48,7 +48,7 @@ class SseUpdatedMessageEmitterAdapterTest {
         SseEmitter mockEmitter = mock(SseEmitter.class);
         SseUpdatedMessageEmitterAdapter adapter = new SseUpdatedMessageEmitterAdapter(mockEmitter);
 
-        assertDoesNotThrow(adapter::complete);
+        assertThatCode(adapter::complete).doesNotThrowAnyException();
         verify(mockEmitter).complete();
     }
 
@@ -59,7 +59,7 @@ class SseUpdatedMessageEmitterAdapterTest {
 
         Mockito.doThrow(new IOException("Broken pipe")).when(mockEmitter).send(any(SseEmitter.SseEventBuilder.class));
 
-        assertDoesNotThrow(() -> adapter.emit(new UpdatedMessage.KeepAlive(Instant.now())));
+        assertThatCode(() -> adapter.emit(new UpdatedMessage.KeepAlive(Instant.now()))).doesNotThrowAnyException();
 
         verify(mockEmitter).completeWithError(any(IOException.class));
     }

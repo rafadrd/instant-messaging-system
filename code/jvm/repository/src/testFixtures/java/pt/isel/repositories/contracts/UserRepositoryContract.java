@@ -7,11 +7,7 @@ import pt.isel.repositories.TransactionManager;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public interface UserRepositoryContract {
     TransactionManager getTxManager();
@@ -21,14 +17,14 @@ public interface UserRepositoryContract {
         getTxManager().run(trx -> {
             User user = trx.repoUsers().create("alice", new PasswordValidationInfo("hash123"));
 
-            assertNotNull(user);
-            assertNotNull(user.id());
-            assertEquals("alice", user.username());
+            assertThat(user).isNotNull();
+            assertThat(user.id()).isNotNull();
+            assertThat(user.username()).isEqualTo("alice");
 
             User found = trx.repoUsers().findById(user.id());
-            assertEquals(user.id(), found.id());
-            assertEquals("alice", found.username());
-            assertEquals("hash123", found.passwordValidation().validationInfo());
+            assertThat(found.id()).isEqualTo(user.id());
+            assertThat(found.username()).isEqualTo("alice");
+            assertThat(found.passwordValidation().validationInfo()).isEqualTo("hash123");
             return null;
         });
     }
@@ -39,10 +35,10 @@ public interface UserRepositoryContract {
             trx.repoUsers().create("bob", new PasswordValidationInfo("hash456"));
 
             User found = trx.repoUsers().findByUsername("bob");
-            assertNotNull(found);
-            assertEquals("bob", found.username());
+            assertThat(found).isNotNull();
+            assertThat(found.username()).isEqualTo("bob");
 
-            assertNull(trx.repoUsers().findByUsername("nonexistent"));
+            assertThat(trx.repoUsers().findByUsername("nonexistent")).isNull();
             return null;
         });
     }
@@ -50,9 +46,9 @@ public interface UserRepositoryContract {
     @Test
     default void testHasUsers() {
         getTxManager().run(trx -> {
-            assertFalse(trx.repoUsers().hasUsers());
+            assertThat(trx.repoUsers().hasUsers()).isFalse();
             trx.repoUsers().create("charlie", new PasswordValidationInfo("hash789"));
-            assertTrue(trx.repoUsers().hasUsers());
+            assertThat(trx.repoUsers().hasUsers()).isTrue();
             return null;
         });
     }
@@ -64,7 +60,7 @@ public interface UserRepositoryContract {
             trx.repoUsers().create("user2", new PasswordValidationInfo("h2"));
 
             List<User> users = trx.repoUsers().findAll();
-            assertEquals(2, users.size());
+            assertThat(users).hasSize(2);
             return null;
         });
     }
@@ -78,8 +74,8 @@ public interface UserRepositoryContract {
             trx.repoUsers().save(updated);
 
             User found = trx.repoUsers().findById(user.id());
-            assertEquals("dave_updated", found.username());
-            assertEquals("h2", found.passwordValidation().validationInfo());
+            assertThat(found.username()).isEqualTo("dave_updated");
+            assertThat(found.passwordValidation().validationInfo()).isEqualTo("h2");
             return null;
         });
     }
@@ -90,8 +86,8 @@ public interface UserRepositoryContract {
             User user = trx.repoUsers().create("eve", new PasswordValidationInfo("h1"));
             trx.repoUsers().deleteById(user.id());
 
-            assertNull(trx.repoUsers().findById(user.id()));
-            assertFalse(trx.repoUsers().hasUsers());
+            assertThat(trx.repoUsers().findById(user.id())).isNull();
+            assertThat(trx.repoUsers().hasUsers()).isFalse();
             return null;
         });
     }
@@ -102,8 +98,8 @@ public interface UserRepositoryContract {
             trx.repoUsers().create("frank", new PasswordValidationInfo("h1"));
             trx.repoUsers().clear();
 
-            assertFalse(trx.repoUsers().hasUsers());
-            assertTrue(trx.repoUsers().findAll().isEmpty());
+            assertThat(trx.repoUsers().hasUsers()).isFalse();
+            assertThat(trx.repoUsers().findAll()).isEmpty();
             return null;
         });
     }
