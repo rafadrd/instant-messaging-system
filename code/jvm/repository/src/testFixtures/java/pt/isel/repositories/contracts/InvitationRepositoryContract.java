@@ -2,15 +2,11 @@ package pt.isel.repositories.contracts;
 
 import org.junit.jupiter.api.Test;
 import pt.isel.domain.builders.InvitationBuilder;
-import pt.isel.domain.builders.UserInfoBuilder;
 import pt.isel.domain.channels.AccessType;
 import pt.isel.domain.channels.Channel;
 import pt.isel.domain.invitations.Invitation;
 import pt.isel.domain.invitations.InvitationStatus;
-import pt.isel.domain.security.PasswordValidationInfo;
 import pt.isel.domain.users.User;
-import pt.isel.domain.users.UserInfo;
-import pt.isel.repositories.TransactionManager;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -19,18 +15,16 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public interface InvitationRepositoryContract {
-    TransactionManager getTxManager();
+public interface InvitationRepositoryContract extends RepositoryTestHelper {
 
     @Test
     default void testCreateAndFindByToken() {
         getTxManager().run(trx -> {
-            User creator = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo creatorInfo = new UserInfoBuilder().withId(creator.id()).withUsername(creator.username()).build();
-            Channel channel = trx.repoChannels().create("Secret", creatorInfo, false);
+            User creator = insertUser(trx, "alice");
+            Channel channel = insertChannel(trx, "Secret", creator, false);
 
             LocalDateTime expiry = LocalDateTime.now(ZoneOffset.UTC).plusDays(1).truncatedTo(ChronoUnit.MILLIS);
-            Invitation inv = trx.repoInvitations().create("token-123", creatorInfo, channel, AccessType.READ_ONLY, expiry);
+            Invitation inv = trx.repoInvitations().create("token-123", toUserInfo(creator), channel, AccessType.READ_ONLY, expiry);
 
             assertThat(inv).isNotNull();
             assertThat(inv.id()).isNotNull();
@@ -47,13 +41,12 @@ public interface InvitationRepositoryContract {
     @Test
     default void testFindAll() {
         getTxManager().run(trx -> {
-            User creator = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo creatorInfo = new UserInfoBuilder().withId(creator.id()).withUsername(creator.username()).build();
-            Channel channel = trx.repoChannels().create("Secret", creatorInfo, false);
+            User creator = insertUser(trx, "alice");
+            Channel channel = insertChannel(trx, "Secret", creator, false);
 
             LocalDateTime expiry = LocalDateTime.now(ZoneOffset.UTC).plusDays(1);
-            trx.repoInvitations().create("t1", creatorInfo, channel, AccessType.READ_ONLY, expiry);
-            trx.repoInvitations().create("t2", creatorInfo, channel, AccessType.READ_WRITE, expiry);
+            trx.repoInvitations().create("t1", toUserInfo(creator), channel, AccessType.READ_ONLY, expiry);
+            trx.repoInvitations().create("t2", toUserInfo(creator), channel, AccessType.READ_WRITE, expiry);
 
             List<Invitation> allInvitations = trx.repoInvitations().findAll();
             assertThat(allInvitations).hasSize(2);
@@ -64,13 +57,12 @@ public interface InvitationRepositoryContract {
     @Test
     default void testFindByChannelId() {
         getTxManager().run(trx -> {
-            User creator = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo creatorInfo = new UserInfoBuilder().withId(creator.id()).withUsername(creator.username()).build();
-            Channel channel = trx.repoChannels().create("Secret", creatorInfo, false);
+            User creator = insertUser(trx, "alice");
+            Channel channel = insertChannel(trx, "Secret", creator, false);
 
             LocalDateTime expiry = LocalDateTime.now(ZoneOffset.UTC).plusDays(1);
-            trx.repoInvitations().create("t1", creatorInfo, channel, AccessType.READ_ONLY, expiry);
-            trx.repoInvitations().create("t2", creatorInfo, channel, AccessType.READ_WRITE, expiry);
+            trx.repoInvitations().create("t1", toUserInfo(creator), channel, AccessType.READ_ONLY, expiry);
+            trx.repoInvitations().create("t2", toUserInfo(creator), channel, AccessType.READ_WRITE, expiry);
 
             List<Invitation> invs = trx.repoInvitations().findByChannelId(channel.id());
             assertThat(invs).hasSize(2);
@@ -81,11 +73,10 @@ public interface InvitationRepositoryContract {
     @Test
     default void testConsumeInvitation() {
         getTxManager().run(trx -> {
-            User creator = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo creatorInfo = new UserInfoBuilder().withId(creator.id()).withUsername(creator.username()).build();
-            Channel channel = trx.repoChannels().create("Secret", creatorInfo, false);
+            User creator = insertUser(trx, "alice");
+            Channel channel = insertChannel(trx, "Secret", creator, false);
 
-            Invitation inv = trx.repoInvitations().create("t1", creatorInfo, channel, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).plusDays(1));
+            Invitation inv = trx.repoInvitations().create("t1", toUserInfo(creator), channel, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).plusDays(1));
 
             assertThat(trx.repoInvitations().consume(inv.id())).isTrue();
 
@@ -100,11 +91,10 @@ public interface InvitationRepositoryContract {
     @Test
     default void testSaveUpdatesInvitation() {
         getTxManager().run(trx -> {
-            User creator = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo creatorInfo = new UserInfoBuilder().withId(creator.id()).withUsername(creator.username()).build();
-            Channel channel = trx.repoChannels().create("Secret", creatorInfo, false);
+            User creator = insertUser(trx, "alice");
+            Channel channel = insertChannel(trx, "Secret", creator, false);
 
-            Invitation inv = trx.repoInvitations().create("t1", creatorInfo, channel, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).plusDays(1));
+            Invitation inv = trx.repoInvitations().create("t1", toUserInfo(creator), channel, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).plusDays(1));
             Invitation rejected = new InvitationBuilder()
                     .withId(inv.id())
                     .withToken(inv.token())
@@ -125,11 +115,10 @@ public interface InvitationRepositoryContract {
     @Test
     default void testDeleteById() {
         getTxManager().run(trx -> {
-            User creator = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo creatorInfo = new UserInfoBuilder().withId(creator.id()).withUsername(creator.username()).build();
-            Channel channel = trx.repoChannels().create("Secret", creatorInfo, false);
+            User creator = insertUser(trx, "alice");
+            Channel channel = insertChannel(trx, "Secret", creator, false);
 
-            Invitation inv = trx.repoInvitations().create("t1", creatorInfo, channel, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).plusDays(1));
+            Invitation inv = trx.repoInvitations().create("t1", toUserInfo(creator), channel, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).plusDays(1));
 
             trx.repoInvitations().deleteById(inv.id());
             assertThat(trx.repoInvitations().findById(inv.id())).isNull();
@@ -140,11 +129,10 @@ public interface InvitationRepositoryContract {
     @Test
     default void testClear() {
         getTxManager().run(trx -> {
-            User creator = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo creatorInfo = new UserInfoBuilder().withId(creator.id()).withUsername(creator.username()).build();
-            Channel channel = trx.repoChannels().create("Secret", creatorInfo, false);
+            User creator = insertUser(trx, "alice");
+            Channel channel = insertChannel(trx, "Secret", creator, false);
 
-            trx.repoInvitations().create("t1", creatorInfo, channel, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).plusDays(1));
+            trx.repoInvitations().create("t1", toUserInfo(creator), channel, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).plusDays(1));
 
             trx.repoInvitations().clear();
             assertThat(trx.repoInvitations().findAll()).isEmpty();

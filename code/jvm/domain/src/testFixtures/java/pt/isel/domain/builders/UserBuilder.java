@@ -3,9 +3,13 @@ package pt.isel.domain.builders;
 import pt.isel.domain.security.PasswordValidationInfo;
 import pt.isel.domain.users.User;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class UserBuilder {
-    private Long id = 1L;
-    private String username = "testuser";
+    private static final AtomicLong ID_GENERATOR = new AtomicLong(1);
+
+    private Long id = ID_GENERATOR.getAndIncrement();
+    private String username = "testuser_" + id;
     private PasswordValidationInfo passwordValidation = new PasswordValidationInfo("hash");
 
     public UserBuilder withId(Long id) {

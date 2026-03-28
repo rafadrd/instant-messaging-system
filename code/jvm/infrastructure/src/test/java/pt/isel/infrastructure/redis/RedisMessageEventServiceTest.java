@@ -14,9 +14,9 @@ import pt.isel.domain.channels.Channel;
 import pt.isel.domain.messages.Message;
 import pt.isel.domain.messages.UpdatedMessage;
 import pt.isel.domain.messages.UpdatedMessageEmitter;
-import pt.isel.domain.security.PasswordValidationInfo;
 import pt.isel.domain.users.User;
-import pt.isel.domain.users.UserInfo;
+import pt.isel.repositories.TransactionManager;
+import pt.isel.repositories.contracts.RepositoryTestHelper;
 import pt.isel.repositories.mem.TransactionManagerInMem;
 
 import java.time.Clock;
@@ -34,7 +34,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class RedisMessageEventServiceTest {
+class RedisMessageEventServiceTest implements RepositoryTestHelper {
 
     private TransactionManagerInMem trxManager;
     private StringRedisTemplate redisTemplate;
@@ -43,6 +43,11 @@ class RedisMessageEventServiceTest {
 
     private User alice;
     private Channel channel;
+
+    @Override
+    public TransactionManager getTxManager() {
+        return trxManager;
+    }
 
     @BeforeEach
     void setUp() throws Exception {
@@ -54,11 +59,10 @@ class RedisMessageEventServiceTest {
 
         service = new RedisMessageEventService(trxManager, redisTemplate, objectMapper, Clock.systemUTC());
 
-        alice = trxManager.run(trx -> trx.repoUsers().create("alice", new PasswordValidationInfo("hash")));
+        alice = trxManager.run(trx -> insertUser(trx, "alice"));
         channel = trxManager.run(trx -> {
-            UserInfo aliceInfo = new UserInfo(alice.id(), alice.username());
-            Channel c = trx.repoChannels().create("General", aliceInfo, true);
-            trx.repoMemberships().addUserToChannel(aliceInfo, c, AccessType.READ_WRITE);
+            Channel c = insertChannel(trx, "General", alice, true);
+            insertMember(trx, alice, c, AccessType.READ_WRITE);
             return c;
         });
     }
@@ -92,7 +96,7 @@ class RedisMessageEventServiceTest {
 
     @Test
     void testAddEmitterThrowsWhenUserNotInChannel() {
-        User bob = trxManager.run(trx -> trx.repoUsers().create("bob", new PasswordValidationInfo("hash")));
+        User bob = trxManager.run(trx -> insertUser(trx, "bob"));
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
 
         assertThatExceptionOfType(SecurityException.class)

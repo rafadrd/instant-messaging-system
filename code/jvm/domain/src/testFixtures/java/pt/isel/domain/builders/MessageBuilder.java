@@ -5,10 +5,13 @@ import pt.isel.domain.messages.Message;
 import pt.isel.domain.users.UserInfo;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class MessageBuilder {
-    private Long id = 1000L;
-    private String content = "Hello World";
+    private static final AtomicLong ID_GENERATOR = new AtomicLong(1);
+
+    private Long id = ID_GENERATOR.getAndIncrement();
+    private String content = "Message " + id;
     private UserInfo user = new UserInfoBuilder().build();
     private Channel channel = new ChannelBuilder().build();
     private LocalDateTime createdAt = LocalDateTime.of(2025, 1, 1, 12, 0);

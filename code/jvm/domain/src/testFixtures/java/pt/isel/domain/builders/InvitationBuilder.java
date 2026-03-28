@@ -7,10 +7,13 @@ import pt.isel.domain.invitations.InvitationStatus;
 import pt.isel.domain.users.UserInfo;
 
 import java.time.LocalDateTime;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class InvitationBuilder {
-    private Long id = 10000L;
-    private String token = "token123";
+    private static final AtomicLong ID_GENERATOR = new AtomicLong(1);
+
+    private Long id = ID_GENERATOR.getAndIncrement();
+    private String token = "token_" + id;
     private UserInfo createdBy = new UserInfoBuilder().build();
     private Channel channel = new ChannelBuilder().build();
     private AccessType accessType = AccessType.READ_ONLY;

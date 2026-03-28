@@ -4,10 +4,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import pt.isel.api.AbstractControllerTest;
+import pt.isel.api.common.Problem;
 import pt.isel.domain.builders.UserBuilder;
 import pt.isel.domain.common.Either;
 import pt.isel.domain.security.PasswordValidationInfo;
@@ -23,12 +22,10 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static pt.isel.api.common.ProblemResultMatchers.isProblem;
 
 @WebMvcTest(UserController.class)
 class UserControllerTest extends AbstractControllerTest {
@@ -49,9 +46,7 @@ class UserControllerTest extends AbstractControllerTest {
 
         when(userService.registerUser(anyString(), anyString(), any())).thenReturn(Either.success(tokenInfo));
 
-        mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(input)))
+        postWithoutAuth("/api/auth/register", input)
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.username").value("alice"))
@@ -63,10 +58,8 @@ class UserControllerTest extends AbstractControllerTest {
     void testRegisterUserValidationFailure_InvalidUsername(String invalidUsername) throws Exception {
         RegisterInput input = new RegisterInput(invalidUsername, "Strong1!", null);
 
-        mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(input)))
-                .andExpect(status().isBadRequest());
+        postWithoutAuth("/api/auth/register", input)
+                .andExpect(isProblem(Problem.InvalidRequestContent));
     }
 
     @ParameterizedTest
@@ -74,10 +67,8 @@ class UserControllerTest extends AbstractControllerTest {
     void testRegisterUserValidationFailure_InvalidPassword(String invalidPassword) throws Exception {
         RegisterInput input = new RegisterInput("alice", invalidPassword, null);
 
-        mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(input)))
-                .andExpect(status().isBadRequest());
+        postWithoutAuth("/api/auth/register", input)
+                .andExpect(isProblem(Problem.InvalidRequestContent));
     }
 
     @Test
@@ -87,9 +78,7 @@ class UserControllerTest extends AbstractControllerTest {
 
         when(userService.createToken(anyString(), anyString())).thenReturn(Either.success(tokenInfo));
 
-        mockMvc.perform(post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(input)))
+        postWithoutAuth("/api/auth/login", input)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.username").value("alice"))
@@ -101,16 +90,13 @@ class UserControllerTest extends AbstractControllerTest {
     void testLoginUserValidationFailure(String invalidInput) throws Exception {
         UserInput input = new UserInput("alice", invalidInput);
 
-        mockMvc.perform(post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(input)))
-                .andExpect(status().isBadRequest());
+        postWithoutAuth("/api/auth/login", input)
+                .andExpect(isProblem(Problem.InvalidRequestContent));
     }
 
     @Test
     void testLogoutUser() throws Exception {
-        mockMvc.perform(post("/api/auth/logout")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
+        postWithAuth("/api/auth/logout")
                 .andExpect(status().isNoContent());
 
         verify(userService).revokeToken(MOCK_TOKEN);
@@ -118,8 +104,7 @@ class UserControllerTest extends AbstractControllerTest {
 
     @Test
     void testUserHome() throws Exception {
-        mockMvc.perform(get("/api/users/me")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
+        getWithAuth("/api/users/me")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.username").value("testuser"))
@@ -133,10 +118,7 @@ class UserControllerTest extends AbstractControllerTest {
 
         when(userService.updateUsername(eq(1L), eq("new_alice"), eq("Strong1!"))).thenReturn(Either.success(updatedUser));
 
-        mockMvc.perform(put("/api/users/me")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(input)))
+        putWithAuth("/api/users/me", input)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("new_alice"));
     }
@@ -148,10 +130,7 @@ class UserControllerTest extends AbstractControllerTest {
 
         when(userService.updatePassword(eq(1L), eq("Strong1!"), eq("Stronger2@"))).thenReturn(Either.success(updatedUser));
 
-        mockMvc.perform(put("/api/users/me/password")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(input)))
+        putWithAuth("/api/users/me/password", input)
                 .andExpect(status().isOk());
     }
 
@@ -160,19 +139,15 @@ class UserControllerTest extends AbstractControllerTest {
     void testUpdatePasswordValidationFailure(String invalidPassword) throws Exception {
         UpdatePasswordInput input = new UpdatePasswordInput("OldPassword1!", invalidPassword);
 
-        mockMvc.perform(put("/api/users/me/password")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(input)))
-                .andExpect(status().isBadRequest());
+        putWithAuth("/api/users/me/password", input)
+                .andExpect(isProblem(Problem.InvalidRequestContent));
     }
 
     @Test
     void testGetUserChannels() throws Exception {
         when(channelService.getJoinedChannels(eq(1L), eq(50), eq(0))).thenReturn(Either.success(List.of()));
 
-        mockMvc.perform(get("/api/users/me/channels")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
+        getWithAuth("/api/users/me/channels")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }
@@ -181,8 +156,7 @@ class UserControllerTest extends AbstractControllerTest {
     void testDeleteUser() throws Exception {
         when(userService.deleteUser(1L)).thenReturn(Either.success("Deleted"));
 
-        mockMvc.perform(delete("/api/users/me")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
+        deleteWithAuth("/api/users/me")
                 .andExpect(status().isOk());
     }
 }

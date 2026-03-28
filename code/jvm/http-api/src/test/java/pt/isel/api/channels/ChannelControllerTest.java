@@ -9,6 +9,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import pt.isel.api.AbstractControllerTest;
+import pt.isel.api.common.Problem;
 import pt.isel.domain.builders.ChannelBuilder;
 import pt.isel.domain.builders.ChannelMemberBuilder;
 import pt.isel.domain.builders.UserInfoBuilder;
@@ -28,13 +29,12 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static pt.isel.api.common.ProblemResultMatchers.isProblem;
 
 @WebMvcTest(ChannelController.class)
 class ChannelControllerTest extends AbstractControllerTest {
@@ -55,8 +55,7 @@ class ChannelControllerTest extends AbstractControllerTest {
     void testGetChannels() throws Exception {
         when(channelService.searchChannels(anyString(), anyInt(), anyInt())).thenReturn(Either.success(List.of()));
 
-        mockMvc.perform(get("/api/channels")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
+        getWithAuth("/api/channels")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }
@@ -68,10 +67,7 @@ class ChannelControllerTest extends AbstractControllerTest {
 
         when(channelService.createChannel(anyString(), anyLong(), anyBoolean())).thenReturn(Either.success(channel));
 
-        mockMvc.perform(post("/api/channels")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(input)))
+        postWithAuth("/api/channels", input)
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(10))
                 .andExpect(jsonPath("$.name").value("General"));
@@ -82,8 +78,7 @@ class ChannelControllerTest extends AbstractControllerTest {
         Channel channel = new ChannelBuilder().withId(10L).build();
         when(channelService.getChannelById(10L)).thenReturn(Either.success(channel));
 
-        mockMvc.perform(get("/api/channels/10")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
+        getWithAuth("/api/channels/10")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(10));
     }
@@ -95,10 +90,7 @@ class ChannelControllerTest extends AbstractControllerTest {
 
         when(channelService.editChannel(eq(1L), eq(10L), eq("NewName"), eq(false))).thenReturn(Either.success(channel));
 
-        mockMvc.perform(put("/api/channels/10")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(input)))
+        putWithAuth("/api/channels/10", input)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("NewName"));
     }
@@ -107,8 +99,7 @@ class ChannelControllerTest extends AbstractControllerTest {
     void testDeleteChannel() throws Exception {
         when(channelService.deleteChannel(1L, 10L)).thenReturn(Either.success("Deleted"));
 
-        mockMvc.perform(delete("/api/channels/10")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
+        deleteWithAuth("/api/channels/10")
                 .andExpect(status().isOk());
     }
 
@@ -116,8 +107,7 @@ class ChannelControllerTest extends AbstractControllerTest {
     void testJoinChannel() throws Exception {
         when(channelService.joinPublicChannel(1L, 10L)).thenReturn(Either.success("Joined"));
 
-        mockMvc.perform(post("/api/channels/10/join")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
+        postWithAuth("/api/channels/10/join")
                 .andExpect(status().isOk());
     }
 
@@ -126,10 +116,7 @@ class ChannelControllerTest extends AbstractControllerTest {
         JoinByTokenInput input = new JoinByTokenInput("token123");
         when(channelService.joinPrivateChannel(1L, "token123")).thenReturn(Either.success("Joined"));
 
-        mockMvc.perform(post("/api/channels/join-by-token")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(input)))
+        postWithAuth("/api/channels/join-by-token", input)
                 .andExpect(status().isOk());
     }
 
@@ -137,8 +124,7 @@ class ChannelControllerTest extends AbstractControllerTest {
     void testLeaveChannel() throws Exception {
         when(channelService.leaveChannel(10L, 1L)).thenReturn(Either.success("Left"));
 
-        mockMvc.perform(post("/api/channels/10/leave")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
+        postWithAuth("/api/channels/10/leave")
                 .andExpect(status().isOk());
     }
 
@@ -146,8 +132,7 @@ class ChannelControllerTest extends AbstractControllerTest {
     void testGetMembers() throws Exception {
         when(channelService.getUsersInChannel(eq(10L), anyInt(), anyInt())).thenReturn(Either.success(List.of()));
 
-        mockMvc.perform(get("/api/channels/10/members")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
+        getWithAuth("/api/channels/10/members")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }
@@ -156,8 +141,7 @@ class ChannelControllerTest extends AbstractControllerTest {
     void testGetAccessType() throws Exception {
         when(channelService.getAccessType(1L, 2L, 10L)).thenReturn(Either.success(AccessType.READ_ONLY));
 
-        mockMvc.perform(get("/api/channels/10/members/2")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
+        getWithAuth("/api/channels/10/members/2")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").value("READ_ONLY"));
     }
@@ -173,10 +157,7 @@ class ChannelControllerTest extends AbstractControllerTest {
 
         when(channelService.editMemberAccess(1L, 10L, 2L, AccessType.READ_WRITE)).thenReturn(Either.success(member));
 
-        mockMvc.perform(put("/api/channels/10/members/2")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(input)))
+        putWithAuth("/api/channels/10/members/2", input)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessType").value("READ_WRITE"));
     }
@@ -186,8 +167,7 @@ class ChannelControllerTest extends AbstractControllerTest {
         when(channelService.getAccessType(1L, 1L, 10L)).thenReturn(Either.success(AccessType.READ_WRITE));
         when(ticketService.createTicket(1L)).thenReturn("ticket-uuid");
 
-        mockMvc.perform(post("/api/channels/10/socket-ticket")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
+        postWithAuth("/api/channels/10/socket-ticket")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.ticket").value("ticket-uuid"));
     }
@@ -196,8 +176,7 @@ class ChannelControllerTest extends AbstractControllerTest {
     void testListenSse() throws Exception {
         when(channelService.getAccessType(1L, 1L, 10L)).thenReturn(Either.success(AccessType.READ_WRITE));
 
-        mockMvc.perform(get("/api/channels/10/listen")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
+        getWithAuth("/api/channels/10/listen")
                 .andExpect(request().asyncStarted())
                 .andExpect(status().isOk());
     }
@@ -207,24 +186,16 @@ class ChannelControllerTest extends AbstractControllerTest {
     void testCreateChannelValidationFailure_Empty(String invalidName) throws Exception {
         ChannelInput input = new ChannelInput(invalidName, true);
 
-        mockMvc.perform(post("/api/channels")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(input)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.title").value("Invalid Request Content"));
+        postWithAuth("/api/channels", input)
+                .andExpect(isProblem(Problem.InvalidRequestContent));
     }
 
     @Test
     void testCreateChannelValidationFailure_TooLong() throws Exception {
         ChannelInput input = new ChannelInput("a".repeat(31), true);
 
-        mockMvc.perform(post("/api/channels")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(input)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.title").value("Invalid Request Content"));
+        postWithAuth("/api/channels", input)
+                .andExpect(isProblem(Problem.InvalidRequestContent));
     }
 
     @ParameterizedTest
@@ -232,11 +203,8 @@ class ChannelControllerTest extends AbstractControllerTest {
     void testJoinChannelByTokenValidationFailure(String invalidToken) throws Exception {
         JoinByTokenInput input = new JoinByTokenInput(invalidToken);
 
-        mockMvc.perform(post("/api/channels/join-by-token")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(input)))
-                .andExpect(status().isBadRequest());
+        postWithAuth("/api/channels/join-by-token", input)
+                .andExpect(isProblem(Problem.InvalidRequestContent));
     }
 
     @Test
@@ -247,7 +215,7 @@ class ChannelControllerTest extends AbstractControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidJson))
-                .andExpect(status().isBadRequest());
+                .andExpect(isProblem(Problem.InvalidRequestContent));
     }
 
     @Test
@@ -257,8 +225,7 @@ class ChannelControllerTest extends AbstractControllerTest {
         Mockito.doThrow(new RuntimeException("Redis connection failed"))
                 .when(messageEventService).addEmitter(anyLong(), anyLong(), any());
 
-        mockMvc.perform(get("/api/channels/10/listen")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
+        getWithAuth("/api/channels/10/listen")
                 .andExpect(request().asyncStarted())
                 .andExpect(status().isOk());
     }

@@ -1,7 +1,6 @@
 package pt.isel.repositories.contracts;
 
 import org.junit.jupiter.api.Test;
-import pt.isel.repositories.TransactionManager;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -9,8 +8,7 @@ import java.time.ZoneOffset;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-public interface TokenBlacklistRepositoryContract {
-    TransactionManager getTxManager();
+public interface TokenBlacklistRepositoryContract extends RepositoryTestHelper {
 
     @Test
     default void testAddAndExists() {

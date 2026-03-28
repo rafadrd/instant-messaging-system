@@ -4,14 +4,12 @@ import org.junit.jupiter.api.Test;
 import pt.isel.domain.builders.UserBuilder;
 import pt.isel.domain.security.PasswordValidationInfo;
 import pt.isel.domain.users.User;
-import pt.isel.repositories.TransactionManager;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public interface UserRepositoryContract {
-    TransactionManager getTxManager();
+public interface UserRepositoryContract extends RepositoryTestHelper {
 
     @Test
     default void testCreateAndFindById() {
@@ -33,7 +31,7 @@ public interface UserRepositoryContract {
     @Test
     default void testFindByUsername() {
         getTxManager().run(trx -> {
-            trx.repoUsers().create("bob", new PasswordValidationInfo("hash456"));
+            insertUser(trx, "bob");
 
             User found = trx.repoUsers().findByUsername("bob");
             assertThat(found).isNotNull();
@@ -48,7 +46,7 @@ public interface UserRepositoryContract {
     default void testHasUsers() {
         getTxManager().run(trx -> {
             assertThat(trx.repoUsers().hasUsers()).isFalse();
-            trx.repoUsers().create("charlie", new PasswordValidationInfo("hash789"));
+            insertUser(trx, "charlie");
             assertThat(trx.repoUsers().hasUsers()).isTrue();
             return null;
         });
@@ -57,8 +55,8 @@ public interface UserRepositoryContract {
     @Test
     default void testFindAll() {
         getTxManager().run(trx -> {
-            trx.repoUsers().create("user1", new PasswordValidationInfo("h1"));
-            trx.repoUsers().create("user2", new PasswordValidationInfo("h2"));
+            insertUser(trx, "user1");
+            insertUser(trx, "user2");
 
             List<User> users = trx.repoUsers().findAll();
             assertThat(users).hasSize(2);
@@ -69,7 +67,7 @@ public interface UserRepositoryContract {
     @Test
     default void testSaveUpdatesExistingUser() {
         getTxManager().run(trx -> {
-            User user = trx.repoUsers().create("dave", new PasswordValidationInfo("h1"));
+            User user = insertUser(trx, "dave");
             User updated = new UserBuilder()
                     .withId(user.id())
                     .withUsername("dave_updated")
@@ -88,7 +86,7 @@ public interface UserRepositoryContract {
     @Test
     default void testDeleteById() {
         getTxManager().run(trx -> {
-            User user = trx.repoUsers().create("eve", new PasswordValidationInfo("h1"));
+            User user = insertUser(trx, "eve");
             trx.repoUsers().deleteById(user.id());
 
             assertThat(trx.repoUsers().findById(user.id())).isNull();
@@ -100,7 +98,7 @@ public interface UserRepositoryContract {
     @Test
     default void testClear() {
         getTxManager().run(trx -> {
-            trx.repoUsers().create("frank", new PasswordValidationInfo("h1"));
+            insertUser(trx, "frank");
             trx.repoUsers().clear();
 
             assertThat(trx.repoUsers().hasUsers()).isFalse();

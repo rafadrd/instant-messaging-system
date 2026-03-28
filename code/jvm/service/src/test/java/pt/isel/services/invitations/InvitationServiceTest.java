@@ -9,7 +9,6 @@ import pt.isel.domain.common.EitherAssert;
 import pt.isel.domain.common.InvitationError;
 import pt.isel.domain.invitations.Invitation;
 import pt.isel.domain.invitations.InvitationStatus;
-import pt.isel.domain.security.PasswordValidationInfo;
 import pt.isel.domain.users.User;
 import pt.isel.services.AbstractServiceTest;
 
@@ -90,7 +89,7 @@ class InvitationServiceTest extends AbstractServiceTest {
 
     @Test
     void testGetInvitationsForChannel_UserNotInChannel() {
-        User dave = trxManager.run(trx -> trx.repoUsers().create("dave", new PasswordValidationInfo("hash")));
+        User dave = trxManager.run(trx -> insertUser(trx, "dave"));
         Either<InvitationError, List<Invitation>> result = invitationService.getInvitationsForChannel(dave.id(), channel.id());
 
         EitherAssert.assertLeft(result, InvitationError.UserNotInChannel.class);
@@ -138,7 +137,7 @@ class InvitationServiceTest extends AbstractServiceTest {
 
     @Test
     void testCreateInvitation_UserNotInChannel() {
-        User dave = trxManager.run(trx -> trx.repoUsers().create("dave", new PasswordValidationInfo("hash")));
+        User dave = trxManager.run(trx -> insertUser(trx, "dave"));
         Either<InvitationError, Invitation> result = invitationService.createInvitation(dave.id(), channel.id(), AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1));
 
         EitherAssert.assertLeft(result, InvitationError.UserNotInChannel.class);

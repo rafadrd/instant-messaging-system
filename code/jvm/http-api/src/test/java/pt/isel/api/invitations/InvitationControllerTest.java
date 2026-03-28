@@ -6,6 +6,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import pt.isel.api.AbstractControllerTest;
+import pt.isel.api.common.Problem;
 import pt.isel.domain.builders.InvitationBuilder;
 import pt.isel.domain.channels.AccessType;
 import pt.isel.domain.common.Either;
@@ -22,6 +23,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static pt.isel.api.common.ProblemResultMatchers.isProblem;
 
 @WebMvcTest(InvitationController.class)
 class InvitationControllerTest extends AbstractControllerTest {
@@ -48,10 +50,7 @@ class InvitationControllerTest extends AbstractControllerTest {
 
         when(invitationService.createInvitation(eq(1L), eq(10L), eq(AccessType.READ_ONLY), any())).thenReturn(Either.success(invitation));
 
-        mockMvc.perform(post("/api/channels/10/invitations")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(input)))
+        postWithAuth("/api/channels/10/invitations", input)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(100))
                 .andExpect(jsonPath("$.token").value("token123"));
@@ -61,8 +60,7 @@ class InvitationControllerTest extends AbstractControllerTest {
     void testGetInvitationsForChannel() throws Exception {
         when(invitationService.getInvitationsForChannel(1L, 10L)).thenReturn(Either.success(List.of()));
 
-        mockMvc.perform(get("/api/channels/10/invitations")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
+        getWithAuth("/api/channels/10/invitations")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }
@@ -71,8 +69,7 @@ class InvitationControllerTest extends AbstractControllerTest {
     void testRevokeInvitation() throws Exception {
         when(invitationService.revokeInvitation(1L, 10L, 100L)).thenReturn(Either.success("Revoked"));
 
-        mockMvc.perform(post("/api/channels/10/invitations/100/revoke")
-                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
+        postWithAuth("/api/channels/10/invitations/100/revoke")
                 .andExpect(status().isOk());
     }
 
@@ -84,7 +81,6 @@ class InvitationControllerTest extends AbstractControllerTest {
                         .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidJson))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.title").value("Invalid Request Content"));
+                .andExpect(isProblem(Problem.InvalidRequestContent));
     }
 }

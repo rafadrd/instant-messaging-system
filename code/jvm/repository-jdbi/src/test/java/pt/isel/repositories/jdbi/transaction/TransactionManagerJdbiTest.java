@@ -3,18 +3,24 @@ package pt.isel.repositories.jdbi.transaction;
 import org.junit.jupiter.api.Test;
 import pt.isel.domain.common.Either;
 import pt.isel.domain.common.EitherAssert;
-import pt.isel.domain.security.PasswordValidationInfo;
+import pt.isel.repositories.TransactionManager;
+import pt.isel.repositories.contracts.RepositoryTestHelper;
 import pt.isel.repositories.jdbi.AbstractJdbiTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-class TransactionManagerJdbiTest extends AbstractJdbiTest {
+class TransactionManagerJdbiTest extends AbstractJdbiTest implements RepositoryTestHelper {
+
+    @Override
+    public TransactionManager getTxManager() {
+        return txManager;
+    }
 
     @Test
     void testSuccessfulTransactionCommits() {
         String result = txManager.run(trx -> {
-            trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
+            insertUser(trx, "alice");
             return "Success";
         });
 
@@ -30,7 +36,7 @@ class TransactionManagerJdbiTest extends AbstractJdbiTest {
     @Test
     void testRollbackOnEitherLeft() {
         Either<String, String> result = txManager.run(trx -> {
-            trx.repoUsers().create("bob", new PasswordValidationInfo("hash"));
+            insertUser(trx, "bob");
             return Either.failure("Business Error");
         });
 
@@ -47,7 +53,7 @@ class TransactionManagerJdbiTest extends AbstractJdbiTest {
     void testRollbackOnException() {
         assertThatExceptionOfType(RuntimeException.class)
                 .isThrownBy(() -> txManager.run(trx -> {
-                    trx.repoUsers().create("charlie", new PasswordValidationInfo("hash"));
+                    insertUser(trx, "charlie");
                     throw new RuntimeException("Unexpected Error");
                 }))
                 .withMessage("Unexpected Error");
@@ -62,7 +68,7 @@ class TransactionManagerJdbiTest extends AbstractJdbiTest {
     @Test
     void testExplicitRollback() {
         txManager.run(trx -> {
-            trx.repoUsers().create("dave", new PasswordValidationInfo("hash"));
+            insertUser(trx, "dave");
 
             // Explicitly rollback the transaction
             trx.rollback();

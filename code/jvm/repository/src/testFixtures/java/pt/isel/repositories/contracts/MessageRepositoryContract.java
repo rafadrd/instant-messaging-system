@@ -2,13 +2,9 @@ package pt.isel.repositories.contracts;
 
 import org.junit.jupiter.api.Test;
 import pt.isel.domain.builders.MessageBuilder;
-import pt.isel.domain.builders.UserInfoBuilder;
 import pt.isel.domain.channels.Channel;
 import pt.isel.domain.messages.Message;
-import pt.isel.domain.security.PasswordValidationInfo;
 import pt.isel.domain.users.User;
-import pt.isel.domain.users.UserInfo;
-import pt.isel.repositories.TransactionManager;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -16,17 +12,15 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public interface MessageRepositoryContract {
-    TransactionManager getTxManager();
+public interface MessageRepositoryContract extends RepositoryTestHelper {
 
     @Test
     default void testCreateAndFindById() {
         getTxManager().run(trx -> {
-            User user = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo userInfo = new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build();
-            Channel channel = trx.repoChannels().create("General", userInfo, true);
+            User user = insertUser(trx, "alice");
+            Channel channel = insertChannel(trx, "General", user, true);
 
-            Message msg = trx.repoMessages().create("Hello World", userInfo, channel, LocalDateTime.now(ZoneOffset.UTC));
+            Message msg = trx.repoMessages().create("Hello World", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC));
 
             assertThat(msg).isNotNull();
             assertThat(msg.id()).isNotNull();
@@ -44,12 +38,11 @@ public interface MessageRepositoryContract {
     @Test
     default void testFindAll() {
         getTxManager().run(trx -> {
-            User user = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo userInfo = new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build();
-            Channel channel = trx.repoChannels().create("General", userInfo, true);
+            User user = insertUser(trx, "alice");
+            Channel channel = insertChannel(trx, "General", user, true);
 
-            trx.repoMessages().create("Msg 1", userInfo, channel, LocalDateTime.now(ZoneOffset.UTC));
-            trx.repoMessages().create("Msg 2", userInfo, channel, LocalDateTime.now(ZoneOffset.UTC));
+            trx.repoMessages().create("Msg 1", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC));
+            trx.repoMessages().create("Msg 2", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC));
 
             List<Message> allMessages = trx.repoMessages().findAll();
             assertThat(allMessages).hasSize(2);
@@ -60,16 +53,15 @@ public interface MessageRepositoryContract {
     @Test
     default void testFindAllInChannelWithPagination() {
         getTxManager().run(trx -> {
-            User user = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo userInfo = new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build();
-            Channel channel = trx.repoChannels().create("General", userInfo, true);
+            User user = insertUser(trx, "alice");
+            Channel channel = insertChannel(trx, "General", user, true);
 
-            trx.repoMessages().create("Msg 1", userInfo, channel, LocalDateTime.now(ZoneOffset.UTC).minusMinutes(3));
-            trx.repoMessages().create("Msg 2", userInfo, channel, LocalDateTime.now(ZoneOffset.UTC).minusMinutes(2));
-            trx.repoMessages().create("Msg 3", userInfo, channel, LocalDateTime.now(ZoneOffset.UTC).minusMinutes(1));
+            trx.repoMessages().create("Msg 1", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC).minusMinutes(3));
+            trx.repoMessages().create("Msg 2", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC).minusMinutes(2));
+            trx.repoMessages().create("Msg 3", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC).minusMinutes(1));
 
-            Channel otherChannel = trx.repoChannels().create("Other", userInfo, true);
-            trx.repoMessages().create("Other Msg", userInfo, otherChannel, LocalDateTime.now(ZoneOffset.UTC));
+            Channel otherChannel = insertChannel(trx, "Other", user, true);
+            trx.repoMessages().create("Other Msg", toUserInfo(user), otherChannel, LocalDateTime.now(ZoneOffset.UTC));
 
             List<Message> page1 = trx.repoMessages().findAllInChannel(channel, 2, 0);
             assertThat(page1).hasSize(2);
@@ -86,15 +78,14 @@ public interface MessageRepositoryContract {
     @Test
     default void testSaveUpdatesMessage() {
         getTxManager().run(trx -> {
-            User user = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo userInfo = new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build();
-            Channel channel = trx.repoChannels().create("General", userInfo, true);
+            User user = insertUser(trx, "alice");
+            Channel channel = insertChannel(trx, "General", user, true);
 
-            Message msg = trx.repoMessages().create("Original", userInfo, channel, LocalDateTime.now(ZoneOffset.UTC));
+            Message msg = trx.repoMessages().create("Original", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC));
             Message updated = new MessageBuilder()
                     .withId(msg.id())
                     .withContent("Edited")
-                    .withUser(userInfo)
+                    .withUser(toUserInfo(user))
                     .withChannel(channel)
                     .withCreatedAt(msg.createdAt())
                     .build();
@@ -109,11 +100,10 @@ public interface MessageRepositoryContract {
     @Test
     default void testDeleteById() {
         getTxManager().run(trx -> {
-            User user = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            UserInfo userInfo = new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build();
-            Channel channel = trx.repoChannels().create("General", userInfo, true);
+            User user = insertUser(trx, "alice");
+            Channel channel = insertChannel(trx, "General", user, true);
 
-            Message msg = trx.repoMessages().create("To Delete", userInfo, channel, LocalDateTime.now(ZoneOffset.UTC));
+            Message msg = trx.repoMessages().create("To Delete", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC));
             trx.repoMessages().deleteById(msg.id());
 
             assertThat(trx.repoMessages().findById(msg.id())).isNull();
@@ -124,9 +114,9 @@ public interface MessageRepositoryContract {
     @Test
     default void testClear() {
         getTxManager().run(trx -> {
-            User user = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
-            Channel channel = trx.repoChannels().create("General", new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build(), true);
-            trx.repoMessages().create("Msg", new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build(), channel, LocalDateTime.now(ZoneOffset.UTC));
+            User user = insertUser(trx, "alice");
+            Channel channel = insertChannel(trx, "General", user, true);
+            trx.repoMessages().create("Msg", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC));
 
             trx.repoMessages().clear();
             assertThat(trx.repoMessages().findAll()).isEmpty();

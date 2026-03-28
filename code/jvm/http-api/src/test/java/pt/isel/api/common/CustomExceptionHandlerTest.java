@@ -12,8 +12,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static pt.isel.api.common.ProblemResultMatchers.isProblem;
 
 @WebMvcTest(UserController.class)
 class CustomExceptionHandlerTest extends AbstractControllerTest {
@@ -31,10 +30,7 @@ class CustomExceptionHandlerTest extends AbstractControllerTest {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(validJson))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.title").value("Internal Server Error"))
-                .andExpect(jsonPath("$.status").value(500))
-                .andExpect(jsonPath("$.detail").value("An internal server error occurred."));
+                .andExpect(isProblem(Problem.InternalServerError));
     }
 
     @Test
@@ -44,9 +40,7 @@ class CustomExceptionHandlerTest extends AbstractControllerTest {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(malformedJson))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.title").value("Invalid Request Content"))
-                .andExpect(jsonPath("$.status").value(400));
+                .andExpect(isProblem(Problem.InvalidRequestContent));
     }
 
     @Test
@@ -56,8 +50,6 @@ class CustomExceptionHandlerTest extends AbstractControllerTest {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidJson))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.title").value("Invalid Request Content"))
-                .andExpect(jsonPath("$.status").value(400));
+                .andExpect(isProblem(Problem.InvalidRequestContent));
     }
 }

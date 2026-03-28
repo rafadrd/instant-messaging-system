@@ -4,7 +4,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
-import pt.isel.domain.builders.UserInfoBuilder;
 import pt.isel.domain.channels.AccessType;
 import pt.isel.domain.channels.Channel;
 import pt.isel.domain.channels.ChannelMember;
@@ -223,9 +222,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     void testJoinPrivateChannel_Success() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("Secret", alice.id(), false));
 
-        Invitation inv = trxManager.run(trx -> trx.repoInvitations().create(
-                "token123", new UserInfoBuilder().withId(alice.id()).withUsername(alice.username()).build(), created, AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1)
-        ));
+        Invitation inv = trxManager.run(trx -> insertInvitation(trx, "token123", alice, created, AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1)));
 
         Either<ChannelError, String> result = channelService.joinPrivateChannel(bob.id(), inv.token());
         EitherAssert.assertRight(result);
@@ -345,9 +342,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     @Test
     void testJoinPrivateChannel_ExpiredToken() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("Secret", alice.id(), false));
-        trxManager.run(trx -> trx.repoInvitations().create(
-                "expired-token", new UserInfoBuilder().withId(alice.id()).withUsername(alice.username()).build(), created, AccessType.READ_ONLY, LocalDateTime.now(clock).minusDays(1)
-        ));
+        trxManager.run(trx -> insertInvitation(trx, "expired-token", alice, created, AccessType.READ_ONLY, LocalDateTime.now(clock).minusDays(1)));
 
         Either<ChannelError, String> result = channelService.joinPrivateChannel(bob.id(), "expired-token");
 
@@ -424,10 +419,8 @@ class ChannelServiceTest extends AbstractServiceTest {
     @Test
     void testJoinPrivateChannel_AlreadyInChannel() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("Secret", alice.id(), false));
-        trxManager.run(trx -> trx.repoMemberships().addUserToChannel(new UserInfoBuilder().withId(bob.id()).withUsername(bob.username()).build(), created, AccessType.READ_ONLY));
-        trxManager.run(trx -> trx.repoInvitations().create(
-                "token123", new UserInfoBuilder().withId(alice.id()).withUsername(alice.username()).build(), created, AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1)
-        ));
+        trxManager.run(trx -> insertMember(trx, bob, created, AccessType.READ_ONLY));
+        trxManager.run(trx -> insertInvitation(trx, "token123", alice, created, AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1)));
 
         Either<ChannelError, String> result = channelService.joinPrivateChannel(bob.id(), "token123");
 
@@ -437,9 +430,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     @Test
     void testJoinPrivateChannel_InvitationAlreadyUsed() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("Secret", alice.id(), false));
-        trxManager.run(trx -> trx.repoInvitations().create(
-                "token123", new UserInfoBuilder().withId(alice.id()).withUsername(alice.username()).build(), created, AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1)
-        ));
+        trxManager.run(trx -> insertInvitation(trx, "token123", alice, created, AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1)));
 
         channelService.joinPrivateChannel(bob.id(), "token123");
 

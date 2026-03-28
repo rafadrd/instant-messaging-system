@@ -4,7 +4,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
-import pt.isel.domain.builders.UserInfoBuilder;
 import pt.isel.domain.channels.AccessType;
 import pt.isel.domain.channels.Channel;
 import pt.isel.domain.common.Either;
@@ -16,6 +15,8 @@ import pt.isel.domain.security.PasswordPolicyConfig;
 import pt.isel.domain.security.PasswordSecurityDomain;
 import pt.isel.domain.security.TokenExternalInfo;
 import pt.isel.domain.users.User;
+import pt.isel.repositories.TransactionManager;
+import pt.isel.repositories.contracts.RepositoryTestHelper;
 import pt.isel.repositories.mem.TransactionManagerInMem;
 import pt.isel.services.common.RateLimiter;
 
@@ -27,12 +28,17 @@ import java.time.ZoneOffset;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
-class UserServiceTest {
+class UserServiceTest implements RepositoryTestHelper {
 
     private TransactionManagerInMem trxManager;
     private UserService userService;
     private boolean rateLimitTriggered = false;
     private Clock clock;
+
+    @Override
+    public TransactionManager getTxManager() {
+        return trxManager;
+    }
 
     @BeforeEach
     void setUp() {
@@ -91,10 +97,8 @@ class UserServiceTest {
                 EitherAssert.assertRight(userService.registerUser("owner", "Strong1!", null)).userId()
         ));
 
-        Channel channel = trxManager.run(trx -> trx.repoChannels().create("Secret", new UserInfoBuilder().withId(owner.id()).withUsername(owner.username()).build(), false));
-        Invitation inv = trxManager.run(trx -> trx.repoInvitations().create(
-                "inv-token", new UserInfoBuilder().withId(owner.id()).withUsername(owner.username()).build(), channel, AccessType.READ_WRITE, LocalDateTime.now(clock).plusDays(1)
-        ));
+        Channel channel = trxManager.run(trx -> insertChannel(trx, "Secret", owner, false));
+        Invitation inv = trxManager.run(trx -> insertInvitation(trx, "inv-token", owner, channel, AccessType.READ_WRITE, LocalDateTime.now(clock).plusDays(1)));
 
         Either<UserError, TokenExternalInfo> result = userService.registerUser("bob", "Strong1!", inv.token());
 
@@ -112,10 +116,8 @@ class UserServiceTest {
                 EitherAssert.assertRight(userService.registerUser("owner", "Strong1!", null)).userId()
         ));
 
-        Channel channel = trxManager.run(trx -> trx.repoChannels().create("Secret", new UserInfoBuilder().withId(owner.id()).withUsername(owner.username()).build(), false));
-        Invitation inv = trxManager.run(trx -> trx.repoInvitations().create(
-                "expired-inv-token", new UserInfoBuilder().withId(owner.id()).withUsername(owner.username()).build(), channel, AccessType.READ_WRITE, LocalDateTime.now(clock).minusDays(1)
-        ));
+        Channel channel = trxManager.run(trx -> insertChannel(trx, "Secret", owner, false));
+        Invitation inv = trxManager.run(trx -> insertInvitation(trx, "expired-inv-token", owner, channel, AccessType.READ_WRITE, LocalDateTime.now(clock).minusDays(1)));
 
         Either<UserError, TokenExternalInfo> result = userService.registerUser("bob", "Strong1!", inv.token());
 
@@ -199,7 +201,7 @@ class UserServiceTest {
     @Test
     void testDeleteUser_HasOwnedChannels() {
         Long id = EitherAssert.assertRight(userService.registerUser("alice", "Strong1!", null)).userId();
-        trxManager.run(trx -> trx.repoChannels().create("General", new UserInfoBuilder().withId(id).withUsername("alice").build(), true));
+        trxManager.run(trx -> insertChannel(trx, "General", trx.repoUsers().findById(id), true));
 
         Either<UserError, String> result = userService.deleteUser(id);
 
@@ -372,10 +374,8 @@ class UserServiceTest {
                 EitherAssert.assertRight(userService.registerUser("owner", "Strong1!", null)).userId()
         ));
 
-        Channel channel = trxManager.run(trx -> trx.repoChannels().create("Secret", new UserInfoBuilder().withId(owner.id()).withUsername(owner.username()).build(), false));
-        trxManager.run(trx -> trx.repoInvitations().create(
-                "inv-token", new UserInfoBuilder().withId(owner.id()).withUsername(owner.username()).build(), channel, AccessType.READ_WRITE, LocalDateTime.now(clock).plusDays(1)
-        ));
+        Channel channel = trxManager.run(trx -> insertChannel(trx, "Secret", owner, false));
+        trxManager.run(trx -> insertInvitation(trx, "inv-token", owner, channel, AccessType.READ_WRITE, LocalDateTime.now(clock).plusDays(1)));
 
         userService.registerUser("bob", "Strong1!", "inv-token");
         Either<UserError, TokenExternalInfo> result = userService.registerUser("charlie", "Strong1!", "inv-token");

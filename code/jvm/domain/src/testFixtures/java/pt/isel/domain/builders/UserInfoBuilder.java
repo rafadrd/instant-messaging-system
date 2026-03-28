@@ -2,9 +2,13 @@ package pt.isel.domain.builders;
 
 import pt.isel.domain.users.UserInfo;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class UserInfoBuilder {
-    private Long id = 1L;
-    private String username = "testuser";
+    private static final AtomicLong ID_GENERATOR = new AtomicLong(1);
+
+    private Long id = ID_GENERATOR.getAndIncrement();
+    private String username = "testuser_" + id;
 
     public UserInfoBuilder withId(Long id) {
         this.id = id;

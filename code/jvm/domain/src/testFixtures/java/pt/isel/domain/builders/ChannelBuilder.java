@@ -3,9 +3,13 @@ package pt.isel.domain.builders;
 import pt.isel.domain.channels.Channel;
 import pt.isel.domain.users.UserInfo;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 public class ChannelBuilder {
-    private Long id = 10L;
-    private String name = "General";
+    private static final AtomicLong ID_GENERATOR = new AtomicLong(1);
+
+    private Long id = ID_GENERATOR.getAndIncrement();
+    private String name = "Channel_" + id;
     private UserInfo owner = new UserInfoBuilder().build();
     private boolean isPublic = true;
 

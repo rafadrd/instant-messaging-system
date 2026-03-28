@@ -11,7 +11,6 @@ import pt.isel.domain.common.MessageError;
 import pt.isel.domain.messages.Message;
 import pt.isel.domain.messages.UpdatedMessage;
 import pt.isel.domain.messages.UpdatedMessageEmitter;
-import pt.isel.domain.security.PasswordValidationInfo;
 import pt.isel.domain.users.User;
 import pt.isel.services.AbstractServiceTest;
 import pt.isel.services.common.RateLimiter;
@@ -108,7 +107,7 @@ class MessageServiceTest extends AbstractServiceTest {
 
     @Test
     void testGetMessagesInChannel_UserNotInChannel() {
-        User dave = trxManager.run(trx -> trx.repoUsers().create("dave", new PasswordValidationInfo("hash")));
+        User dave = trxManager.run(trx -> insertUser(trx, "dave"));
 
         Either<MessageError, List<Message>> result = messageService.getMessagesInChannel(dave.id(), channel.id(), 10, 0);
 
@@ -131,7 +130,7 @@ class MessageServiceTest extends AbstractServiceTest {
 
     @Test
     void testCreateMessage_UserNotInChannel() {
-        User dave = trxManager.run(trx -> trx.repoUsers().create("dave", new PasswordValidationInfo("hash")));
+        User dave = trxManager.run(trx -> insertUser(trx, "dave"));
         Either<MessageError, Message> result = messageService.createMessage("Hello", dave.id(), channel.id());
 
         EitherAssert.assertLeft(result, MessageError.UserNotInChannel.class);
