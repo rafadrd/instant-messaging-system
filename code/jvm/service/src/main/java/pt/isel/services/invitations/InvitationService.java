@@ -11,6 +11,7 @@ import pt.isel.domain.users.UserInfo;
 import pt.isel.repositories.Transaction;
 import pt.isel.repositories.TransactionManager;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -18,13 +19,15 @@ import java.util.UUID;
 @Named
 public class InvitationService {
     private final TransactionManager trxManager;
+    private final Clock clock;
 
-    public InvitationService(TransactionManager trxManager) {
+    public InvitationService(TransactionManager trxManager, Clock clock) {
         this.trxManager = trxManager;
+        this.clock = clock;
     }
 
     public Either<InvitationError, Invitation> createInvitation(Long creatorId, Long channelId, AccessType accessType, LocalDateTime expiresAt) {
-        if (expiresAt.isBefore(LocalDateTime.now())) {
+        if (expiresAt.isBefore(LocalDateTime.now(clock))) {
             return Either.failure(new InvitationError.InvalidExpirationTime());
         }
 

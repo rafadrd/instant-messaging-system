@@ -5,6 +5,7 @@ import pt.isel.domain.messages.Message;
 import pt.isel.domain.users.UserInfo;
 import pt.isel.repositories.messages.MessageRepository;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -14,8 +15,8 @@ public class MessageRepositoryInMem implements MessageRepository {
     private long nextId = 1;
 
     @Override
-    public Message create(String content, UserInfo user, Channel channel) {
-        Message msg = new Message(nextId++, content, user, channel);
+    public Message create(String content, UserInfo user, Channel channel, LocalDateTime createdAt) {
+        Message msg = new Message(nextId++, content, user, channel, createdAt);
         messages.add(msg);
         return msg;
     }

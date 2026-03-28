@@ -44,7 +44,7 @@ public interface TokenBlacklistRepositoryContract {
             trx.repoTokenBlacklist().add("expired-token", LocalDateTime.now(ZoneOffset.UTC).minusHours(1));
             trx.repoTokenBlacklist().add("valid-token", LocalDateTime.now(ZoneOffset.UTC).plusHours(1));
 
-            trx.repoTokenBlacklist().cleanupExpired();
+            trx.repoTokenBlacklist().cleanupExpired(LocalDateTime.now(ZoneOffset.UTC));
 
             assertThat(trx.repoTokenBlacklist().exists("expired-token")).isFalse();
             assertThat(trx.repoTokenBlacklist().exists("valid-token")).isTrue();

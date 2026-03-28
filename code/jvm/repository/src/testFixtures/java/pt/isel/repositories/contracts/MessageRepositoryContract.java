@@ -10,6 +10,8 @@ import pt.isel.domain.users.User;
 import pt.isel.domain.users.UserInfo;
 import pt.isel.repositories.TransactionManager;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,7 +26,7 @@ public interface MessageRepositoryContract {
             UserInfo userInfo = new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build();
             Channel channel = trx.repoChannels().create("General", userInfo, true);
 
-            Message msg = trx.repoMessages().create("Hello World", userInfo, channel);
+            Message msg = trx.repoMessages().create("Hello World", userInfo, channel, LocalDateTime.now(ZoneOffset.UTC));
 
             assertThat(msg).isNotNull();
             assertThat(msg.id()).isNotNull();
@@ -46,8 +48,8 @@ public interface MessageRepositoryContract {
             UserInfo userInfo = new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build();
             Channel channel = trx.repoChannels().create("General", userInfo, true);
 
-            trx.repoMessages().create("Msg 1", userInfo, channel);
-            trx.repoMessages().create("Msg 2", userInfo, channel);
+            trx.repoMessages().create("Msg 1", userInfo, channel, LocalDateTime.now(ZoneOffset.UTC));
+            trx.repoMessages().create("Msg 2", userInfo, channel, LocalDateTime.now(ZoneOffset.UTC));
 
             List<Message> allMessages = trx.repoMessages().findAll();
             assertThat(allMessages).hasSize(2);
@@ -62,12 +64,12 @@ public interface MessageRepositoryContract {
             UserInfo userInfo = new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build();
             Channel channel = trx.repoChannels().create("General", userInfo, true);
 
-            trx.repoMessages().create("Msg 1", userInfo, channel);
-            trx.repoMessages().create("Msg 2", userInfo, channel);
-            trx.repoMessages().create("Msg 3", userInfo, channel);
+            trx.repoMessages().create("Msg 1", userInfo, channel, LocalDateTime.now(ZoneOffset.UTC).minusMinutes(3));
+            trx.repoMessages().create("Msg 2", userInfo, channel, LocalDateTime.now(ZoneOffset.UTC).minusMinutes(2));
+            trx.repoMessages().create("Msg 3", userInfo, channel, LocalDateTime.now(ZoneOffset.UTC).minusMinutes(1));
 
             Channel otherChannel = trx.repoChannels().create("Other", userInfo, true);
-            trx.repoMessages().create("Other Msg", userInfo, otherChannel);
+            trx.repoMessages().create("Other Msg", userInfo, otherChannel, LocalDateTime.now(ZoneOffset.UTC));
 
             List<Message> page1 = trx.repoMessages().findAllInChannel(channel, 2, 0);
             assertThat(page1).hasSize(2);
@@ -88,7 +90,7 @@ public interface MessageRepositoryContract {
             UserInfo userInfo = new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build();
             Channel channel = trx.repoChannels().create("General", userInfo, true);
 
-            Message msg = trx.repoMessages().create("Original", userInfo, channel);
+            Message msg = trx.repoMessages().create("Original", userInfo, channel, LocalDateTime.now(ZoneOffset.UTC));
             Message updated = new MessageBuilder()
                     .withId(msg.id())
                     .withContent("Edited")
@@ -111,7 +113,7 @@ public interface MessageRepositoryContract {
             UserInfo userInfo = new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build();
             Channel channel = trx.repoChannels().create("General", userInfo, true);
 
-            Message msg = trx.repoMessages().create("To Delete", userInfo, channel);
+            Message msg = trx.repoMessages().create("To Delete", userInfo, channel, LocalDateTime.now(ZoneOffset.UTC));
             trx.repoMessages().deleteById(msg.id());
 
             assertThat(trx.repoMessages().findById(msg.id())).isNull();
@@ -124,7 +126,7 @@ public interface MessageRepositoryContract {
         getTxManager().run(trx -> {
             User user = trx.repoUsers().create("alice", new PasswordValidationInfo("hash"));
             Channel channel = trx.repoChannels().create("General", new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build(), true);
-            trx.repoMessages().create("Msg", new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build(), channel);
+            trx.repoMessages().create("Msg", new UserInfoBuilder().withId(user.id()).withUsername(user.username()).build(), channel, LocalDateTime.now(ZoneOffset.UTC));
 
             trx.repoMessages().clear();
             assertThat(trx.repoMessages().findAll()).isEmpty();

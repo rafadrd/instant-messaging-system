@@ -1,6 +1,7 @@
 package pt.isel.api.invitations;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -10,10 +11,16 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import pt.isel.api.TestConfig;
 import pt.isel.domain.builders.InvitationBuilder;
+import pt.isel.domain.builders.UserBuilder;
 import pt.isel.domain.channels.AccessType;
 import pt.isel.domain.common.Either;
 import pt.isel.domain.invitations.Invitation;
+import pt.isel.domain.users.AuthenticatedUser;
+import pt.isel.domain.users.User;
+import pt.isel.pipeline.authentication.RequestTokenProcessor;
 import pt.isel.services.invitations.InvitationService;
+import pt.isel.services.users.TicketService;
+import pt.isel.services.users.UserService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,6 +46,28 @@ class InvitationControllerTest {
     @MockitoBean
     private InvitationService invitationService;
 
+    @MockitoBean
+    private RequestTokenProcessor requestTokenProcessor;
+
+    @MockitoBean
+    private TicketService ticketService;
+
+    @MockitoBean
+    private UserService userService;
+
+    @BeforeEach
+    void setUpAuth() {
+        User mockUser = new UserBuilder().withId(1L).withUsername("testuser").build();
+        AuthenticatedUser authUser = new AuthenticatedUser(mockUser, "mock-token");
+        when(requestTokenProcessor.processAuthorizationHeaderValue("Bearer mock-token")).thenReturn(authUser);
+    }
+
+    @Test
+    void testUnauthorizedAccess() throws Exception {
+        mockMvc.perform(get("/api/channels/10/invitations"))
+                .andExpect(status().isUnauthorized());
+    }
+
     @Test
     void testCreateInvitation() throws Exception {
         LocalDateTime expiry = LocalDateTime.now().plusDays(1);
@@ -53,6 +82,7 @@ class InvitationControllerTest {
         when(invitationService.createInvitation(eq(1L), eq(10L), eq(AccessType.READ_ONLY), any())).thenReturn(Either.success(invitation));
 
         mockMvc.perform(post("/api/channels/10/invitations")
+                        .header("Authorization", "Bearer mock-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isOk())
@@ -64,7 +94,8 @@ class InvitationControllerTest {
     void testGetInvitationsForChannel() throws Exception {
         when(invitationService.getInvitationsForChannel(1L, 10L)).thenReturn(Either.success(List.of()));
 
-        mockMvc.perform(get("/api/channels/10/invitations"))
+        mockMvc.perform(get("/api/channels/10/invitations")
+                        .header("Authorization", "Bearer mock-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }
@@ -73,7 +104,8 @@ class InvitationControllerTest {
     void testRevokeInvitation() throws Exception {
         when(invitationService.revokeInvitation(1L, 10L, 100L)).thenReturn(Either.success("Revoked"));
 
-        mockMvc.perform(post("/api/channels/10/invitations/100/revoke"))
+        mockMvc.perform(post("/api/channels/10/invitations/100/revoke")
+                        .header("Authorization", "Bearer mock-token"))
                 .andExpect(status().isOk());
     }
 
@@ -82,6 +114,7 @@ class InvitationControllerTest {
         String invalidJson = "{}";
 
         mockMvc.perform(post("/api/channels/10/invitations")
+                        .header("Authorization", "Bearer mock-token")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidJson))
                 .andExpect(status().isBadRequest())

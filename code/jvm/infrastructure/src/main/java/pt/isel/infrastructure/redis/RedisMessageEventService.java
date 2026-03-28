@@ -12,6 +12,7 @@ import pt.isel.domain.messages.UpdatedMessageEmitter;
 import pt.isel.repositories.TransactionManager;
 import pt.isel.services.messages.MessageEventService;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
@@ -25,12 +26,14 @@ public class RedisMessageEventService implements MessageEventService {
     private final TransactionManager trxManager;
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
+    private final Clock clock;
     private final Map<Long, Set<UpdatedMessageEmitter>> localListeners = new ConcurrentHashMap<>();
 
-    public RedisMessageEventService(TransactionManager trxManager, StringRedisTemplate redisTemplate, ObjectMapper objectMapper) {
+    public RedisMessageEventService(TransactionManager trxManager, StringRedisTemplate redisTemplate, ObjectMapper objectMapper, Clock clock) {
         this.trxManager = trxManager;
         this.redisTemplate = redisTemplate;
         this.objectMapper = objectMapper;
+        this.clock = clock;
     }
 
     @Override
@@ -92,7 +95,7 @@ public class RedisMessageEventService implements MessageEventService {
 
     @Scheduled(fixedRate = 30000)
     public void sendKeepAlive() {
-        Instant now = Instant.now();
+        Instant now = Instant.now(clock);
         UpdatedMessage.KeepAlive keepAlive = new UpdatedMessage.KeepAlive(now);
 
         localListeners.forEach((channelId, emitters) -> {

@@ -9,6 +9,7 @@ import pt.isel.services.users.ParsedToken;
 
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import java.time.Clock;
 import java.util.Base64;
 import java.util.Date;
 import java.util.UUID;
@@ -20,6 +21,7 @@ class JwtTokenServiceTest {
 
     private static final String VALID_SECRET;
     private static final String INVALID_SECRET = "short-secret";
+    private static final Clock CLOCK = Clock.systemUTC();
 
     static {
         byte[] keyBytes = new byte[32];
@@ -29,13 +31,13 @@ class JwtTokenServiceTest {
 
     @Test
     void testInitThrowsWeakKeyExceptionForShortSecret() {
-        JwtTokenService service = new JwtTokenService(INVALID_SECRET);
+        JwtTokenService service = new JwtTokenService(INVALID_SECRET, CLOCK);
         assertThatThrownBy(service::init).isInstanceOf(WeakKeyException.class);
     }
 
     @Test
     void testCreateAndValidateTokenSuccess() {
-        JwtTokenService service = new JwtTokenService(VALID_SECRET);
+        JwtTokenService service = new JwtTokenService(VALID_SECRET, CLOCK);
         service.init();
 
         Long userId = 123L;
@@ -56,7 +58,7 @@ class JwtTokenServiceTest {
 
     @Test
     void testValidateTokenReturnsNullForInvalidToken() {
-        JwtTokenService service = new JwtTokenService(VALID_SECRET);
+        JwtTokenService service = new JwtTokenService(VALID_SECRET, CLOCK);
         service.init();
 
         ParsedToken parsedToken = service.validateToken("invalid.token.value");
@@ -65,7 +67,7 @@ class JwtTokenServiceTest {
 
     @Test
     void testValidateTokenReturnsNullForTamperedToken() {
-        JwtTokenService service = new JwtTokenService(VALID_SECRET);
+        JwtTokenService service = new JwtTokenService(VALID_SECRET, CLOCK);
         service.init();
 
         TokenExternalInfo tokenInfo = service.createToken(123L);
@@ -77,13 +79,13 @@ class JwtTokenServiceTest {
 
     @Test
     void testValidateTokenWithNonNumericSubject() {
-        JwtTokenService service = new JwtTokenService(VALID_SECRET);
+        JwtTokenService service = new JwtTokenService(VALID_SECRET, CLOCK);
         service.init();
 
         String token = Jwts.builder()
                 .subject("not-a-number")
                 .id(UUID.randomUUID().toString())
-                .expiration(new Date(System.currentTimeMillis() + 10000))
+                .expiration(new Date(CLOCK.millis() + 10000))
                 .signWith(Keys.hmacShaKeyFor(VALID_SECRET.getBytes(StandardCharsets.UTF_8)))
                 .compact();
 
@@ -93,12 +95,12 @@ class JwtTokenServiceTest {
 
     @Test
     void testValidateTokenMissingJti() {
-        JwtTokenService service = new JwtTokenService(VALID_SECRET);
+        JwtTokenService service = new JwtTokenService(VALID_SECRET, CLOCK);
         service.init();
 
         String token = Jwts.builder()
                 .subject("123")
-                .expiration(new Date(System.currentTimeMillis() + 10000))
+                .expiration(new Date(CLOCK.millis() + 10000))
                 .signWith(Keys.hmacShaKeyFor(VALID_SECRET.getBytes(StandardCharsets.UTF_8)))
                 .compact();
 
@@ -108,12 +110,12 @@ class JwtTokenServiceTest {
 
     @Test
     void testValidateTokenMissingSubject() {
-        JwtTokenService service = new JwtTokenService(VALID_SECRET);
+        JwtTokenService service = new JwtTokenService(VALID_SECRET, CLOCK);
         service.init();
 
         String token = Jwts.builder()
                 .id(UUID.randomUUID().toString())
-                .expiration(new Date(System.currentTimeMillis() + 10000))
+                .expiration(new Date(CLOCK.millis() + 10000))
                 .signWith(Keys.hmacShaKeyFor(VALID_SECRET.getBytes(StandardCharsets.UTF_8)))
                 .compact();
 
@@ -123,13 +125,13 @@ class JwtTokenServiceTest {
 
     @Test
     void testValidateTokenExpired() {
-        JwtTokenService service = new JwtTokenService(VALID_SECRET);
+        JwtTokenService service = new JwtTokenService(VALID_SECRET, CLOCK);
         service.init();
 
         String expiredToken = Jwts.builder()
                 .subject("123")
                 .id(UUID.randomUUID().toString())
-                .expiration(new Date(System.currentTimeMillis() - 1000))
+                .expiration(new Date(CLOCK.millis() - 1000))
                 .signWith(Keys.hmacShaKeyFor(VALID_SECRET.getBytes(StandardCharsets.UTF_8)))
                 .compact();
 

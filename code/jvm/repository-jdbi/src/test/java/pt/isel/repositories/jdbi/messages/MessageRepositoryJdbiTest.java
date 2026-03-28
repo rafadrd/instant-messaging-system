@@ -11,6 +11,9 @@ import pt.isel.repositories.TransactionManager;
 import pt.isel.repositories.contracts.MessageRepositoryContract;
 import pt.isel.repositories.jdbi.AbstractJdbiTest;
 
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MessageRepositoryJdbiTest extends AbstractJdbiTest implements MessageRepositoryContract {
@@ -29,7 +32,7 @@ class MessageRepositoryJdbiTest extends AbstractJdbiTest implements MessageRepos
             User author = trx.repoUsers().create("author", new PasswordValidationInfo("hash"));
             UserInfo authorInfo = new UserInfoBuilder().withId(author.id()).withUsername(author.username()).build();
 
-            Message msg = trx.repoMessages().create("Ghost message", authorInfo, channel);
+            Message msg = trx.repoMessages().create("Ghost message", authorInfo, channel, LocalDateTime.now(ZoneOffset.UTC));
             assertThat(msg.user()).isNotNull();
 
             trx.repoUsers().deleteById(author.id());

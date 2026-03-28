@@ -23,17 +23,4 @@ class MessageTest {
         assertThat(msg.channel()).isEqualTo(channel);
         assertThat(msg.createdAt()).isEqualTo(fixedTime);
     }
-
-    @Test
-    void testAuxiliaryConstructorSetsCreatedAtToNow() {
-        UserInfo user = new UserInfo(2L, "Bob");
-        Channel channel = new Channel(2L, "General", user);
-        LocalDateTime before = LocalDateTime.now().minusSeconds(1);
-        Message msg = new Message(200L, "What's up?", user, channel);
-        LocalDateTime after = LocalDateTime.now().plusSeconds(1);
-
-        assertThat(msg.id()).isEqualTo(200L);
-        assertThat(msg.content()).isEqualTo("What's up?");
-        assertThat(msg.createdAt()).isNotNull().isAfter(before).isBefore(after);
-    }
 }

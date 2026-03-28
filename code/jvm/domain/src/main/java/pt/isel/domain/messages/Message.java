@@ -12,7 +12,4 @@ public record Message(
         Channel channel,
         LocalDateTime createdAt
 ) {
-    public Message(Long id, String content, UserInfo user, Channel channel) {
-        this(id, content, user, channel, LocalDateTime.now());
-    }
 }

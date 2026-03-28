@@ -14,7 +14,7 @@ public class InvitationBuilder {
     private UserInfo createdBy = new UserInfoBuilder().build();
     private Channel channel = new ChannelBuilder().build();
     private AccessType accessType = AccessType.READ_ONLY;
-    private LocalDateTime expiresAt = LocalDateTime.now().plusDays(1);
+    private LocalDateTime expiresAt = LocalDateTime.of(2030, 1, 1, 12, 0);
     private InvitationStatus status = InvitationStatus.PENDING;
 
     public InvitationBuilder withId(Long id) {

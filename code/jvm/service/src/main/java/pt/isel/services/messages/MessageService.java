@@ -12,7 +12,9 @@ import pt.isel.repositories.Transaction;
 import pt.isel.repositories.TransactionManager;
 import pt.isel.services.common.RateLimiter;
 
+import java.time.Clock;
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Named
@@ -20,11 +22,13 @@ public class MessageService {
     private final TransactionManager trxManager;
     private final MessageEventService messageEventService;
     private final RateLimiter rateLimiter;
+    private final Clock clock;
 
-    public MessageService(TransactionManager trxManager, MessageEventService messageEventService, RateLimiter rateLimiter) {
+    public MessageService(TransactionManager trxManager, MessageEventService messageEventService, RateLimiter rateLimiter, Clock clock) {
         this.trxManager = trxManager;
         this.messageEventService = messageEventService;
         this.rateLimiter = rateLimiter;
+        this.clock = clock;
     }
 
     public Either<MessageError, Message> createMessage(String content, Long userId, Long channelId) {
@@ -37,7 +41,7 @@ public class MessageService {
 
         var result = trxManager.run(trx -> checkUserCanPostMessage(trx, userId, channelId)
                 .flatMap(pair -> {
-                    var message = trx.repoMessages().create(content, pair.userInfo(), pair.channel());
+                    var message = trx.repoMessages().create(content, pair.userInfo(), pair.channel(), LocalDateTime.now(clock));
                     return Either.success(message);
                 }));
 

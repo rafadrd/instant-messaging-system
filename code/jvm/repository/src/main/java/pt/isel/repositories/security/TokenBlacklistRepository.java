@@ -7,7 +7,7 @@ public interface TokenBlacklistRepository {
 
     boolean exists(String jti);
 
-    void cleanupExpired();
+    void cleanupExpired(LocalDateTime now);
 
     void clear();
 }

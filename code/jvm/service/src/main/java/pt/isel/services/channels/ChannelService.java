@@ -13,16 +13,18 @@ import pt.isel.domain.users.UserInfo;
 import pt.isel.repositories.Transaction;
 import pt.isel.repositories.TransactionManager;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 
 @Named
 public class ChannelService {
     private final TransactionManager trxManager;
+    private final Clock clock;
 
-    public ChannelService(TransactionManager trxManager) {
+    public ChannelService(TransactionManager trxManager, Clock clock) {
         this.trxManager = trxManager;
+        this.clock = clock;
     }
 
     public Either<ChannelError, Channel> createChannel(String name, Long ownerId, boolean isPublic) {
@@ -158,7 +160,7 @@ public class ChannelService {
             var invitation = trx.repoInvitations().findByToken(token);
             if (invitation == null) return Either.failure(new ChannelError.TokenNotFound());
 
-            if (invitation.expiresAt().isBefore(LocalDateTime.now(ZoneOffset.UTC)))
+            if (invitation.expiresAt().isBefore(LocalDateTime.now(clock)))
                 return Either.failure(new ChannelError.InvitationExpired());
             if (invitation.status() != InvitationStatus.PENDING)
                 return Either.failure(new ChannelError.InvitationAlreadyUsed());

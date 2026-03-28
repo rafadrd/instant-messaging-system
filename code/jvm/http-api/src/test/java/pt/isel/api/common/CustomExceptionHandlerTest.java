@@ -9,7 +9,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import pt.isel.api.TestConfig;
 import pt.isel.api.users.UserController;
+import pt.isel.pipeline.authentication.RequestTokenProcessor;
 import pt.isel.services.channels.ChannelService;
+import pt.isel.services.users.TicketService;
 import pt.isel.services.users.UserService;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -31,6 +33,12 @@ class CustomExceptionHandlerTest {
 
     @MockitoBean
     private ChannelService channelService;
+
+    @MockitoBean
+    private RequestTokenProcessor requestTokenProcessor;
+
+    @MockitoBean
+    private TicketService ticketService;
 
     @Test
     void testHandleAllExceptions() throws Exception {

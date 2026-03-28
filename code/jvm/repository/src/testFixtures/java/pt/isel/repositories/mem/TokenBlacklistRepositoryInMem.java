@@ -3,7 +3,6 @@ package pt.isel.repositories.mem;
 import pt.isel.repositories.security.TokenBlacklistRepository;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -21,8 +20,7 @@ public class TokenBlacklistRepositoryInMem implements TokenBlacklistRepository {
     }
 
     @Override
-    public void cleanupExpired() {
-        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+    public void cleanupExpired(LocalDateTime now) {
         blacklist.entrySet().removeIf(entry -> entry.getValue().isBefore(now));
     }
 

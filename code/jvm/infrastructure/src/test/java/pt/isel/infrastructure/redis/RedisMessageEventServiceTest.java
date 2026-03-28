@@ -19,6 +19,7 @@ import pt.isel.domain.users.User;
 import pt.isel.domain.users.UserInfo;
 import pt.isel.repositories.mem.TransactionManagerInMem;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.util.function.Consumer;
 
@@ -50,7 +51,7 @@ class RedisMessageEventServiceTest {
         objectMapper = mock(ObjectMapper.class);
         when(objectMapper.writeValueAsString(any())).thenReturn("{\"dummy\":\"json\"}");
 
-        service = new RedisMessageEventService(trxManager, redisTemplate, objectMapper);
+        service = new RedisMessageEventService(trxManager, redisTemplate, objectMapper, Clock.systemUTC());
 
         alice = trxManager.run(trx -> trx.repoUsers().create("alice", new PasswordValidationInfo("hash")));
         channel = trxManager.run(trx -> {

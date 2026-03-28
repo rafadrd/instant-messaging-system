@@ -2,6 +2,8 @@ package pt.isel.services.channels;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import pt.isel.domain.builders.UserInfoBuilder;
 import pt.isel.domain.channels.AccessType;
 import pt.isel.domain.channels.Channel;
@@ -15,6 +17,8 @@ import pt.isel.domain.users.User;
 import pt.isel.domain.users.UserInfo;
 import pt.isel.repositories.mem.TransactionManagerInMem;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
@@ -25,6 +29,7 @@ class ChannelServiceTest {
 
     private TransactionManagerInMem trxManager;
     private ChannelService channelService;
+    private Clock clock;
 
     private User alice;
     private User bob;
@@ -32,7 +37,8 @@ class ChannelServiceTest {
     @BeforeEach
     void setUp() {
         trxManager = new TransactionManagerInMem();
-        channelService = new ChannelService(trxManager);
+        clock = Clock.fixed(Instant.parse("2025-01-01T10:00:00Z"), ZoneOffset.UTC);
+        channelService = new ChannelService(trxManager, clock);
 
         alice = trxManager.run(trx -> trx.repoUsers().create("alice", new PasswordValidationInfo("hash")));
         bob = trxManager.run(trx -> trx.repoUsers().create("bob", new PasswordValidationInfo("hash")));
@@ -65,10 +71,10 @@ class ChannelServiceTest {
         assertThat(((Either.Left<ChannelError, Channel>) result).value()).isInstanceOf(ChannelError.ChannelAlreadyExists.class);
     }
 
-    @Test
-    void testCreateChannel_EmptyName() {
-        assertThat(channelService.createChannel("", alice.id(), true)).isInstanceOf(Either.Left.class);
-        assertThat(channelService.createChannel(null, alice.id(), true)).isInstanceOf(Either.Left.class);
+    @ParameterizedTest
+    @NullAndEmptySource
+    void testCreateChannel_EmptyName(String invalidName) {
+        assertThat(channelService.createChannel(invalidName, alice.id(), true)).isInstanceOf(Either.Left.class);
     }
 
     @Test
@@ -249,7 +255,7 @@ class ChannelServiceTest {
         Channel created = ((Either.Right<ChannelError, Channel>) channelService.createChannel("Secret", alice.id(), false)).value();
 
         Invitation inv = trxManager.run(trx -> trx.repoInvitations().create(
-                "token123", new UserInfoBuilder().withId(alice.id()).withUsername(alice.username()).build(), created, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).plusDays(1)
+                "token123", new UserInfoBuilder().withId(alice.id()).withUsername(alice.username()).build(), created, AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1)
         ));
 
         Either<ChannelError, String> result = channelService.joinPrivateChannel(bob.id(), inv.token());
@@ -301,10 +307,11 @@ class ChannelServiceTest {
         assertThat(((Either.Left<ChannelError, List<Channel>>) result).value()).isInstanceOf(ChannelError.UserNotFound.class);
     }
 
-    @Test
-    void testEditChannel_EmptyName() {
+    @ParameterizedTest
+    @NullAndEmptySource
+    void testEditChannel_EmptyName(String invalidName) {
         Channel created = ((Either.Right<ChannelError, Channel>) channelService.createChannel("General", alice.id(), true)).value();
-        assertThat(channelService.editChannel(alice.id(), created.id(), "", true)).isInstanceOf(Either.Left.class);
+        assertThat(channelService.editChannel(alice.id(), created.id(), invalidName, true)).isInstanceOf(Either.Left.class);
     }
 
     @Test
@@ -383,7 +390,7 @@ class ChannelServiceTest {
     void testJoinPrivateChannel_ExpiredToken() {
         Channel created = ((Either.Right<ChannelError, Channel>) channelService.createChannel("Secret", alice.id(), false)).value();
         trxManager.run(trx -> trx.repoInvitations().create(
-                "expired-token", new UserInfoBuilder().withId(alice.id()).withUsername(alice.username()).build(), created, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).minusDays(1)
+                "expired-token", new UserInfoBuilder().withId(alice.id()).withUsername(alice.username()).build(), created, AccessType.READ_ONLY, LocalDateTime.now(clock).minusDays(1)
         ));
 
         Either<ChannelError, String> result = channelService.joinPrivateChannel(bob.id(), "expired-token");
@@ -472,7 +479,7 @@ class ChannelServiceTest {
         Channel created = ((Either.Right<ChannelError, Channel>) channelService.createChannel("Secret", alice.id(), false)).value();
         trxManager.run(trx -> trx.repoMemberships().addUserToChannel(new UserInfoBuilder().withId(bob.id()).withUsername(bob.username()).build(), created, AccessType.READ_ONLY));
         trxManager.run(trx -> trx.repoInvitations().create(
-                "token123", new UserInfoBuilder().withId(alice.id()).withUsername(alice.username()).build(), created, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).plusDays(1)
+                "token123", new UserInfoBuilder().withId(alice.id()).withUsername(alice.username()).build(), created, AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1)
         ));
 
         Either<ChannelError, String> result = channelService.joinPrivateChannel(bob.id(), "token123");
@@ -485,7 +492,7 @@ class ChannelServiceTest {
     void testJoinPrivateChannel_InvitationAlreadyUsed() {
         Channel created = ((Either.Right<ChannelError, Channel>) channelService.createChannel("Secret", alice.id(), false)).value();
         trxManager.run(trx -> trx.repoInvitations().create(
-                "token123", new UserInfoBuilder().withId(alice.id()).withUsername(alice.username()).build(), created, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).plusDays(1)
+                "token123", new UserInfoBuilder().withId(alice.id()).withUsername(alice.username()).build(), created, AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1)
         ));
 
         channelService.joinPrivateChannel(bob.id(), "token123");

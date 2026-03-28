@@ -14,7 +14,10 @@ import pt.isel.domain.users.User;
 import pt.isel.domain.users.UserInfo;
 import pt.isel.repositories.mem.TransactionManagerInMem;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,6 +26,7 @@ class InvitationServiceTest {
 
     private TransactionManagerInMem trxManager;
     private InvitationService invitationService;
+    private Clock clock;
 
     private User alice;
     private User bob;
@@ -32,7 +36,8 @@ class InvitationServiceTest {
     @BeforeEach
     void setUp() {
         trxManager = new TransactionManagerInMem();
-        invitationService = new InvitationService(trxManager);
+        clock = Clock.fixed(Instant.parse("2025-01-01T10:00:00Z"), ZoneOffset.UTC);
+        invitationService = new InvitationService(trxManager, clock);
 
         alice = trxManager.run(trx -> trx.repoUsers().create("alice", new PasswordValidationInfo("hash")));
         bob = trxManager.run(trx -> trx.repoUsers().create("bob", new PasswordValidationInfo("hash")));
@@ -50,7 +55,7 @@ class InvitationServiceTest {
 
     @Test
     void testCreateInvitation_SuccessByOwner() {
-        LocalDateTime expiry = LocalDateTime.now().plusDays(1);
+        LocalDateTime expiry = LocalDateTime.now(clock).plusDays(1);
         Either<InvitationError, Invitation> result = invitationService.createInvitation(alice.id(), channel.id(), AccessType.READ_ONLY, expiry);
 
         assertThat(result).isInstanceOf(Either.Right.class);
@@ -61,7 +66,7 @@ class InvitationServiceTest {
 
     @Test
     void testCreateInvitation_SuccessByReadWriteMember() {
-        LocalDateTime expiry = LocalDateTime.now().plusDays(1);
+        LocalDateTime expiry = LocalDateTime.now(clock).plusDays(1);
         Either<InvitationError, Invitation> result = invitationService.createInvitation(bob.id(), channel.id(), AccessType.READ_WRITE, expiry);
 
         assertThat(result).isInstanceOf(Either.Right.class);
@@ -69,7 +74,7 @@ class InvitationServiceTest {
 
     @Test
     void testCreateInvitation_FailureByReadOnlyMember() {
-        LocalDateTime expiry = LocalDateTime.now().plusDays(1);
+        LocalDateTime expiry = LocalDateTime.now(clock).plusDays(1);
         Either<InvitationError, Invitation> result = invitationService.createInvitation(charlie.id(), channel.id(), AccessType.READ_ONLY, expiry);
 
         assertThat(result).isInstanceOf(Either.Left.class);
@@ -78,7 +83,7 @@ class InvitationServiceTest {
 
     @Test
     void testCreateInvitation_InvalidExpiration() {
-        LocalDateTime expiry = LocalDateTime.now().minusDays(1);
+        LocalDateTime expiry = LocalDateTime.now(clock).minusDays(1);
         Either<InvitationError, Invitation> result = invitationService.createInvitation(alice.id(), channel.id(), AccessType.READ_ONLY, expiry);
 
         assertThat(result).isInstanceOf(Either.Left.class);
@@ -87,8 +92,8 @@ class InvitationServiceTest {
 
     @Test
     void testGetInvitationsForChannel_Success() {
-        invitationService.createInvitation(alice.id(), channel.id(), AccessType.READ_ONLY, LocalDateTime.now().plusDays(1));
-        invitationService.createInvitation(bob.id(), channel.id(), AccessType.READ_WRITE, LocalDateTime.now().plusDays(1));
+        invitationService.createInvitation(alice.id(), channel.id(), AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1));
+        invitationService.createInvitation(bob.id(), channel.id(), AccessType.READ_WRITE, LocalDateTime.now(clock).plusDays(1));
 
         Either<InvitationError, List<Invitation>> result = invitationService.getInvitationsForChannel(alice.id(), channel.id());
 
@@ -124,7 +129,7 @@ class InvitationServiceTest {
     @Test
     void testRevokeInvitation_SuccessByOwner() {
         Invitation inv = ((Either.Right<InvitationError, Invitation>) invitationService.createInvitation(
-                alice.id(), channel.id(), AccessType.READ_ONLY, LocalDateTime.now().plusDays(1)
+                alice.id(), channel.id(), AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1)
         )).value();
 
         Either<InvitationError, String> result = invitationService.revokeInvitation(alice.id(), channel.id(), inv.id());
@@ -139,7 +144,7 @@ class InvitationServiceTest {
     @Test
     void testRevokeInvitation_FailureNotOwner() {
         Invitation inv = ((Either.Right<InvitationError, Invitation>) invitationService.createInvitation(
-                alice.id(), channel.id(), AccessType.READ_ONLY, LocalDateTime.now().plusDays(1)
+                alice.id(), channel.id(), AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1)
         )).value();
 
         Either<InvitationError, String> result = invitationService.revokeInvitation(bob.id(), channel.id(), inv.id());
@@ -150,7 +155,7 @@ class InvitationServiceTest {
 
     @Test
     void testCreateInvitation_UserNotFound() {
-        Either<InvitationError, Invitation> result = invitationService.createInvitation(999L, channel.id(), AccessType.READ_ONLY, LocalDateTime.now().plusDays(1));
+        Either<InvitationError, Invitation> result = invitationService.createInvitation(999L, channel.id(), AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1));
 
         assertThat(result).isInstanceOf(Either.Left.class);
         assertThat(((Either.Left<InvitationError, Invitation>) result).value()).isInstanceOf(InvitationError.UserNotFound.class);
@@ -158,7 +163,7 @@ class InvitationServiceTest {
 
     @Test
     void testCreateInvitation_ChannelNotFound() {
-        Either<InvitationError, Invitation> result = invitationService.createInvitation(alice.id(), 999L, AccessType.READ_ONLY, LocalDateTime.now().plusDays(1));
+        Either<InvitationError, Invitation> result = invitationService.createInvitation(alice.id(), 999L, AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1));
 
         assertThat(result).isInstanceOf(Either.Left.class);
         assertThat(((Either.Left<InvitationError, Invitation>) result).value()).isInstanceOf(InvitationError.ChannelNotFound.class);
@@ -167,7 +172,7 @@ class InvitationServiceTest {
     @Test
     void testCreateInvitation_UserNotInChannel() {
         User dave = trxManager.run(trx -> trx.repoUsers().create("dave", new PasswordValidationInfo("hash")));
-        Either<InvitationError, Invitation> result = invitationService.createInvitation(dave.id(), channel.id(), AccessType.READ_ONLY, LocalDateTime.now().plusDays(1));
+        Either<InvitationError, Invitation> result = invitationService.createInvitation(dave.id(), channel.id(), AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1));
 
         assertThat(result).isInstanceOf(Either.Left.class);
         assertThat(((Either.Left<InvitationError, Invitation>) result).value()).isInstanceOf(InvitationError.UserNotInChannel.class);

@@ -13,6 +13,7 @@ import pt.isel.services.users.TokenService;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Date;
@@ -22,11 +23,12 @@ import java.util.UUID;
 public class JwtTokenService implements TokenService {
 
     private final String secret;
-    private final long expirationTimeMillis = 24L * 60 * 60 * 1000; // 24 hours
+    private final Clock clock;
     private SecretKey key;
 
-    public JwtTokenService(@Value("${jwt.secret}") String secret) {
+    public JwtTokenService(@Value("${jwt.secret}") String secret, Clock clock) {
         this.secret = secret;
+        this.clock = clock;
     }
 
     @PostConstruct
@@ -40,7 +42,8 @@ public class JwtTokenService implements TokenService {
 
     @Override
     public TokenExternalInfo createToken(Long userId) {
-        long now = System.currentTimeMillis();
+        long now = clock.millis();
+        long expirationTimeMillis = 24L * 60 * 60 * 1000; // 24 hours
         Date expiration = new Date(now + expirationTimeMillis);
         String jti = UUID.randomUUID().toString();
 
@@ -64,6 +67,7 @@ public class JwtTokenService implements TokenService {
         try {
             var claims = Jwts.parser()
                     .verifyWith(key)
+                    .clock(() -> new Date(clock.millis()))
                     .build()
                     .parseSignedClaims(token)
                     .getPayload();
@@ -73,7 +77,7 @@ public class JwtTokenService implements TokenService {
 
             String subject = claims.getSubject();
             if (subject == null) return null;
-            Long userId;
+            long userId;
             try {
                 userId = Long.parseLong(subject);
             } catch (NumberFormatException e) {

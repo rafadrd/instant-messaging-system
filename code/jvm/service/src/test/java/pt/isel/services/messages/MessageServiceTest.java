@@ -2,6 +2,8 @@ package pt.isel.services.messages;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import pt.isel.domain.builders.UserInfoBuilder;
 import pt.isel.domain.channels.AccessType;
 import pt.isel.domain.channels.Channel;
@@ -16,6 +18,9 @@ import pt.isel.domain.users.UserInfo;
 import pt.isel.repositories.mem.TransactionManagerInMem;
 import pt.isel.services.common.RateLimiter;
 
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -24,6 +29,7 @@ class MessageServiceTest {
 
     private TransactionManagerInMem trxManager;
     private MessageService messageService;
+    private Clock clock;
 
     private User alice;
     private User bob;
@@ -38,6 +44,7 @@ class MessageServiceTest {
         trxManager = new TransactionManagerInMem();
         rateLimitTriggered = false;
         broadcastTriggered = false;
+        clock = Clock.fixed(Instant.parse("2025-01-01T10:00:00Z"), ZoneOffset.UTC);
 
         RateLimiter rateLimiter = (action, identifier, limit, window) -> rateLimitTriggered;
 
@@ -52,7 +59,7 @@ class MessageServiceTest {
             }
         };
 
-        messageService = new MessageService(trxManager, eventService, rateLimiter);
+        messageService = new MessageService(trxManager, eventService, rateLimiter, clock);
 
         alice = trxManager.run(trx -> trx.repoUsers().create("alice", new PasswordValidationInfo("hash")));
         bob = trxManager.run(trx -> trx.repoUsers().create("bob", new PasswordValidationInfo("hash")));
@@ -89,10 +96,10 @@ class MessageServiceTest {
         assertThat(broadcastTriggered).isFalse();
     }
 
-    @Test
-    void testCreateMessage_EmptyContent() {
-        assertThat(messageService.createMessage("", alice.id(), channel.id())).isInstanceOf(Either.Left.class);
-        assertThat(messageService.createMessage(null, alice.id(), channel.id())).isInstanceOf(Either.Left.class);
+    @ParameterizedTest
+    @NullAndEmptySource
+    void testCreateMessage_EmptyContent(String invalidContent) {
+        assertThat(messageService.createMessage(invalidContent, alice.id(), channel.id())).isInstanceOf(Either.Left.class);
     }
 
     @Test

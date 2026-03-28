@@ -5,7 +5,6 @@ import pt.isel.repositories.jdbi.utils.JdbiUtils;
 import pt.isel.repositories.security.TokenBlacklistRepository;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Map;
 
 public class TokenBlacklistRepositoryJdbi implements TokenBlacklistRepository {
@@ -34,9 +33,8 @@ public class TokenBlacklistRepositoryJdbi implements TokenBlacklistRepository {
     }
 
     @Override
-    public void cleanupExpired() {
-        JdbiUtils.executeUpdate(handle, "DELETE FROM token_blacklist WHERE expires_at < :now",
-                Map.of("now", LocalDateTime.now(ZoneOffset.UTC)));
+    public void cleanupExpired(LocalDateTime now) {
+        JdbiUtils.executeUpdate(handle, "DELETE FROM token_blacklist WHERE expires_at < :now", Map.of("now", now));
     }
 
     @Override

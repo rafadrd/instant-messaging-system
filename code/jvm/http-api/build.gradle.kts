@@ -10,10 +10,11 @@ dependencies {
     implementation(libs.springdoc.openapi.starter.webmvc.ui)
 
     // Testing
+    testImplementation(testFixtures(project(":domain")))
     testImplementation(project(":repository-jdbi"))
+    testImplementation(project(":http-pipeline"))
     testImplementation(libs.jdbi3.core)
     testImplementation(libs.postgresql)
     testImplementation(libs.flyway.core)
     testImplementation(libs.flyway.database.postgresql)
-    testImplementation(testFixtures(project(":domain")))
 }

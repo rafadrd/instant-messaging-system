@@ -202,7 +202,7 @@ public class UserService {
 
     public void cleanupExpiredTokens() {
         trxManager.run(trx -> {
-            trx.repoTokenBlacklist().cleanupExpired();
+            trx.repoTokenBlacklist().cleanupExpired(LocalDateTime.now(clock));
             return null;
         });
     }
