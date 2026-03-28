@@ -2,6 +2,7 @@ package pt.isel.repositories.jdbi.transaction;
 
 import org.junit.jupiter.api.Test;
 import pt.isel.domain.common.Either;
+import pt.isel.domain.common.EitherAssert;
 import pt.isel.domain.security.PasswordValidationInfo;
 import pt.isel.repositories.jdbi.AbstractJdbiTest;
 
@@ -33,8 +34,7 @@ class TransactionManagerJdbiTest extends AbstractJdbiTest {
             return Either.failure("Business Error");
         });
 
-        assertThat(result).isInstanceOf(Either.Left.class);
-        assertThat(((Either.Left<String, String>) result).value()).isEqualTo("Business Error");
+        assertThat(EitherAssert.assertLeft(result)).isEqualTo("Business Error");
 
         txManager.run(trx -> {
             // Verify data was rolled back
