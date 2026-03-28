@@ -9,6 +9,7 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -50,6 +51,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(TestConfig.class)
 class ChannelControllerTest {
 
+    private static final String MOCK_TOKEN = "mock-token";
+    private static final String BEARER_TOKEN = "Bearer " + MOCK_TOKEN;
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -74,8 +78,8 @@ class ChannelControllerTest {
     @BeforeEach
     void setUpAuth() {
         User mockUser = new UserBuilder().withId(1L).withUsername("testuser").build();
-        AuthenticatedUser authUser = new AuthenticatedUser(mockUser, "mock-token");
-        when(requestTokenProcessor.processAuthorizationHeaderValue("Bearer mock-token")).thenReturn(authUser);
+        AuthenticatedUser authUser = new AuthenticatedUser(mockUser, MOCK_TOKEN);
+        when(requestTokenProcessor.processAuthorizationHeaderValue(BEARER_TOKEN)).thenReturn(authUser);
     }
 
     @Test
@@ -89,7 +93,7 @@ class ChannelControllerTest {
         when(channelService.searchChannels(anyString(), anyInt(), anyInt())).thenReturn(Either.success(List.of()));
 
         mockMvc.perform(get("/api/channels")
-                        .header("Authorization", "Bearer mock-token"))
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }
@@ -102,7 +106,7 @@ class ChannelControllerTest {
         when(channelService.createChannel(anyString(), anyLong(), anyBoolean())).thenReturn(Either.success(channel));
 
         mockMvc.perform(post("/api/channels")
-                        .header("Authorization", "Bearer mock-token")
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isCreated())
@@ -116,7 +120,7 @@ class ChannelControllerTest {
         when(channelService.getChannelById(10L)).thenReturn(Either.success(channel));
 
         mockMvc.perform(get("/api/channels/10")
-                        .header("Authorization", "Bearer mock-token"))
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(10));
     }
@@ -129,7 +133,7 @@ class ChannelControllerTest {
         when(channelService.editChannel(eq(1L), eq(10L), eq("NewName"), eq(false))).thenReturn(Either.success(channel));
 
         mockMvc.perform(put("/api/channels/10")
-                        .header("Authorization", "Bearer mock-token")
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isOk())
@@ -141,7 +145,7 @@ class ChannelControllerTest {
         when(channelService.deleteChannel(1L, 10L)).thenReturn(Either.success("Deleted"));
 
         mockMvc.perform(delete("/api/channels/10")
-                        .header("Authorization", "Bearer mock-token"))
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isOk());
     }
 
@@ -150,7 +154,7 @@ class ChannelControllerTest {
         when(channelService.joinPublicChannel(1L, 10L)).thenReturn(Either.success("Joined"));
 
         mockMvc.perform(post("/api/channels/10/join")
-                        .header("Authorization", "Bearer mock-token"))
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isOk());
     }
 
@@ -160,7 +164,7 @@ class ChannelControllerTest {
         when(channelService.joinPrivateChannel(1L, "token123")).thenReturn(Either.success("Joined"));
 
         mockMvc.perform(post("/api/channels/join-by-token")
-                        .header("Authorization", "Bearer mock-token")
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isOk());
@@ -171,7 +175,7 @@ class ChannelControllerTest {
         when(channelService.leaveChannel(10L, 1L)).thenReturn(Either.success("Left"));
 
         mockMvc.perform(post("/api/channels/10/leave")
-                        .header("Authorization", "Bearer mock-token"))
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isOk());
     }
 
@@ -180,7 +184,7 @@ class ChannelControllerTest {
         when(channelService.getUsersInChannel(eq(10L), anyInt(), anyInt())).thenReturn(Either.success(List.of()));
 
         mockMvc.perform(get("/api/channels/10/members")
-                        .header("Authorization", "Bearer mock-token"))
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }
@@ -190,7 +194,7 @@ class ChannelControllerTest {
         when(channelService.getAccessType(1L, 2L, 10L)).thenReturn(Either.success(AccessType.READ_ONLY));
 
         mockMvc.perform(get("/api/channels/10/members/2")
-                        .header("Authorization", "Bearer mock-token"))
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").value("READ_ONLY"));
     }
@@ -207,7 +211,7 @@ class ChannelControllerTest {
         when(channelService.editMemberAccess(1L, 10L, 2L, AccessType.READ_WRITE)).thenReturn(Either.success(member));
 
         mockMvc.perform(put("/api/channels/10/members/2")
-                        .header("Authorization", "Bearer mock-token")
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isOk())
@@ -220,7 +224,7 @@ class ChannelControllerTest {
         when(ticketService.createTicket(1L)).thenReturn("ticket-uuid");
 
         mockMvc.perform(post("/api/channels/10/socket-ticket")
-                        .header("Authorization", "Bearer mock-token"))
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.ticket").value("ticket-uuid"));
     }
@@ -230,7 +234,7 @@ class ChannelControllerTest {
         when(channelService.getAccessType(1L, 1L, 10L)).thenReturn(Either.success(AccessType.READ_WRITE));
 
         mockMvc.perform(get("/api/channels/10/listen")
-                        .header("Authorization", "Bearer mock-token"))
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(request().asyncStarted())
                 .andExpect(status().isOk());
     }
@@ -241,7 +245,7 @@ class ChannelControllerTest {
         ChannelInput input = new ChannelInput(invalidName, true);
 
         mockMvc.perform(post("/api/channels")
-                        .header("Authorization", "Bearer mock-token")
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isBadRequest())
@@ -253,7 +257,7 @@ class ChannelControllerTest {
         ChannelInput input = new ChannelInput("a".repeat(31), true);
 
         mockMvc.perform(post("/api/channels")
-                        .header("Authorization", "Bearer mock-token")
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isBadRequest())
@@ -266,7 +270,7 @@ class ChannelControllerTest {
         JoinByTokenInput input = new JoinByTokenInput(invalidToken);
 
         mockMvc.perform(post("/api/channels/join-by-token")
-                        .header("Authorization", "Bearer mock-token")
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isBadRequest());
@@ -277,7 +281,7 @@ class ChannelControllerTest {
         String invalidJson = "{}";
 
         mockMvc.perform(put("/api/channels/10/members/2")
-                        .header("Authorization", "Bearer mock-token")
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidJson))
                 .andExpect(status().isBadRequest());
@@ -291,7 +295,7 @@ class ChannelControllerTest {
                 .when(messageEventService).addEmitter(anyLong(), anyLong(), any());
 
         mockMvc.perform(get("/api/channels/10/listen")
-                        .header("Authorization", "Bearer mock-token"))
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(request().asyncStarted())
                 .andExpect(status().isOk());
     }

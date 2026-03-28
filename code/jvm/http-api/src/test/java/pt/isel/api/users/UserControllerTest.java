@@ -8,6 +8,7 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -42,6 +43,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(TestConfig.class)
 class UserControllerTest {
 
+    private static final String MOCK_TOKEN = "mock-token";
+    private static final String BEARER_TOKEN = "Bearer " + MOCK_TOKEN;
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -63,8 +67,8 @@ class UserControllerTest {
     @BeforeEach
     void setUpAuth() {
         User mockUser = new UserBuilder().withId(1L).withUsername("testuser").build();
-        AuthenticatedUser authUser = new AuthenticatedUser(mockUser, "mock-token");
-        when(requestTokenProcessor.processAuthorizationHeaderValue("Bearer mock-token")).thenReturn(authUser);
+        AuthenticatedUser authUser = new AuthenticatedUser(mockUser, MOCK_TOKEN);
+        when(requestTokenProcessor.processAuthorizationHeaderValue(BEARER_TOKEN)).thenReturn(authUser);
     }
 
     @Test
@@ -141,16 +145,16 @@ class UserControllerTest {
     @Test
     void testLogoutUser() throws Exception {
         mockMvc.perform(post("/api/auth/logout")
-                        .header("Authorization", "Bearer mock-token"))
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isNoContent());
 
-        verify(userService).revokeToken("mock-token");
+        verify(userService).revokeToken(MOCK_TOKEN);
     }
 
     @Test
     void testUserHome() throws Exception {
         mockMvc.perform(get("/api/users/me")
-                        .header("Authorization", "Bearer mock-token"))
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.username").value("testuser"))
@@ -165,7 +169,7 @@ class UserControllerTest {
         when(userService.updateUsername(eq(1L), eq("new_alice"), eq("Strong1!"))).thenReturn(Either.success(updatedUser));
 
         mockMvc.perform(put("/api/users/me")
-                        .header("Authorization", "Bearer mock-token")
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isOk())
@@ -180,7 +184,7 @@ class UserControllerTest {
         when(userService.updatePassword(eq(1L), eq("Strong1!"), eq("Stronger2@"))).thenReturn(Either.success(updatedUser));
 
         mockMvc.perform(put("/api/users/me/password")
-                        .header("Authorization", "Bearer mock-token")
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isOk());
@@ -192,7 +196,7 @@ class UserControllerTest {
         UpdatePasswordInput input = new UpdatePasswordInput("OldPassword1!", invalidPassword);
 
         mockMvc.perform(put("/api/users/me/password")
-                        .header("Authorization", "Bearer mock-token")
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isBadRequest());
@@ -203,7 +207,7 @@ class UserControllerTest {
         when(channelService.getJoinedChannels(eq(1L), eq(50), eq(0))).thenReturn(Either.success(List.of()));
 
         mockMvc.perform(get("/api/users/me/channels")
-                        .header("Authorization", "Bearer mock-token"))
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }
@@ -213,7 +217,7 @@ class UserControllerTest {
         when(userService.deleteUser(1L)).thenReturn(Either.success("Deleted"));
 
         mockMvc.perform(delete("/api/users/me")
-                        .header("Authorization", "Bearer mock-token"))
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isOk());
     }
 }

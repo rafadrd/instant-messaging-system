@@ -15,7 +15,7 @@ import java.util.Date;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 class JwtTokenServiceTest {
 
@@ -32,7 +32,7 @@ class JwtTokenServiceTest {
     @Test
     void testInitThrowsWeakKeyExceptionForShortSecret() {
         JwtTokenService service = new JwtTokenService(INVALID_SECRET, CLOCK);
-        assertThatThrownBy(service::init).isInstanceOf(WeakKeyException.class);
+        assertThatExceptionOfType(WeakKeyException.class).isThrownBy(service::init);
     }
 
     @Test

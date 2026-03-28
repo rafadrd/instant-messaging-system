@@ -24,7 +24,8 @@ import java.time.Instant;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -76,17 +77,17 @@ class RedisMessageEventServiceTest {
     @Test
     void testAddEmitterThrowsWhenUserNotFound() {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
-        assertThatThrownBy(() -> service.addEmitter(channel.id(), 999L, emitter))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("not found");
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> service.addEmitter(channel.id(), 999L, emitter))
+                .withMessageContaining("not found");
     }
 
     @Test
     void testAddEmitterThrowsWhenChannelNotFound() {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
-        assertThatThrownBy(() -> service.addEmitter(999L, alice.id(), emitter))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("not found");
+        assertThatIllegalArgumentException()
+                .isThrownBy(() -> service.addEmitter(999L, alice.id(), emitter))
+                .withMessageContaining("not found");
     }
 
     @Test
@@ -94,8 +95,8 @@ class RedisMessageEventServiceTest {
         User bob = trxManager.run(trx -> trx.repoUsers().create("bob", new PasswordValidationInfo("hash")));
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
 
-        assertThatThrownBy(() -> service.addEmitter(channel.id(), bob.id(), emitter))
-                .isInstanceOf(SecurityException.class);
+        assertThatExceptionOfType(SecurityException.class)
+                .isThrownBy(() -> service.addEmitter(channel.id(), bob.id(), emitter));
     }
 
     @Test

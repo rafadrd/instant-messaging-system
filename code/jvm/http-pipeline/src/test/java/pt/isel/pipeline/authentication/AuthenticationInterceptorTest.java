@@ -23,6 +23,11 @@ import static org.mockito.Mockito.when;
 
 class AuthenticationInterceptorTest {
 
+    private static final String VALID_TOKEN = "valid-token";
+    private static final String BEARER_VALID_TOKEN = "Bearer " + VALID_TOKEN;
+    private static final String INVALID_TOKEN = "invalid-token";
+    private static final String BEARER_INVALID_TOKEN = "Bearer " + INVALID_TOKEN;
+
     private RequestTokenProcessor tokenProcessor;
     private TicketService ticketService;
     private UserService userService;
@@ -66,10 +71,10 @@ class AuthenticationInterceptorTest {
     @Test
     void testPreHandleAuthRequiredValidToken() {
         User user = new UserBuilder().withId(1L).withUsername("alice").build();
-        AuthenticatedUser authUser = new AuthenticatedUser(user, "valid-token");
+        AuthenticatedUser authUser = new AuthenticatedUser(user, VALID_TOKEN);
 
-        when(request.getHeader(AuthenticationInterceptor.NAME_AUTHORIZATION_HEADER)).thenReturn("Bearer valid-token");
-        when(tokenProcessor.processAuthorizationHeaderValue("Bearer valid-token")).thenReturn(authUser);
+        when(request.getHeader(AuthenticationInterceptor.NAME_AUTHORIZATION_HEADER)).thenReturn(BEARER_VALID_TOKEN);
+        when(tokenProcessor.processAuthorizationHeaderValue(BEARER_VALID_TOKEN)).thenReturn(authUser);
 
         assertThat(interceptor.preHandle(request, response, authHandlerMethod)).isTrue();
         verify(request).setAttribute("AuthenticatedUserArgumentResolver", authUser);
@@ -87,8 +92,8 @@ class AuthenticationInterceptorTest {
 
     @Test
     void testPreHandleAuthRequiredInvalidToken() {
-        when(request.getHeader(AuthenticationInterceptor.NAME_AUTHORIZATION_HEADER)).thenReturn("Bearer invalid-token");
-        when(tokenProcessor.processAuthorizationHeaderValue("Bearer invalid-token")).thenReturn(null);
+        when(request.getHeader(AuthenticationInterceptor.NAME_AUTHORIZATION_HEADER)).thenReturn(BEARER_INVALID_TOKEN);
+        when(tokenProcessor.processAuthorizationHeaderValue(BEARER_INVALID_TOKEN)).thenReturn(null);
         when(request.getRequestURI()).thenReturn("/api/users/me");
 
         assertThat(interceptor.preHandle(request, response, authHandlerMethod)).isFalse();

@@ -6,7 +6,7 @@ import pt.isel.domain.security.PasswordValidationInfo;
 import pt.isel.repositories.jdbi.AbstractJdbiTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 class TransactionManagerJdbiTest extends AbstractJdbiTest {
 
@@ -45,10 +45,12 @@ class TransactionManagerJdbiTest extends AbstractJdbiTest {
 
     @Test
     void testRollbackOnException() {
-        assertThatThrownBy(() -> txManager.run(trx -> {
-            trx.repoUsers().create("charlie", new PasswordValidationInfo("hash"));
-            throw new RuntimeException("Unexpected Error");
-        })).isInstanceOf(RuntimeException.class).hasMessage("Unexpected Error");
+        assertThatExceptionOfType(RuntimeException.class)
+                .isThrownBy(() -> txManager.run(trx -> {
+                    trx.repoUsers().create("charlie", new PasswordValidationInfo("hash"));
+                    throw new RuntimeException("Unexpected Error");
+                }))
+                .withMessage("Unexpected Error");
 
         txManager.run(trx -> {
             // Verify data was rolled back

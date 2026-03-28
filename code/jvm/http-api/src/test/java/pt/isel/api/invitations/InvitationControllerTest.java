@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -37,6 +38,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(TestConfig.class)
 class InvitationControllerTest {
 
+    private static final String MOCK_TOKEN = "mock-token";
+    private static final String BEARER_TOKEN = "Bearer " + MOCK_TOKEN;
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -58,8 +62,8 @@ class InvitationControllerTest {
     @BeforeEach
     void setUpAuth() {
         User mockUser = new UserBuilder().withId(1L).withUsername("testuser").build();
-        AuthenticatedUser authUser = new AuthenticatedUser(mockUser, "mock-token");
-        when(requestTokenProcessor.processAuthorizationHeaderValue("Bearer mock-token")).thenReturn(authUser);
+        AuthenticatedUser authUser = new AuthenticatedUser(mockUser, MOCK_TOKEN);
+        when(requestTokenProcessor.processAuthorizationHeaderValue(BEARER_TOKEN)).thenReturn(authUser);
     }
 
     @Test
@@ -82,7 +86,7 @@ class InvitationControllerTest {
         when(invitationService.createInvitation(eq(1L), eq(10L), eq(AccessType.READ_ONLY), any())).thenReturn(Either.success(invitation));
 
         mockMvc.perform(post("/api/channels/10/invitations")
-                        .header("Authorization", "Bearer mock-token")
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(input)))
                 .andExpect(status().isOk())
@@ -95,7 +99,7 @@ class InvitationControllerTest {
         when(invitationService.getInvitationsForChannel(1L, 10L)).thenReturn(Either.success(List.of()));
 
         mockMvc.perform(get("/api/channels/10/invitations")
-                        .header("Authorization", "Bearer mock-token"))
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }
@@ -105,7 +109,7 @@ class InvitationControllerTest {
         when(invitationService.revokeInvitation(1L, 10L, 100L)).thenReturn(Either.success("Revoked"));
 
         mockMvc.perform(post("/api/channels/10/invitations/100/revoke")
-                        .header("Authorization", "Bearer mock-token"))
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isOk());
     }
 
@@ -114,7 +118,7 @@ class InvitationControllerTest {
         String invalidJson = "{}";
 
         mockMvc.perform(post("/api/channels/10/invitations")
-                        .header("Authorization", "Bearer mock-token")
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidJson))
                 .andExpect(status().isBadRequest())

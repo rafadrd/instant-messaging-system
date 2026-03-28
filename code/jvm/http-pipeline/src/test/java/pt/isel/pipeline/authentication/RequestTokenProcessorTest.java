@@ -13,6 +13,9 @@ import static org.mockito.Mockito.when;
 
 class RequestTokenProcessorTest {
 
+    private static final String VALID_TOKEN = "valid-token";
+    private static final String BEARER_VALID_TOKEN = "Bearer " + VALID_TOKEN;
+
     private UserService userService;
     private RequestTokenProcessor processor;
 
@@ -44,25 +47,25 @@ class RequestTokenProcessorTest {
     @Test
     void testProcessAuthorizationHeaderValueValidToken() {
         User user = new UserBuilder().withId(1L).withUsername("alice").build();
-        when(userService.getUserByToken("valid-token")).thenReturn(user);
+        when(userService.getUserByToken(VALID_TOKEN)).thenReturn(user);
 
-        AuthenticatedUser authUser = processor.processAuthorizationHeaderValue("Bearer valid-token");
+        AuthenticatedUser authUser = processor.processAuthorizationHeaderValue(BEARER_VALID_TOKEN);
 
         assertThat(authUser).isNotNull();
         assertThat(authUser.user()).isEqualTo(user);
-        assertThat(authUser.token()).isEqualTo("valid-token");
+        assertThat(authUser.token()).isEqualTo(VALID_TOKEN);
     }
 
     @Test
     void testProcessAuthorizationHeaderValueValidTokenCaseInsensitiveScheme() {
         User user = new UserBuilder().withId(1L).withUsername("alice").build();
-        when(userService.getUserByToken("valid-token")).thenReturn(user);
+        when(userService.getUserByToken(VALID_TOKEN)).thenReturn(user);
 
-        AuthenticatedUser authUser = processor.processAuthorizationHeaderValue("bEaReR valid-token");
+        AuthenticatedUser authUser = processor.processAuthorizationHeaderValue("bEaReR " + VALID_TOKEN);
 
         assertThat(authUser).isNotNull();
         assertThat(authUser.user()).isEqualTo(user);
-        assertThat(authUser.token()).isEqualTo("valid-token");
+        assertThat(authUser.token()).isEqualTo(VALID_TOKEN);
     }
 
     @Test

@@ -8,6 +8,7 @@ import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -39,6 +40,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(TestConfig.class)
 class MessageControllerTest {
 
+    private static final String MOCK_TOKEN = "mock-token";
+    private static final String BEARER_TOKEN = "Bearer " + MOCK_TOKEN;
+
     @Autowired
     private MockMvc mockMvc;
 
@@ -60,8 +64,8 @@ class MessageControllerTest {
     @BeforeEach
     void setUpAuth() {
         User mockUser = new UserBuilder().withId(1L).withUsername("testuser").build();
-        AuthenticatedUser authUser = new AuthenticatedUser(mockUser, "mock-token");
-        when(requestTokenProcessor.processAuthorizationHeaderValue("Bearer mock-token")).thenReturn(authUser);
+        AuthenticatedUser authUser = new AuthenticatedUser(mockUser, MOCK_TOKEN);
+        when(requestTokenProcessor.processAuthorizationHeaderValue(BEARER_TOKEN)).thenReturn(authUser);
     }
 
     @Test
@@ -78,7 +82,7 @@ class MessageControllerTest {
         when(messageService.createMessage(anyString(), anyLong(), anyLong())).thenReturn(Either.success(message));
 
         mockMvc.perform(post("/api/channels/10/messages")
-                        .header("Authorization", "Bearer mock-token")
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -92,7 +96,7 @@ class MessageControllerTest {
         MessageRequest request = new MessageRequest(invalidContent);
 
         mockMvc.perform(post("/api/channels/10/messages")
-                        .header("Authorization", "Bearer mock-token")
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -103,7 +107,7 @@ class MessageControllerTest {
         MessageRequest request = new MessageRequest("a".repeat(1001));
 
         mockMvc.perform(post("/api/channels/10/messages")
-                        .header("Authorization", "Bearer mock-token")
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest());
@@ -114,7 +118,7 @@ class MessageControllerTest {
         when(messageService.getMessagesInChannel(eq(1L), eq(10L), anyInt(), anyInt())).thenReturn(Either.success(List.of()));
 
         mockMvc.perform(get("/api/channels/10/messages")
-                        .header("Authorization", "Bearer mock-token"))
+                        .header(HttpHeaders.AUTHORIZATION, BEARER_TOKEN))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
     }

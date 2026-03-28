@@ -13,7 +13,7 @@ import pt.isel.domain.users.User;
 import java.lang.reflect.Method;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -65,9 +65,9 @@ class AuthenticatedUserArgumentResolverTest {
 
         when(webRequest.getNativeRequest(HttpServletRequest.class)).thenReturn(null);
 
-        assertThatThrownBy(() -> resolver.resolveArgument(validParameter, mavContainer, webRequest, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Failed to extract HttpServletRequest from NativeWebRequest.");
+        assertThatIllegalStateException()
+                .isThrownBy(() -> resolver.resolveArgument(validParameter, mavContainer, webRequest, null))
+                .withMessage("Failed to extract HttpServletRequest from NativeWebRequest.");
     }
 
     @Test
@@ -79,9 +79,9 @@ class AuthenticatedUserArgumentResolverTest {
         when(webRequest.getNativeRequest(HttpServletRequest.class)).thenReturn(request);
         when(request.getAttribute("AuthenticatedUserArgumentResolver")).thenReturn(null);
 
-        assertThatThrownBy(() -> resolver.resolveArgument(validParameter, mavContainer, webRequest, null))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessage("AuthenticatedUser not found in request attributes.");
+        assertThatIllegalStateException()
+                .isThrownBy(() -> resolver.resolveArgument(validParameter, mavContainer, webRequest, null))
+                .withMessage("AuthenticatedUser not found in request attributes.");
     }
 
     @Test
