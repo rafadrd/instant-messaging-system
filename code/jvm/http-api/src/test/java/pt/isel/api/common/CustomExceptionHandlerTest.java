@@ -1,18 +1,12 @@
 package pt.isel.api.common;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-import pt.isel.api.TestConfig;
+import pt.isel.api.AbstractControllerTest;
 import pt.isel.api.users.UserController;
-import pt.isel.pipeline.authentication.RequestTokenProcessor;
 import pt.isel.services.channels.ChannelService;
-import pt.isel.services.users.TicketService;
-import pt.isel.services.users.UserService;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -22,23 +16,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserController.class)
-@Import(TestConfig.class)
-class CustomExceptionHandlerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockitoBean
-    private UserService userService;
+class CustomExceptionHandlerTest extends AbstractControllerTest {
 
     @MockitoBean
     private ChannelService channelService;
-
-    @MockitoBean
-    private RequestTokenProcessor requestTokenProcessor;
-
-    @MockitoBean
-    private TicketService ticketService;
 
     @Test
     void testHandleAllExceptions() throws Exception {

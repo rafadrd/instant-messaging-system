@@ -1,28 +1,17 @@
 package pt.isel.api.messages;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
-import pt.isel.api.TestConfig;
+import pt.isel.api.AbstractControllerTest;
 import pt.isel.domain.builders.MessageBuilder;
-import pt.isel.domain.builders.UserBuilder;
 import pt.isel.domain.common.Either;
 import pt.isel.domain.messages.Message;
-import pt.isel.domain.users.AuthenticatedUser;
-import pt.isel.domain.users.User;
-import pt.isel.pipeline.authentication.RequestTokenProcessor;
 import pt.isel.services.messages.MessageService;
-import pt.isel.services.users.TicketService;
-import pt.isel.services.users.UserService;
 
 import java.util.List;
 
@@ -37,36 +26,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(MessageController.class)
-@Import(TestConfig.class)
-class MessageControllerTest {
-
-    private static final String MOCK_TOKEN = "mock-token";
-    private static final String BEARER_TOKEN = "Bearer " + MOCK_TOKEN;
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
+class MessageControllerTest extends AbstractControllerTest {
 
     @MockitoBean
     private MessageService messageService;
-
-    @MockitoBean
-    private RequestTokenProcessor requestTokenProcessor;
-
-    @MockitoBean
-    private TicketService ticketService;
-
-    @MockitoBean
-    private UserService userService;
-
-    @BeforeEach
-    void setUpAuth() {
-        User mockUser = new UserBuilder().withId(1L).withUsername("testuser").build();
-        AuthenticatedUser authUser = new AuthenticatedUser(mockUser, MOCK_TOKEN);
-        when(requestTokenProcessor.processAuthorizationHeaderValue(BEARER_TOKEN)).thenReturn(authUser);
-    }
 
     @Test
     void testUnauthorizedAccess() throws Exception {
