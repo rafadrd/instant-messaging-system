@@ -1,7 +1,10 @@
 package pt.isel.host;
 
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
@@ -35,6 +38,9 @@ public abstract class AbstractIntegrationTest {
         redis.start();
     }
 
+    @Autowired
+    protected JdbcTemplate jdbcTemplate;
+
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", () -> postgres.getJdbcUrl() + "&currentSchema=dbo");
@@ -42,5 +48,10 @@ public abstract class AbstractIntegrationTest {
         registry.add("spring.datasource.password", postgres::getPassword);
         registry.add("spring.flyway.enabled", () -> "true");
         registry.add("jwt.secret", () -> JWT_SECRET);
+    }
+
+    @BeforeEach
+    void cleanDatabase() {
+        jdbcTemplate.execute("TRUNCATE TABLE users, channels, messages, invitations, channel_members, token_blacklist RESTART IDENTITY CASCADE");
     }
 }

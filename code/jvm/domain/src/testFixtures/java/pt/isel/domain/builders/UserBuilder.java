@@ -10,7 +10,7 @@ public class UserBuilder {
 
     private Long id = ID_GENERATOR.getAndIncrement();
     private String username = "testuser_" + id;
-    private PasswordValidationInfo passwordValidation = new PasswordValidationInfo("hash");
+    private PasswordValidationInfo passwordValidation = new PasswordValidationInfoBuilder().build();
 
     public UserBuilder withId(Long id) {
         this.id = id;

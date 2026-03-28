@@ -1,29 +1,29 @@
 package pt.isel.pipeline.authentication;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import pt.isel.domain.builders.UserBuilder;
 import pt.isel.domain.users.AuthenticatedUser;
 import pt.isel.domain.users.User;
 import pt.isel.services.users.UserService;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class RequestTokenProcessorTest {
 
     private static final String VALID_TOKEN = "valid-token";
     private static final String BEARER_VALID_TOKEN = "Bearer " + VALID_TOKEN;
 
+    @Mock
     private UserService userService;
-    private RequestTokenProcessor processor;
 
-    @BeforeEach
-    void setUp() {
-        userService = mock(UserService.class);
-        processor = new RequestTokenProcessor(userService);
-    }
+    @InjectMocks
+    private RequestTokenProcessor processor;
 
     @Test
     void testProcessAuthorizationHeaderValueNullOrBlank() {

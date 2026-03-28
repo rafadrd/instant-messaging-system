@@ -39,6 +39,7 @@ springdoc-openapi-starter-webmvc-ui = { group = "org.springdoc", name = "springd
 
 # Jackson
 jackson-databind = { group = "com.fasterxml.jackson.core", name = "jackson-databind" }
+jackson-datatype-jsr310 = { group = "com.fasterxml.jackson.datatype", name = "jackson-datatype-jsr310" }
 
 # Junit
 junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher" }

@@ -10,18 +10,20 @@ import pt.isel.services.users.ParsedToken;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Base64;
 import java.util.Date;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JwtTokenServiceTest {
 
     private static final String VALID_SECRET;
     private static final String INVALID_SECRET = "short-secret";
-    private static final Clock CLOCK = Clock.systemUTC();
+    private static final Clock CLOCK = Clock.fixed(Instant.parse("2025-01-01T10:00:00Z"), ZoneOffset.UTC);
 
     static {
         byte[] keyBytes = new byte[32];
@@ -32,7 +34,7 @@ class JwtTokenServiceTest {
     @Test
     void testInitThrowsWeakKeyExceptionForShortSecret() {
         JwtTokenService service = new JwtTokenService(INVALID_SECRET, CLOCK);
-        assertThatExceptionOfType(WeakKeyException.class).isThrownBy(service::init);
+        assertThatThrownBy(service::init).isInstanceOf(WeakKeyException.class);
     }
 
     @Test

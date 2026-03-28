@@ -2,27 +2,31 @@ package pt.isel.domain.security;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import pt.isel.domain.builders.PasswordValidationInfoBuilder;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 
+@ExtendWith(MockitoExtension.class)
 class PasswordSecurityDomainTest {
 
-    private PasswordSecurityDomain securityDomain;
+    @Mock
     private PasswordEncoder fakeEncoder;
+
+    private PasswordSecurityDomain securityDomain;
 
     @BeforeEach
     void setUp() {
-        fakeEncoder = new PasswordEncoder() {
-            @Override
-            public String encode(String rawPassword) {
-                return "encoded_" + rawPassword;
-            }
-
-            @Override
-            public boolean matches(String rawPassword, String encodedPassword) {
-                return encodedPassword.equals("encoded_" + rawPassword);
-            }
-        };
+        lenient().when(fakeEncoder.encode(anyString())).thenAnswer(inv -> "encoded_" + inv.getArgument(0));
+        lenient().when(fakeEncoder.matches(anyString(), anyString())).thenAnswer(inv -> {
+            String raw = inv.getArgument(0);
+            String encoded = inv.getArgument(1);
+            return encoded.equals("encoded_" + raw);
+        });
 
         PasswordPolicyConfig config = new PasswordPolicyConfig(8, true, true, true, true);
         securityDomain = new PasswordSecurityDomain(fakeEncoder, config);
@@ -36,13 +40,13 @@ class PasswordSecurityDomainTest {
 
     @Test
     void testValidatePasswordSuccess() {
-        PasswordValidationInfo info = new PasswordValidationInfo("encoded_mySecret");
+        PasswordValidationInfo info = new PasswordValidationInfoBuilder().withValidationInfo("encoded_mySecret").build();
         assertThat(securityDomain.validatePassword("mySecret", info)).isTrue();
     }
 
     @Test
     void testValidatePasswordFailure() {
-        PasswordValidationInfo info = new PasswordValidationInfo("encoded_mySecret");
+        PasswordValidationInfo info = new PasswordValidationInfoBuilder().withValidationInfo("encoded_mySecret").build();
         assertThat(securityDomain.validatePassword("wrongSecret", info)).isFalse();
     }
 

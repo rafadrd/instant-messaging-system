@@ -8,7 +8,7 @@ import pt.isel.repositories.contracts.RepositoryTestHelper;
 import pt.isel.repositories.jdbi.AbstractJdbiTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TransactionManagerJdbiTest extends AbstractJdbiTest implements RepositoryTestHelper {
 
@@ -51,12 +51,12 @@ class TransactionManagerJdbiTest extends AbstractJdbiTest implements RepositoryT
 
     @Test
     void testRollbackOnException() {
-        assertThatExceptionOfType(RuntimeException.class)
-                .isThrownBy(() -> txManager.run(trx -> {
-                    insertUser(trx, "charlie");
-                    throw new RuntimeException("Unexpected Error");
-                }))
-                .withMessage("Unexpected Error");
+        assertThatThrownBy(() -> txManager.run(trx -> {
+            insertUser(trx, "charlie");
+            throw new RuntimeException("Unexpected Error");
+        }))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Unexpected Error");
 
         txManager.run(trx -> {
             // Verify data was rolled back

@@ -1,22 +1,30 @@
 package pt.isel.infrastructure.security;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class SpringPasswordEncoderAdapterTest {
+
+    @Mock
+    private PasswordEncoder springEncoder;
+
+    @InjectMocks
+    private SpringPasswordEncoderAdapter adapter;
 
     @Test
     void testEncodeDelegatesToSpringEncoder() {
-        PasswordEncoder springEncoder = mock(PasswordEncoder.class);
         when(springEncoder.encode("myPassword")).thenReturn("encodedPassword");
 
-        SpringPasswordEncoderAdapter adapter = new SpringPasswordEncoderAdapter(springEncoder);
         String result = adapter.encode("myPassword");
 
         assertThat(result).isEqualTo("encodedPassword");
@@ -25,10 +33,8 @@ class SpringPasswordEncoderAdapterTest {
 
     @Test
     void testMatchesDelegatesToSpringEncoder() {
-        PasswordEncoder springEncoder = mock(PasswordEncoder.class);
         when(springEncoder.matches("myPassword", "encodedPassword")).thenReturn(true);
 
-        SpringPasswordEncoderAdapter adapter = new SpringPasswordEncoderAdapter(springEncoder);
         boolean result = adapter.matches("myPassword", "encodedPassword");
 
         assertThat(result).isTrue();
@@ -37,12 +43,12 @@ class SpringPasswordEncoderAdapterTest {
 
     @Test
     void testIntegrationWithRealBCrypt() {
-        SpringPasswordEncoderAdapter adapter = new SpringPasswordEncoderAdapter(new BCryptPasswordEncoder());
+        SpringPasswordEncoderAdapter realAdapter = new SpringPasswordEncoderAdapter(new BCryptPasswordEncoder());
 
         String rawPassword = "SecurePassword123!";
-        String encoded = adapter.encode(rawPassword);
+        String encoded = realAdapter.encode(rawPassword);
 
-        assertThat(adapter.matches(rawPassword, encoded)).isTrue();
-        assertThat(adapter.matches("WrongPassword!", encoded)).isFalse();
+        assertThat(realAdapter.matches(rawPassword, encoded)).isTrue();
+        assertThat(realAdapter.matches("WrongPassword!", encoded)).isFalse();
     }
 }

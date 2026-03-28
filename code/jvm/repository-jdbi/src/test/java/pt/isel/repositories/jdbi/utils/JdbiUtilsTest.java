@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class JdbiUtilsTest {
 
@@ -20,8 +20,8 @@ class JdbiUtilsTest {
 
     @Test
     void testParamsThrowsIllegalArgumentExceptionOnOddArguments() {
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> JdbiUtils.params("key1", "value1", "key2"))
-                .withMessage("Key-value array must have even length");
+        assertThatThrownBy(() -> JdbiUtils.params("key1", "value1", "key2"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Key-value array must have even length");
     }
 }

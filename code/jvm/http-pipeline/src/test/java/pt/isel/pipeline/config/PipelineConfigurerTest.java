@@ -2,6 +2,9 @@ package pt.isel.pipeline.config;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.CorsRegistration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -13,21 +16,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class PipelineConfigurerTest {
 
+    @Mock
     private AuthenticationInterceptor interceptor;
+
+    @Mock
     private AuthenticatedUserArgumentResolver resolver;
+
     private PipelineConfigurer configurer;
 
     @BeforeEach
     void setUp() {
-        interceptor = mock(AuthenticationInterceptor.class);
-        resolver = mock(AuthenticatedUserArgumentResolver.class);
         configurer = new PipelineConfigurer(interceptor, resolver, "http://localhost:3000,http://localhost:8000");
     }
 
@@ -55,8 +62,8 @@ class PipelineConfigurerTest {
         CorsRegistration registration = mock(CorsRegistration.class);
 
         when(registry.addMapping(anyString())).thenReturn(registration);
-        when(registration.allowedOrigins(org.mockito.ArgumentMatchers.any(String[].class))).thenReturn(registration);
-        when(registration.allowedMethods(org.mockito.ArgumentMatchers.any(String[].class))).thenReturn(registration);
+        when(registration.allowedOrigins(any(String[].class))).thenReturn(registration);
+        when(registration.allowedMethods(any(String[].class))).thenReturn(registration);
         when(registration.allowCredentials(true)).thenReturn(registration);
 
         configurer.addCorsMappings(registry);

@@ -34,12 +34,12 @@ class AppInstantMessagingIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void mainMethodStartsApplicationSuccessfully() {
+    void testMainMethodStartsApplicationSuccessfully() {
         assertThatCode(() -> AppInstantMessaging.main(new String[]{
                 "--spring.main.web-application-type=none",
                 "--spring.flyway.enabled=false",
                 "--jwt.secret=my-32-character-ultra-secure-secret-key-for-tests",
-                "--spring.datasource.url=" + postgres.getJdbcUrl(),
+                "--spring.datasource.url=" + postgres.getJdbcUrl() + "&currentSchema=dbo",
                 "--spring.datasource.username=" + postgres.getUsername(),
                 "--spring.datasource.password=" + postgres.getPassword(),
                 "--spring.data.redis.host=" + redis.getHost(),

@@ -9,6 +9,7 @@ dependencies {
 
     // Jackson
     implementation(libs.jackson.databind)
+    implementation(libs.jackson.datatype.jsr310)
 
     // JWT
     implementation(libs.jjwt.api)

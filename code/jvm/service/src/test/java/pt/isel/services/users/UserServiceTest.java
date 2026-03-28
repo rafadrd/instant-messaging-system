@@ -2,8 +2,12 @@ package pt.isel.services.users;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import pt.isel.domain.builders.TokenExternalInfoBuilder;
 import pt.isel.domain.channels.AccessType;
 import pt.isel.domain.channels.Channel;
 import pt.isel.domain.common.Either;
@@ -15,80 +19,75 @@ import pt.isel.domain.security.PasswordPolicyConfig;
 import pt.isel.domain.security.PasswordSecurityDomain;
 import pt.isel.domain.security.TokenExternalInfo;
 import pt.isel.domain.users.User;
-import pt.isel.repositories.TransactionManager;
-import pt.isel.repositories.contracts.RepositoryTestHelper;
-import pt.isel.repositories.mem.TransactionManagerInMem;
+import pt.isel.services.AbstractServiceTest;
+import pt.isel.services.builders.ParsedTokenBuilder;
 import pt.isel.services.common.RateLimiter;
 
-import java.time.Clock;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.when;
 
-class UserServiceTest implements RepositoryTestHelper {
+@ExtendWith(MockitoExtension.class)
+class UserServiceTest extends AbstractServiceTest {
 
-    private TransactionManagerInMem trxManager;
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @Mock
+    private TokenService tokenService;
+
+    @Mock
+    private RateLimiter rateLimiter;
+
     private UserService userService;
-    private boolean rateLimitTriggered = false;
-    private Clock clock;
-
-    @Override
-    public TransactionManager getTxManager() {
-        return trxManager;
-    }
 
     @BeforeEach
     void setUp() {
-        trxManager = new TransactionManagerInMem();
-        rateLimitTriggered = false;
+        super.setUpBaseState();
 
-        PasswordEncoder encoder = new PasswordEncoder() {
-            @Override
-            public String encode(String rawPassword) {
-                return "encoded_" + rawPassword;
-            }
+        lenient().when(passwordEncoder.encode(anyString())).thenAnswer(inv -> "encoded_" + inv.getArgument(0));
+        lenient().when(passwordEncoder.matches(anyString(), anyString())).thenAnswer(inv -> {
+            String raw = inv.getArgument(0);
+            String encoded = inv.getArgument(1);
+            return encoded.equals("encoded_" + raw);
+        });
 
-            @Override
-            public boolean matches(String rawPassword, String encodedPassword) {
-                return encodedPassword.equals("encoded_" + rawPassword);
+        lenient().when(tokenService.createToken(anyLong())).thenAnswer(inv -> {
+            Long id = inv.getArgument(0);
+            return new TokenExternalInfoBuilder().withTokenValue("token-" + id).withUserId(id).build();
+        });
+
+        lenient().when(tokenService.validateToken(anyString())).thenAnswer(inv -> {
+            String token = inv.getArgument(0);
+            if (token.startsWith("token-")) {
+                Long id = Long.parseLong(token.substring(6));
+                return new ParsedTokenBuilder().withJti("jti-" + id).withUserId(id).build();
             }
-        };
+            return null;
+        });
+
+        lenient().when(rateLimiter.isRateLimited(anyString(), anyString(), anyInt(), any())).thenReturn(false);
 
         PasswordPolicyConfig config = new PasswordPolicyConfig(8, true, true, true, true);
-        PasswordSecurityDomain securityDomain = new PasswordSecurityDomain(encoder, config);
-
-        TokenService tokenService = new TokenService() {
-            @Override
-            public TokenExternalInfo createToken(Long userId) {
-                return new TokenExternalInfo("token-" + userId, Instant.now().plusSeconds(3600), userId);
-            }
-
-            @Override
-            public ParsedToken validateToken(String token) {
-                if (token.startsWith("token-")) {
-                    Long id = Long.parseLong(token.substring(6));
-                    return new ParsedToken("jti-" + id, id, LocalDateTime.now().plusHours(1));
-                }
-                return null;
-            }
-        };
-
-        RateLimiter rateLimiter = (action, identifier, limit, window) -> rateLimitTriggered;
-        clock = Clock.fixed(Instant.parse("2025-01-01T10:00:00Z"), ZoneOffset.UTC);
+        PasswordSecurityDomain securityDomain = new PasswordSecurityDomain(passwordEncoder, config);
 
         userService = new UserService(trxManager, securityDomain, tokenService, clock, rateLimiter);
     }
 
     @Test
     void testRegisterUser_Success() {
-        Either<UserError, TokenExternalInfo> result = userService.registerUser("alice", "Strong1!", null);
+        Either<UserError, TokenExternalInfo> result = userService.registerUser("dave", "Strong1!", null);
 
         TokenExternalInfo tokenInfo = EitherAssert.assertRight(result);
         assertThat(tokenInfo.tokenValue()).isNotNull();
-        assertThat(tokenInfo.userId()).isEqualTo(1L);
+        assertThat(tokenInfo.userId()).isNotNull();
     }
 
     @Test
@@ -100,12 +99,12 @@ class UserServiceTest implements RepositoryTestHelper {
         Channel channel = trxManager.run(trx -> insertChannel(trx, "Secret", owner, false));
         Invitation inv = trxManager.run(trx -> insertInvitation(trx, "inv-token", owner, channel, AccessType.READ_WRITE, LocalDateTime.now(clock).plusDays(1)));
 
-        Either<UserError, TokenExternalInfo> result = userService.registerUser("bob", "Strong1!", inv.token());
+        Either<UserError, TokenExternalInfo> result = userService.registerUser("eve", "Strong1!", inv.token());
 
-        Long bobId = EitherAssert.assertRight(result).userId();
+        Long eveId = EitherAssert.assertRight(result).userId();
 
         trxManager.run(trx -> {
-            assertThat(trx.repoMemberships().findUserInChannel(bobId, channel.id())).isNotNull();
+            assertThat(trx.repoMemberships().findUserInChannel(eveId, channel.id())).isNotNull();
             return null;
         });
     }
@@ -119,63 +118,63 @@ class UserServiceTest implements RepositoryTestHelper {
         Channel channel = trxManager.run(trx -> insertChannel(trx, "Secret", owner, false));
         Invitation inv = trxManager.run(trx -> insertInvitation(trx, "expired-inv-token", owner, channel, AccessType.READ_WRITE, LocalDateTime.now(clock).minusDays(1)));
 
-        Either<UserError, TokenExternalInfo> result = userService.registerUser("bob", "Strong1!", inv.token());
+        Either<UserError, TokenExternalInfo> result = userService.registerUser("eve", "Strong1!", inv.token());
 
         EitherAssert.assertLeft(result, UserError.InvitationExpired.class);
     }
 
     @Test
     void testRegisterUser_InsecurePassword() {
-        Either<UserError, TokenExternalInfo> result = userService.registerUser("alice", "weak", null);
+        Either<UserError, TokenExternalInfo> result = userService.registerUser("dave", "weak", null);
 
         EitherAssert.assertLeft(result, UserError.InsecurePassword.class);
     }
 
     @Test
     void testRegisterUser_UsernameAlreadyInUse() {
-        userService.registerUser("alice", "Strong1!", null);
-        Either<UserError, TokenExternalInfo> result = userService.registerUser("alice", "Strong2!", null);
+        userService.registerUser("dave", "Strong1!", null);
+        Either<UserError, TokenExternalInfo> result = userService.registerUser("dave", "Strong2!", null);
 
         EitherAssert.assertLeft(result, UserError.UsernameAlreadyInUse.class);
     }
 
     @Test
     void testGetUserById_Success() {
-        Long id = EitherAssert.assertRight(userService.registerUser("alice", "Strong1!", null)).userId();
+        Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         Either<UserError, User> result = userService.getUserById(id);
 
-        assertThat(EitherAssert.assertRight(result).username()).isEqualTo("alice");
+        assertThat(EitherAssert.assertRight(result).username()).isEqualTo("dave");
     }
 
     @Test
     void testUpdateUsername_Success() {
-        Long id = EitherAssert.assertRight(userService.registerUser("alice", "Strong1!", null)).userId();
-        Either<UserError, User> result = userService.updateUsername(id, "alice_new", "Strong1!");
+        Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
+        Either<UserError, User> result = userService.updateUsername(id, "dave_new", "Strong1!");
 
-        assertThat(EitherAssert.assertRight(result).username()).isEqualTo("alice_new");
+        assertThat(EitherAssert.assertRight(result).username()).isEqualTo("dave_new");
     }
 
     @Test
     void testUpdateUsername_UsernameAlreadyInUse() {
-        Long id1 = EitherAssert.assertRight(userService.registerUser("alice", "Strong1!", null)).userId();
-        userService.registerUser("bob", "Strong1!", null);
+        Long id1 = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
+        userService.registerUser("eve", "Strong1!", null);
 
-        Either<UserError, User> result = userService.updateUsername(id1, "bob", "Strong1!");
+        Either<UserError, User> result = userService.updateUsername(id1, "eve", "Strong1!");
 
         EitherAssert.assertLeft(result, UserError.UsernameAlreadyInUse.class);
     }
 
     @Test
     void testUpdateUsername_IncorrectPassword() {
-        Long id = EitherAssert.assertRight(userService.registerUser("alice", "Strong1!", null)).userId();
-        Either<UserError, User> result = userService.updateUsername(id, "alice_new", "Wrong1!");
+        Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
+        Either<UserError, User> result = userService.updateUsername(id, "dave_new", "Wrong1!");
 
         EitherAssert.assertLeft(result, UserError.IncorrectPassword.class);
     }
 
     @Test
     void testUpdatePassword_Success() {
-        Long id = EitherAssert.assertRight(userService.registerUser("alice", "Strong1!", null)).userId();
+        Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         Either<UserError, User> result = userService.updatePassword(id, "Strong1!", "Stronger2@");
 
         EitherAssert.assertRight(result);
@@ -183,7 +182,7 @@ class UserServiceTest implements RepositoryTestHelper {
 
     @Test
     void testUpdatePassword_SameAsPrevious() {
-        Long id = EitherAssert.assertRight(userService.registerUser("alice", "Strong1!", null)).userId();
+        Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         Either<UserError, User> result = userService.updatePassword(id, "Strong1!", "Strong1!");
 
         EitherAssert.assertLeft(result, UserError.PasswordSameAsPrevious.class);
@@ -191,7 +190,7 @@ class UserServiceTest implements RepositoryTestHelper {
 
     @Test
     void testDeleteUser_Success() {
-        Long id = EitherAssert.assertRight(userService.registerUser("alice", "Strong1!", null)).userId();
+        Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         Either<UserError, String> result = userService.deleteUser(id);
 
         EitherAssert.assertRight(result);
@@ -200,7 +199,7 @@ class UserServiceTest implements RepositoryTestHelper {
 
     @Test
     void testDeleteUser_HasOwnedChannels() {
-        Long id = EitherAssert.assertRight(userService.registerUser("alice", "Strong1!", null)).userId();
+        Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         trxManager.run(trx -> insertChannel(trx, "General", trx.repoUsers().findById(id), true));
 
         Either<UserError, String> result = userService.deleteUser(id);
@@ -210,24 +209,25 @@ class UserServiceTest implements RepositoryTestHelper {
 
     @Test
     void testCreateToken_Success() {
-        userService.registerUser("alice", "Strong1!", null);
-        Either<UserError, TokenExternalInfo> result = userService.createToken("alice", "Strong1!");
+        userService.registerUser("dave", "Strong1!", null);
+        Either<UserError, TokenExternalInfo> result = userService.createToken("dave", "Strong1!");
 
         assertThat(EitherAssert.assertRight(result).tokenValue()).isNotNull();
     }
 
     @Test
     void testCreateToken_RateLimited() {
-        userService.registerUser("alice", "Strong1!", null);
-        rateLimitTriggered = true;
-        Either<UserError, TokenExternalInfo> result = userService.createToken("alice", "Strong1!");
+        userService.registerUser("dave", "Strong1!", null);
+        when(rateLimiter.isRateLimited(anyString(), anyString(), anyInt(), any())).thenReturn(true);
+
+        Either<UserError, TokenExternalInfo> result = userService.createToken("dave", "Strong1!");
 
         EitherAssert.assertLeft(result, UserError.RateLimitExceeded.class);
     }
 
     @Test
     void testGetUserByToken_Success() {
-        Long id = EitherAssert.assertRight(userService.registerUser("alice", "Strong1!", null)).userId();
+        Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         User user = userService.getUserByToken("token-" + id);
 
         assertThat(user).isNotNull();
@@ -236,7 +236,7 @@ class UserServiceTest implements RepositoryTestHelper {
 
     @Test
     void testRevokeToken_Success() {
-        Long id = EitherAssert.assertRight(userService.registerUser("alice", "Strong1!", null)).userId();
+        Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         String token = "token-" + id;
 
         assertThat(userService.getUserByToken(token)).isNotNull();
@@ -261,12 +261,12 @@ class UserServiceTest implements RepositoryTestHelper {
     @ParameterizedTest
     @NullAndEmptySource
     void testRegisterUser_InvalidPassword(String invalidPassword) {
-        EitherAssert.assertLeft(userService.registerUser("bob", invalidPassword, null));
+        EitherAssert.assertLeft(userService.registerUser("eve", invalidPassword, null));
     }
 
     @Test
     void testRegisterUser_InvitationNotFound() {
-        Either<UserError, TokenExternalInfo> result = userService.registerUser("bob", "Strong1!", "invalid-token");
+        Either<UserError, TokenExternalInfo> result = userService.registerUser("eve", "Strong1!", "invalid-token");
 
         EitherAssert.assertLeft(result, UserError.InvitationNotFound.class);
     }
@@ -281,13 +281,13 @@ class UserServiceTest implements RepositoryTestHelper {
     @ParameterizedTest
     @NullAndEmptySource
     void testUpdateUsername_InvalidUsername(String invalidUsername) {
-        Long id = EitherAssert.assertRight(userService.registerUser("alice", "Strong1!", null)).userId();
+        Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         EitherAssert.assertLeft(userService.updateUsername(id, invalidUsername, "Strong1!"));
     }
 
     @Test
     void testUpdateUsername_UsernameTooLong() {
-        Long id = EitherAssert.assertRight(userService.registerUser("alice", "Strong1!", null)).userId();
+        Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         String longName = "a".repeat(31);
 
         Either<UserError, User> result = userService.updateUsername(id, longName, "Strong1!");
@@ -305,13 +305,13 @@ class UserServiceTest implements RepositoryTestHelper {
     @ParameterizedTest
     @NullAndEmptySource
     void testUpdatePassword_InvalidPassword(String invalidPassword) {
-        Long id = EitherAssert.assertRight(userService.registerUser("alice", "Strong1!", null)).userId();
+        Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         EitherAssert.assertLeft(userService.updatePassword(id, "Strong1!", invalidPassword));
     }
 
     @Test
     void testUpdatePassword_InsecurePassword() {
-        Long id = EitherAssert.assertRight(userService.registerUser("alice", "Strong1!", null)).userId();
+        Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         Either<UserError, User> result = userService.updatePassword(id, "Strong1!", "weak");
 
         EitherAssert.assertLeft(result, UserError.InsecurePassword.class);
@@ -319,7 +319,7 @@ class UserServiceTest implements RepositoryTestHelper {
 
     @Test
     void testUpdatePassword_IncorrectOldPassword() {
-        Long id = EitherAssert.assertRight(userService.registerUser("alice", "Strong1!", null)).userId();
+        Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         Either<UserError, User> result = userService.updatePassword(id, "Wrong1!", "Stronger2@");
 
         EitherAssert.assertLeft(result, UserError.IncorrectPassword.class);
@@ -336,7 +336,7 @@ class UserServiceTest implements RepositoryTestHelper {
     @NullAndEmptySource
     void testCreateToken_InvalidCredentials(String invalidInput) {
         EitherAssert.assertLeft(userService.createToken(invalidInput, "Strong1!"));
-        EitherAssert.assertLeft(userService.createToken("alice", invalidInput));
+        EitherAssert.assertLeft(userService.createToken("dave", invalidInput));
     }
 
     @Test
@@ -348,8 +348,8 @@ class UserServiceTest implements RepositoryTestHelper {
 
     @Test
     void testCreateToken_IncorrectPassword() {
-        userService.registerUser("alice", "Strong1!", null);
-        Either<UserError, TokenExternalInfo> result = userService.createToken("alice", "Wrong1!");
+        userService.registerUser("dave", "Strong1!", null);
+        Either<UserError, TokenExternalInfo> result = userService.createToken("dave", "Wrong1!");
 
         EitherAssert.assertLeft(result, UserError.IncorrectPassword.class);
     }
@@ -361,7 +361,7 @@ class UserServiceTest implements RepositoryTestHelper {
 
     @Test
     void testGetUserByToken_BlacklistedToken() {
-        Long id = EitherAssert.assertRight(userService.registerUser("alice", "Strong1!", null)).userId();
+        Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         String token = "token-" + id;
 
         userService.revokeToken(token);
@@ -377,8 +377,8 @@ class UserServiceTest implements RepositoryTestHelper {
         Channel channel = trxManager.run(trx -> insertChannel(trx, "Secret", owner, false));
         trxManager.run(trx -> insertInvitation(trx, "inv-token", owner, channel, AccessType.READ_WRITE, LocalDateTime.now(clock).plusDays(1)));
 
-        userService.registerUser("bob", "Strong1!", "inv-token");
-        Either<UserError, TokenExternalInfo> result = userService.registerUser("charlie", "Strong1!", "inv-token");
+        userService.registerUser("eve", "Strong1!", "inv-token");
+        Either<UserError, TokenExternalInfo> result = userService.registerUser("frank", "Strong1!", "inv-token");
 
         EitherAssert.assertLeft(result, UserError.InvitationAlreadyUsed.class);
     }

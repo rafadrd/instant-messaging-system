@@ -4,6 +4,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.web.method.HandlerMethod;
 import pt.isel.domain.builders.UserBuilder;
 import pt.isel.domain.common.Either;
@@ -16,11 +20,11 @@ import pt.isel.services.users.UserService;
 import java.lang.reflect.Method;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class AuthenticationInterceptorTest {
 
     private static final String VALID_TOKEN = "valid-token";
@@ -28,12 +32,22 @@ class AuthenticationInterceptorTest {
     private static final String INVALID_TOKEN = "invalid-token";
     private static final String BEARER_INVALID_TOKEN = "Bearer " + INVALID_TOKEN;
 
+    @Mock
     private RequestTokenProcessor tokenProcessor;
+
+    @Mock
     private TicketService ticketService;
+
+    @Mock
     private UserService userService;
+
+    @InjectMocks
     private AuthenticationInterceptor interceptor;
 
+    @Mock
     private HttpServletRequest request;
+
+    @Mock
     private HttpServletResponse response;
 
     private HandlerMethod authHandlerMethod;
@@ -41,14 +55,6 @@ class AuthenticationInterceptorTest {
 
     @BeforeEach
     void setUp() throws NoSuchMethodException {
-        tokenProcessor = mock(RequestTokenProcessor.class);
-        ticketService = mock(TicketService.class);
-        userService = mock(UserService.class);
-        interceptor = new AuthenticationInterceptor(tokenProcessor, ticketService, userService);
-
-        request = mock(HttpServletRequest.class);
-        response = mock(HttpServletResponse.class);
-
         Method authMethod = DummyController.class.getMethod("requiresAuth", AuthenticatedUser.class);
         authHandlerMethod = new HandlerMethod(new DummyController(), authMethod);
 
@@ -94,7 +100,6 @@ class AuthenticationInterceptorTest {
     void testPreHandleAuthRequiredInvalidToken() {
         when(request.getHeader(AuthenticationInterceptor.NAME_AUTHORIZATION_HEADER)).thenReturn(BEARER_INVALID_TOKEN);
         when(tokenProcessor.processAuthorizationHeaderValue(BEARER_INVALID_TOKEN)).thenReturn(null);
-        when(request.getRequestURI()).thenReturn("/api/users/me");
 
         assertThat(interceptor.preHandle(request, response, authHandlerMethod)).isFalse();
         verify(response).setStatus(401);

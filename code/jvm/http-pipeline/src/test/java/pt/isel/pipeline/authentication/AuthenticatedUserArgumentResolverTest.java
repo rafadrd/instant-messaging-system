@@ -3,6 +3,9 @@ package pt.isel.pipeline.authentication;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.MethodParameter;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.ModelAndViewContainer;
@@ -13,16 +16,25 @@ import pt.isel.domain.users.User;
 import java.lang.reflect.Method;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
-import static org.mockito.Mockito.mock;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class AuthenticatedUserArgumentResolverTest {
 
     private AuthenticatedUserArgumentResolver resolver;
     private MethodParameter validParameter;
     private MethodParameter invalidParameter;
+
+    @Mock
+    private NativeWebRequest webRequest;
+
+    @Mock
+    private HttpServletRequest request;
+
+    @Mock
+    private ModelAndViewContainer mavContainer;
 
     @BeforeEach
     void setUp() throws NoSuchMethodException {
@@ -43,10 +55,6 @@ class AuthenticatedUserArgumentResolverTest {
 
     @Test
     void testResolveArgumentSuccess() {
-        NativeWebRequest webRequest = mock(NativeWebRequest.class);
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        ModelAndViewContainer mavContainer = mock(ModelAndViewContainer.class);
-
         User user = new UserBuilder().withId(1L).withUsername("alice").build();
         AuthenticatedUser authUser = new AuthenticatedUser(user, "token123");
 
@@ -60,33 +68,25 @@ class AuthenticatedUserArgumentResolverTest {
 
     @Test
     void testResolveArgumentThrowsWhenRequestIsNull() {
-        NativeWebRequest webRequest = mock(NativeWebRequest.class);
-        ModelAndViewContainer mavContainer = mock(ModelAndViewContainer.class);
-
         when(webRequest.getNativeRequest(HttpServletRequest.class)).thenReturn(null);
 
-        assertThatIllegalStateException()
-                .isThrownBy(() -> resolver.resolveArgument(validParameter, mavContainer, webRequest, null))
-                .withMessage("Failed to extract HttpServletRequest from NativeWebRequest.");
+        assertThatThrownBy(() -> resolver.resolveArgument(validParameter, mavContainer, webRequest, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Failed to extract HttpServletRequest from NativeWebRequest.");
     }
 
     @Test
     void testResolveArgumentThrowsWhenUserNotFoundInAttributes() {
-        NativeWebRequest webRequest = mock(NativeWebRequest.class);
-        HttpServletRequest request = mock(HttpServletRequest.class);
-        ModelAndViewContainer mavContainer = mock(ModelAndViewContainer.class);
-
         when(webRequest.getNativeRequest(HttpServletRequest.class)).thenReturn(request);
         when(request.getAttribute("AuthenticatedUserArgumentResolver")).thenReturn(null);
 
-        assertThatIllegalStateException()
-                .isThrownBy(() -> resolver.resolveArgument(validParameter, mavContainer, webRequest, null))
-                .withMessage("AuthenticatedUser not found in request attributes.");
+        assertThatThrownBy(() -> resolver.resolveArgument(validParameter, mavContainer, webRequest, null))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("AuthenticatedUser not found in request attributes.");
     }
 
     @Test
     void testAddAndGetUser() {
-        HttpServletRequest request = mock(HttpServletRequest.class);
         User user = new UserBuilder().withId(1L).withUsername("alice").build();
         AuthenticatedUser authUser = new AuthenticatedUser(user, "token123");
 

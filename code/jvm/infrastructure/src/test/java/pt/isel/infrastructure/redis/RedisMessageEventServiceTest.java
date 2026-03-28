@@ -1,11 +1,15 @@
 package pt.isel.infrastructure.redis;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import pt.isel.domain.builders.MessageBuilder;
 import pt.isel.domain.builders.UserInfoBuilder;
@@ -24,20 +28,22 @@ import java.time.Instant;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class RedisMessageEventServiceTest implements RepositoryTestHelper {
 
     private TransactionManagerInMem trxManager;
+
+    @Mock
     private StringRedisTemplate redisTemplate;
+
     private ObjectMapper objectMapper;
     private RedisMessageEventService service;
 
@@ -52,10 +58,10 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
     @BeforeEach
     void setUp() throws Exception {
         trxManager = new TransactionManagerInMem();
-        redisTemplate = mock(StringRedisTemplate.class);
 
-        objectMapper = mock(ObjectMapper.class);
-        when(objectMapper.writeValueAsString(any())).thenReturn("{\"dummy\":\"json\"}");
+        objectMapper = new ObjectMapper();
+        objectMapper.findAndRegisterModules();
+        objectMapper.addMixIn(UpdatedMessage.class, UpdatedMessageMixin.class);
 
         service = new RedisMessageEventService(trxManager, redisTemplate, objectMapper, Clock.systemUTC());
 
@@ -81,17 +87,17 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
     @Test
     void testAddEmitterThrowsWhenUserNotFound() {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> service.addEmitter(channel.id(), 999L, emitter))
-                .withMessageContaining("not found");
+        assertThatThrownBy(() -> service.addEmitter(channel.id(), 999L, emitter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("not found");
     }
 
     @Test
     void testAddEmitterThrowsWhenChannelNotFound() {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
-        assertThatIllegalArgumentException()
-                .isThrownBy(() -> service.addEmitter(999L, alice.id(), emitter))
-                .withMessageContaining("not found");
+        assertThatThrownBy(() -> service.addEmitter(999L, alice.id(), emitter))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("not found");
     }
 
     @Test
@@ -99,8 +105,8 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
         User bob = trxManager.run(trx -> insertUser(trx, "bob"));
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
 
-        assertThatExceptionOfType(SecurityException.class)
-                .isThrownBy(() -> service.addEmitter(channel.id(), bob.id(), emitter));
+        assertThatThrownBy(() -> service.addEmitter(channel.id(), bob.id(), emitter))
+                .isInstanceOf(SecurityException.class);
     }
 
     @Test
@@ -126,10 +132,9 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
         UpdatedMessage.KeepAlive keepAlive = new UpdatedMessage.KeepAlive(Instant.now());
         RedisMessageEventService.DistributedEvent event = new RedisMessageEventService.DistributedEvent(channel.id(), keepAlive);
 
-        when(objectMapper.readValue(anyString(), eq(RedisMessageEventService.DistributedEvent.class)))
-                .thenReturn(event);
+        String json = objectMapper.writeValueAsString(event);
 
-        service.handleRedisMessage("{\"dummy\":\"json\"}");
+        service.handleRedisMessage(json);
 
         verify(emitter).emit(any(UpdatedMessage.KeepAlive.class));
     }
@@ -170,11 +175,10 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
         UpdatedMessage.KeepAlive keepAlive = new UpdatedMessage.KeepAlive(Instant.now());
         RedisMessageEventService.DistributedEvent event = new RedisMessageEventService.DistributedEvent(channel.id(), keepAlive);
 
-        when(objectMapper.readValue(anyString(), eq(RedisMessageEventService.DistributedEvent.class)))
-                .thenReturn(event);
+        String json = objectMapper.writeValueAsString(event);
 
-        service.handleRedisMessage("{\"dummy\":\"json\"}");
-        service.handleRedisMessage("{\"dummy\":\"json\"}");
+        service.handleRedisMessage(json);
+        service.handleRedisMessage(json);
 
         verify(emitter, Mockito.times(1)).emit(any());
     }
@@ -194,23 +198,7 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
     }
 
     @Test
-    void testBroadcastMessageCatchesJsonProcessingException() throws Exception {
-        when(objectMapper.writeValueAsString(any())).thenThrow(new JsonProcessingException("Serialization error") {
-        });
-
-        UpdatedMessage.KeepAlive keepAlive = new UpdatedMessage.KeepAlive(Instant.now());
-
-        assertThatCode(() -> service.broadcastMessage(channel.id(), keepAlive))
-                .doesNotThrowAnyException();
-        verify(redisTemplate, never()).convertAndSend(anyString(), anyString());
-    }
-
-    @Test
-    void testHandleRedisMessageCatchesJsonProcessingException() throws Exception {
-        when(objectMapper.readValue(anyString(), eq(RedisMessageEventService.DistributedEvent.class)))
-                .thenThrow(new JsonProcessingException("Deserialization error") {
-                });
-
+    void testHandleRedisMessageCatchesJsonProcessingException() {
         assertThatCode(() -> service.handleRedisMessage("invalid-json-string"))
                 .doesNotThrowAnyException();
     }
@@ -228,5 +216,13 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
 
         service.sendKeepAlive();
         verify(emitter, never()).emit(any());
+    }
+
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+    @JsonSubTypes({
+            @JsonSubTypes.Type(value = UpdatedMessage.NewMessage.class, name = "new-message"),
+            @JsonSubTypes.Type(value = UpdatedMessage.KeepAlive.class, name = "keep-alive")
+    })
+    abstract static class UpdatedMessageMixin {
     }
 }

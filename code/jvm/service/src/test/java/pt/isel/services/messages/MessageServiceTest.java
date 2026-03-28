@@ -2,15 +2,17 @@ package pt.isel.services.messages;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import pt.isel.domain.channels.Channel;
 import pt.isel.domain.common.Either;
 import pt.isel.domain.common.EitherAssert;
 import pt.isel.domain.common.MessageError;
 import pt.isel.domain.messages.Message;
 import pt.isel.domain.messages.UpdatedMessage;
-import pt.isel.domain.messages.UpdatedMessageEmitter;
 import pt.isel.domain.users.User;
 import pt.isel.services.AbstractServiceTest;
 import pt.isel.services.common.RateLimiter;
@@ -18,34 +20,35 @@ import pt.isel.services.common.RateLimiter;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
+@ExtendWith(MockitoExtension.class)
 class MessageServiceTest extends AbstractServiceTest {
+
+    @Mock
+    private MessageEventService messageEventService;
+
+    @Mock
+    private RateLimiter rateLimiter;
 
     private MessageService messageService;
     private Channel channel;
-    private boolean rateLimitTriggered;
-    private boolean broadcastTriggered;
 
     @BeforeEach
     void setUp() {
         super.setUpBaseState();
-        rateLimitTriggered = false;
-        broadcastTriggered = false;
 
-        RateLimiter rateLimiter = (action, identifier, limit, window) -> rateLimitTriggered;
+        lenient().when(rateLimiter.isRateLimited(anyString(), anyString(), anyInt(), any())).thenReturn(false);
 
-        MessageEventService eventService = new MessageEventService() {
-            @Override
-            public void addEmitter(Long channelId, Long userId, UpdatedMessageEmitter emitter) {
-            }
-
-            @Override
-            public void broadcastMessage(Long channelId, UpdatedMessage signal) {
-                broadcastTriggered = true;
-            }
-        };
-
-        messageService = new MessageService(trxManager, eventService, rateLimiter, clock);
+        messageService = new MessageService(trxManager, messageEventService, rateLimiter, clock);
         channel = createChannelWithMembers("General", true);
     }
 
@@ -56,16 +59,18 @@ class MessageServiceTest extends AbstractServiceTest {
         Message msg = EitherAssert.assertRight(result);
         assertThat(msg.content()).isEqualTo("Hello World");
         assertThat(msg.user().id()).isEqualTo(alice.id());
-        assertThat(broadcastTriggered).isTrue();
+
+        verify(messageEventService).broadcastMessage(eq(channel.id()), any(UpdatedMessage.NewMessage.class));
     }
 
     @Test
     void testCreateMessage_RateLimited() {
-        rateLimitTriggered = true;
+        when(rateLimiter.isRateLimited(anyString(), anyString(), anyInt(), any())).thenReturn(true);
+
         Either<MessageError, Message> result = messageService.createMessage("Hello", alice.id(), channel.id());
 
         EitherAssert.assertLeft(result, MessageError.RateLimitExceeded.class);
-        assertThat(broadcastTriggered).isFalse();
+        verify(messageEventService, never()).broadcastMessage(anyLong(), any());
     }
 
     @ParameterizedTest
