@@ -2,6 +2,7 @@ package pt.isel.host;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -35,7 +36,7 @@ class AppInstantMessagingIntegrationTest extends AbstractIntegrationTest {
 
     @Test
     void testMainMethodStartsApplicationSuccessfully() {
-        assertThatCode(() -> AppInstantMessaging.main(new String[]{
+        assertThatCode(() -> SpringApplication.run(AppInstantMessaging.class,
                 "--spring.main.web-application-type=none",
                 "--spring.flyway.enabled=false",
                 "--jwt.secret=my-32-character-ultra-secure-secret-key-for-tests",
@@ -44,7 +45,7 @@ class AppInstantMessagingIntegrationTest extends AbstractIntegrationTest {
                 "--spring.datasource.password=" + postgres.getPassword(),
                 "--spring.data.redis.host=" + redis.getHost(),
                 "--spring.data.redis.port=" + redis.getFirstMappedPort()
-        })).doesNotThrowAnyException();
+        )).doesNotThrowAnyException();
     }
 
     @Test
