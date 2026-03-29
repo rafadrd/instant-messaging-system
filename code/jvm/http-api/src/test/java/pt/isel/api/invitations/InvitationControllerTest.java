@@ -32,13 +32,13 @@ class InvitationControllerTest extends AbstractControllerTest {
     private InvitationService invitationService;
 
     @Test
-    void testUnauthorizedAccess() throws Exception {
+    void GetInvitations_WithoutAuth_ReturnsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/channels/10/invitations"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void testCreateInvitation() throws Exception {
+    void CreateInvitation_ValidInput_ReturnsCreated() throws Exception {
         LocalDateTime expiry = LocalDateTime.now().plusDays(1);
         InvitationInput input = new InvitationInput(AccessType.READ_ONLY, expiry);
         Invitation invitation = new InvitationBuilder()
@@ -57,7 +57,7 @@ class InvitationControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testGetInvitationsForChannel() throws Exception {
+    void GetInvitationsForChannel_ValidId_ReturnsInvitations() throws Exception {
         when(invitationService.getInvitationsForChannel(1L, 10L)).thenReturn(Either.success(List.of()));
 
         getWithAuth("/api/channels/10/invitations")
@@ -66,7 +66,7 @@ class InvitationControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testRevokeInvitation() throws Exception {
+    void RevokeInvitation_ValidId_ReturnsOk() throws Exception {
         when(invitationService.revokeInvitation(1L, 10L, 100L)).thenReturn(Either.success("Revoked"));
 
         postWithAuth("/api/channels/10/invitations/100/revoke")
@@ -74,7 +74,7 @@ class InvitationControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testCreateInvitationValidationFailure() throws Exception {
+    void CreateInvitation_InvalidInput_ReturnsBadRequest() throws Exception {
         String invalidJson = "{}";
 
         mockMvc.perform(post("/api/channels/10/invitations")

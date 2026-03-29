@@ -46,13 +46,13 @@ class ChannelControllerTest extends AbstractControllerTest {
     private MessageEventService messageEventService;
 
     @Test
-    void testUnauthorizedAccess() throws Exception {
+    void GetChannel_WithoutAuth_ReturnsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/channels/10"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void testGetChannels() throws Exception {
+    void GetChannels_ValidRequest_ReturnsChannels() throws Exception {
         when(channelService.searchChannels(anyString(), anyInt(), anyInt())).thenReturn(Either.success(List.of()));
 
         getWithAuth("/api/channels")
@@ -61,7 +61,7 @@ class ChannelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testCreateChannel() throws Exception {
+    void CreateChannel_ValidInput_ReturnsCreated() throws Exception {
         ChannelInput input = new ChannelInput("General", true);
         Channel channel = new ChannelBuilder().withId(10L).withName("General").build();
 
@@ -74,7 +74,7 @@ class ChannelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testGetChannelById() throws Exception {
+    void GetChannelById_ValidId_ReturnsChannel() throws Exception {
         Channel channel = new ChannelBuilder().withId(10L).build();
         when(channelService.getChannelById(10L)).thenReturn(Either.success(channel));
 
@@ -84,7 +84,7 @@ class ChannelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testEditChannel() throws Exception {
+    void EditChannel_ValidInput_ReturnsUpdatedChannel() throws Exception {
         EditChannelInput input = new EditChannelInput("NewName", false);
         Channel channel = new ChannelBuilder().withId(10L).withName("NewName").withIsPublic(false).build();
 
@@ -96,7 +96,7 @@ class ChannelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testDeleteChannel() throws Exception {
+    void DeleteChannel_ValidId_ReturnsOk() throws Exception {
         when(channelService.deleteChannel(1L, 10L)).thenReturn(Either.success("Deleted"));
 
         deleteWithAuth("/api/channels/10")
@@ -104,7 +104,7 @@ class ChannelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testJoinChannel() throws Exception {
+    void JoinChannel_ValidId_ReturnsOk() throws Exception {
         when(channelService.joinPublicChannel(1L, 10L)).thenReturn(Either.success("Joined"));
 
         postWithAuth("/api/channels/10/join")
@@ -112,7 +112,7 @@ class ChannelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testJoinChannelByToken() throws Exception {
+    void JoinChannelByToken_ValidToken_ReturnsOk() throws Exception {
         JoinByTokenInput input = new JoinByTokenInput("token123");
         when(channelService.joinPrivateChannel(1L, "token123")).thenReturn(Either.success("Joined"));
 
@@ -121,7 +121,7 @@ class ChannelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testLeaveChannel() throws Exception {
+    void LeaveChannel_ValidId_ReturnsOk() throws Exception {
         when(channelService.leaveChannel(10L, 1L)).thenReturn(Either.success("Left"));
 
         postWithAuth("/api/channels/10/leave")
@@ -129,7 +129,7 @@ class ChannelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testGetMembers() throws Exception {
+    void GetMembers_ValidId_ReturnsMembers() throws Exception {
         when(channelService.getUsersInChannel(eq(10L), anyInt(), anyInt())).thenReturn(Either.success(List.of()));
 
         getWithAuth("/api/channels/10/members")
@@ -138,7 +138,7 @@ class ChannelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testGetAccessType() throws Exception {
+    void GetAccessType_ValidIds_ReturnsAccessType() throws Exception {
         when(channelService.getAccessType(1L, 2L, 10L)).thenReturn(Either.success(AccessType.READ_ONLY));
 
         getWithAuth("/api/channels/10/members/2")
@@ -147,7 +147,7 @@ class ChannelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testEditMemberAccess() throws Exception {
+    void EditMemberAccess_ValidInput_ReturnsUpdatedMember() throws Exception {
         EditMemberInput input = new EditMemberInput(AccessType.READ_WRITE);
         ChannelMember member = new ChannelMemberBuilder()
                 .withId(1L)
@@ -163,7 +163,7 @@ class ChannelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testGetSocketTicket() throws Exception {
+    void GetSocketTicket_ValidId_ReturnsTicket() throws Exception {
         when(channelService.getAccessType(1L, 1L, 10L)).thenReturn(Either.success(AccessType.READ_WRITE));
         when(ticketService.createTicket(1L)).thenReturn("ticket-uuid");
 
@@ -173,7 +173,7 @@ class ChannelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testListenSse() throws Exception {
+    void Listen_ValidId_ReturnsSseEmitter() throws Exception {
         when(channelService.getAccessType(1L, 1L, 10L)).thenReturn(Either.success(AccessType.READ_WRITE));
 
         getWithAuth("/api/channels/10/listen")
@@ -183,7 +183,7 @@ class ChannelControllerTest extends AbstractControllerTest {
 
     @ParameterizedTest
     @NullAndEmptySource
-    void testCreateChannelValidationFailure_Empty(String invalidName) throws Exception {
+    void CreateChannel_EmptyName_ReturnsBadRequest(String invalidName) throws Exception {
         ChannelInput input = new ChannelInput(invalidName, true);
 
         postWithAuth("/api/channels", input)
@@ -191,7 +191,7 @@ class ChannelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testCreateChannelValidationFailure_TooLong() throws Exception {
+    void CreateChannel_NameTooLong_ReturnsBadRequest() throws Exception {
         ChannelInput input = new ChannelInput("a".repeat(31), true);
 
         postWithAuth("/api/channels", input)
@@ -200,7 +200,7 @@ class ChannelControllerTest extends AbstractControllerTest {
 
     @ParameterizedTest
     @NullAndEmptySource
-    void testJoinChannelByTokenValidationFailure(String invalidToken) throws Exception {
+    void JoinChannelByToken_EmptyToken_ReturnsBadRequest(String invalidToken) throws Exception {
         JoinByTokenInput input = new JoinByTokenInput(invalidToken);
 
         postWithAuth("/api/channels/join-by-token", input)
@@ -208,7 +208,7 @@ class ChannelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testEditMemberAccessValidationFailure() throws Exception {
+    void EditMemberAccess_InvalidInput_ReturnsBadRequest() throws Exception {
         String invalidJson = "{}";
 
         mockMvc.perform(put("/api/channels/10/members/2")
@@ -219,7 +219,7 @@ class ChannelControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testListenSseCatchesException() throws Exception {
+    void Listen_ServiceThrowsException_CompletesWithError() throws Exception {
         when(channelService.getAccessType(1L, 1L, 10L)).thenReturn(Either.success(AccessType.READ_WRITE));
 
         Mockito.doThrow(new RuntimeException("Redis connection failed"))

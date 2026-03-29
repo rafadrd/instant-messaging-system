@@ -34,13 +34,13 @@ class UserControllerTest extends AbstractControllerTest {
     private ChannelService channelService;
 
     @Test
-    void testUnauthorizedAccess() throws Exception {
+    void GetMe_WithoutAuth_ReturnsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/users/me"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void testRegisterUserSuccess() throws Exception {
+    void RegisterUser_ValidInput_ReturnsCreated() throws Exception {
         RegisterInput input = new RegisterInput("alice", "Strong1!", null);
         TokenExternalInfo tokenInfo = new TokenExternalInfo("token123", Instant.now(), 1L);
 
@@ -55,7 +55,7 @@ class UserControllerTest extends AbstractControllerTest {
 
     @ParameterizedTest
     @NullAndEmptySource
-    void testRegisterUserValidationFailure_InvalidUsername(String invalidUsername) throws Exception {
+    void RegisterUser_InvalidUsername_ReturnsBadRequest(String invalidUsername) throws Exception {
         RegisterInput input = new RegisterInput(invalidUsername, "Strong1!", null);
 
         postWithoutAuth("/api/auth/register", input)
@@ -64,7 +64,7 @@ class UserControllerTest extends AbstractControllerTest {
 
     @ParameterizedTest
     @NullAndEmptySource
-    void testRegisterUserValidationFailure_InvalidPassword(String invalidPassword) throws Exception {
+    void RegisterUser_InvalidPassword_ReturnsBadRequest(String invalidPassword) throws Exception {
         RegisterInput input = new RegisterInput("alice", invalidPassword, null);
 
         postWithoutAuth("/api/auth/register", input)
@@ -72,7 +72,7 @@ class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testLoginUserSuccess() throws Exception {
+    void LoginUser_ValidInput_ReturnsOk() throws Exception {
         UserInput input = new UserInput("alice", "Strong1!");
         TokenExternalInfo tokenInfo = new TokenExternalInfo("token123", Instant.now(), 1L);
 
@@ -87,7 +87,7 @@ class UserControllerTest extends AbstractControllerTest {
 
     @ParameterizedTest
     @NullAndEmptySource
-    void testLoginUserValidationFailure(String invalidInput) throws Exception {
+    void LoginUser_InvalidInput_ReturnsBadRequest(String invalidInput) throws Exception {
         UserInput input = new UserInput("alice", invalidInput);
 
         postWithoutAuth("/api/auth/login", input)
@@ -95,7 +95,7 @@ class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testLogoutUser() throws Exception {
+    void LogoutUser_ValidToken_ReturnsNoContent() throws Exception {
         postWithAuth("/api/auth/logout")
                 .andExpect(status().isNoContent());
 
@@ -103,7 +103,7 @@ class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testUserHome() throws Exception {
+    void UserHome_ValidToken_ReturnsUserInfo() throws Exception {
         getWithAuth("/api/users/me")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
@@ -112,7 +112,7 @@ class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testUpdateUsername() throws Exception {
+    void UpdateUsername_ValidInput_ReturnsUpdatedUser() throws Exception {
         UpdateUsernameInput input = new UpdateUsernameInput("new_alice", "Strong1!");
         User updatedUser = new UserBuilder().withId(1L).withUsername("new_alice").build();
 
@@ -124,7 +124,7 @@ class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testUpdatePassword() throws Exception {
+    void UpdatePassword_ValidInput_ReturnsOk() throws Exception {
         UpdatePasswordInput input = new UpdatePasswordInput("Strong1!", "Stronger2@");
         User updatedUser = new UserBuilder().withId(1L).withPasswordValidation(new PasswordValidationInfo("newhash")).build();
 
@@ -136,7 +136,7 @@ class UserControllerTest extends AbstractControllerTest {
 
     @ParameterizedTest
     @NullAndEmptySource
-    void testUpdatePasswordValidationFailure(String invalidPassword) throws Exception {
+    void UpdatePassword_InvalidInput_ReturnsBadRequest(String invalidPassword) throws Exception {
         UpdatePasswordInput input = new UpdatePasswordInput("OldPassword1!", invalidPassword);
 
         putWithAuth("/api/users/me/password", input)
@@ -144,7 +144,7 @@ class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testGetUserChannels() throws Exception {
+    void GetUserChannels_ValidToken_ReturnsChannels() throws Exception {
         when(channelService.getJoinedChannels(eq(1L), eq(50), eq(0))).thenReturn(Either.success(List.of()));
 
         getWithAuth("/api/users/me/channels")
@@ -153,7 +153,7 @@ class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testDeleteUser() throws Exception {
+    void DeleteUser_ValidToken_ReturnsOk() throws Exception {
         when(userService.deleteUser(1L)).thenReturn(Either.success("Deleted"));
 
         deleteWithAuth("/api/users/me")

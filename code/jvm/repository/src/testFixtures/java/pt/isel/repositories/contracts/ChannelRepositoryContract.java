@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public interface ChannelRepositoryContract extends RepositoryTestHelper {
 
     @Test
-    default void testCreateAndFindById() {
+    default void Create_ValidInput_CreatesAndFindsById() {
         getTxManager().run(trx -> {
             User owner = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", owner, true);
@@ -30,7 +30,7 @@ public interface ChannelRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testFindByName() {
+    default void FindByName_ValidName_ReturnsChannel() {
         getTxManager().run(trx -> {
             User owner = insertUser(trx, "alice");
             insertChannel(trx, "Random", owner, true);
@@ -45,7 +45,7 @@ public interface ChannelRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testFindAll() {
+    default void FindAll_HasRecords_ReturnsAllRecords() {
         getTxManager().run(trx -> {
             User owner = insertUser(trx, "alice");
 
@@ -59,7 +59,7 @@ public interface ChannelRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testFindAllByOwner() {
+    default void FindAllByOwner_ValidOwnerId_ReturnsChannels() {
         getTxManager().run(trx -> {
             User owner1 = insertUser(trx, "alice");
             User owner2 = insertUser(trx, "bob");
@@ -78,7 +78,7 @@ public interface ChannelRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testFindAllPublicChannelsWithPagination() {
+    default void FindAllPublicChannels_ValidPagination_ReturnsChannels() {
         getTxManager().run(trx -> {
             User owner = insertUser(trx, "alice");
 
@@ -100,7 +100,7 @@ public interface ChannelRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testSearchByName() {
+    default void SearchByName_ValidQuery_ReturnsMatchingChannels() {
         getTxManager().run(trx -> {
             User owner = insertUser(trx, "alice");
 
@@ -117,7 +117,7 @@ public interface ChannelRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testSaveUpdatesChannel() {
+    default void Save_UpdatedChannel_UpdatesRecord() {
         getTxManager().run(trx -> {
             User owner = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "OldName", owner, true);
@@ -138,7 +138,7 @@ public interface ChannelRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testDeleteById() {
+    default void DeleteById_ValidId_DeletesRecord() {
         getTxManager().run(trx -> {
             User owner = insertUser(trx, "alice");
             Channel c1 = insertChannel(trx, "C1", owner, true);
@@ -150,7 +150,7 @@ public interface ChannelRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testClear() {
+    default void Clear_HasRecords_RemovesAllRecords() {
         getTxManager().run(trx -> {
             User owner = insertUser(trx, "alice");
             insertChannel(trx, "C1", owner, true);

@@ -39,7 +39,7 @@ class PipelineConfigurerTest {
     }
 
     @Test
-    void testAddInterceptors() {
+    void AddInterceptors_ValidRegistry_AddsInterceptor() {
         InterceptorRegistry registry = mock(InterceptorRegistry.class);
 
         configurer.addInterceptors(registry);
@@ -48,7 +48,7 @@ class PipelineConfigurerTest {
     }
 
     @Test
-    void testAddArgumentResolvers() {
+    void AddArgumentResolvers_ValidList_AddsResolver() {
         List<HandlerMethodArgumentResolver> resolvers = new ArrayList<>();
 
         configurer.addArgumentResolvers(resolvers);
@@ -57,7 +57,7 @@ class PipelineConfigurerTest {
     }
 
     @Test
-    void testAddCorsMappings() {
+    void AddCorsMappings_ValidRegistry_AddsMappings() {
         CorsRegistry registry = mock(CorsRegistry.class);
         CorsRegistration registration = mock(CorsRegistration.class);
 

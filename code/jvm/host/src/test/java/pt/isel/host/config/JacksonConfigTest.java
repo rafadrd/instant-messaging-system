@@ -23,7 +23,7 @@ class JacksonConfigTest {
     private ObjectMapper objectMapper;
 
     @Test
-    void testSerializeAndDeserializeNewMessage() throws Exception {
+    void SerializeDeserialize_NewMessage_MaintainsType() throws Exception {
         Message message = new MessageBuilder()
                 .withId(100L)
                 .withContent("Hello World")
@@ -48,7 +48,7 @@ class JacksonConfigTest {
     }
 
     @Test
-    void testSerializeAndDeserializeKeepAlive() throws Exception {
+    void SerializeDeserialize_KeepAlive_MaintainsType() throws Exception {
         Instant now = Instant.now();
         UpdatedMessage.KeepAlive keepAlive = new UpdatedMessage.KeepAlive(now);
 

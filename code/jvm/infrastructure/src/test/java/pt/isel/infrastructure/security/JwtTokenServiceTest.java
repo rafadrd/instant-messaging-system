@@ -32,13 +32,13 @@ class JwtTokenServiceTest {
     }
 
     @Test
-    void testInitThrowsWeakKeyExceptionForShortSecret() {
+    void Init_ShortSecret_ThrowsException() {
         JwtTokenService service = new JwtTokenService(INVALID_SECRET, CLOCK);
         assertThatThrownBy(service::init).isInstanceOf(WeakKeyException.class);
     }
 
     @Test
-    void testCreateAndValidateTokenSuccess() {
+    void CreateAndValidateToken_ValidInput_ReturnsParsedToken() {
         JwtTokenService service = new JwtTokenService(VALID_SECRET, CLOCK);
         service.init();
 
@@ -59,7 +59,7 @@ class JwtTokenServiceTest {
     }
 
     @Test
-    void testValidateTokenReturnsNullForInvalidToken() {
+    void ValidateToken_InvalidToken_ReturnsNull() {
         JwtTokenService service = new JwtTokenService(VALID_SECRET, CLOCK);
         service.init();
 
@@ -68,7 +68,7 @@ class JwtTokenServiceTest {
     }
 
     @Test
-    void testValidateTokenReturnsNullForTamperedToken() {
+    void ValidateToken_TamperedToken_ReturnsNull() {
         JwtTokenService service = new JwtTokenService(VALID_SECRET, CLOCK);
         service.init();
 
@@ -80,7 +80,7 @@ class JwtTokenServiceTest {
     }
 
     @Test
-    void testValidateTokenWithNonNumericSubject() {
+    void ValidateToken_NonNumericSubject_ReturnsNull() {
         JwtTokenService service = new JwtTokenService(VALID_SECRET, CLOCK);
         service.init();
 
@@ -96,7 +96,7 @@ class JwtTokenServiceTest {
     }
 
     @Test
-    void testValidateTokenMissingJti() {
+    void ValidateToken_MissingJti_ReturnsNull() {
         JwtTokenService service = new JwtTokenService(VALID_SECRET, CLOCK);
         service.init();
 
@@ -111,7 +111,7 @@ class JwtTokenServiceTest {
     }
 
     @Test
-    void testValidateTokenMissingSubject() {
+    void ValidateToken_MissingSubject_ReturnsNull() {
         JwtTokenService service = new JwtTokenService(VALID_SECRET, CLOCK);
         service.init();
 
@@ -126,7 +126,7 @@ class JwtTokenServiceTest {
     }
 
     @Test
-    void testValidateTokenExpired() {
+    void ValidateToken_ExpiredToken_ReturnsNull() {
         JwtTokenService service = new JwtTokenService(VALID_SECRET, CLOCK);
         service.init();
 

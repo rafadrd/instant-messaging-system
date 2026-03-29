@@ -53,7 +53,7 @@ class MessageServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testCreateMessage_Success() {
+    void CreateMessage_ValidInput_ReturnsSuccess() {
         Either<MessageError, Message> result = messageService.createMessage("Hello World", alice.id(), channel.id());
 
         Message msg = EitherAssert.assertRight(result);
@@ -64,7 +64,7 @@ class MessageServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testCreateMessage_RateLimited() {
+    void CreateMessage_RateLimited_ReturnsLeft() {
         when(rateLimiter.isRateLimited(anyString(), anyString(), anyInt(), any())).thenReturn(true);
 
         Either<MessageError, Message> result = messageService.createMessage("Hello", alice.id(), channel.id());
@@ -75,12 +75,12 @@ class MessageServiceTest extends AbstractServiceTest {
 
     @ParameterizedTest
     @NullAndEmptySource
-    void testCreateMessage_EmptyContent(String invalidContent) {
+    void CreateMessage_EmptyContent_ReturnsLeft(String invalidContent) {
         EitherAssert.assertLeft(messageService.createMessage(invalidContent, alice.id(), channel.id()));
     }
 
     @Test
-    void testCreateMessage_ContentTooLong() {
+    void CreateMessage_ContentTooLong_ReturnsLeft() {
         String longMsg = "a".repeat(1001);
         Either<MessageError, Message> result = messageService.createMessage(longMsg, alice.id(), channel.id());
 
@@ -88,14 +88,14 @@ class MessageServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testCreateMessage_UserNotAuthorized() {
+    void CreateMessage_UserNotAuthorized_ReturnsLeft() {
         Either<MessageError, Message> result = messageService.createMessage("Hello", charlie.id(), channel.id());
 
         EitherAssert.assertLeft(result, MessageError.UserNotAuthorized.class);
     }
 
     @Test
-    void testGetMessagesInChannel_Success() {
+    void GetMessagesInChannel_ValidInput_ReturnsSuccess() {
         messageService.createMessage("Msg 1", alice.id(), channel.id());
         messageService.createMessage("Msg 2", bob.id(), channel.id());
 
@@ -105,13 +105,13 @@ class MessageServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testGetMessagesInChannel_InvalidPagination() {
+    void GetMessagesInChannel_InvalidPagination_ReturnsLeft() {
         EitherAssert.assertLeft(messageService.getMessagesInChannel(alice.id(), channel.id(), 0, 0));
         EitherAssert.assertLeft(messageService.getMessagesInChannel(alice.id(), channel.id(), 10, -1));
     }
 
     @Test
-    void testGetMessagesInChannel_UserNotInChannel() {
+    void GetMessagesInChannel_UserNotInChannel_ReturnsLeft() {
         User dave = trxManager.run(trx -> insertUser(trx, "dave"));
 
         Either<MessageError, List<Message>> result = messageService.getMessagesInChannel(dave.id(), channel.id(), 10, 0);
@@ -120,21 +120,21 @@ class MessageServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testCreateMessage_UserNotFound() {
+    void CreateMessage_UserNotFound_ReturnsLeft() {
         Either<MessageError, Message> result = messageService.createMessage("Hello", 999L, channel.id());
 
         EitherAssert.assertLeft(result, MessageError.UserNotFound.class);
     }
 
     @Test
-    void testCreateMessage_ChannelNotFound() {
+    void CreateMessage_ChannelNotFound_ReturnsLeft() {
         Either<MessageError, Message> result = messageService.createMessage("Hello", alice.id(), 999L);
 
         EitherAssert.assertLeft(result, MessageError.ChannelNotFound.class);
     }
 
     @Test
-    void testCreateMessage_UserNotInChannel() {
+    void CreateMessage_UserNotInChannel_ReturnsLeft() {
         User dave = trxManager.run(trx -> insertUser(trx, "dave"));
         Either<MessageError, Message> result = messageService.createMessage("Hello", dave.id(), channel.id());
 
@@ -142,7 +142,7 @@ class MessageServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testGetMessagesInChannel_ChannelNotFound() {
+    void GetMessagesInChannel_ChannelNotFound_ReturnsLeft() {
         Either<MessageError, List<Message>> result = messageService.getMessagesInChannel(alice.id(), 999L, 10, 0);
 
         EitherAssert.assertLeft(result, MessageError.ChannelNotFound.class);

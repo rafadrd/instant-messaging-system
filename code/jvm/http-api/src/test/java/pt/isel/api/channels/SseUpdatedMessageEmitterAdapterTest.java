@@ -29,7 +29,7 @@ class SseUpdatedMessageEmitterAdapterTest {
     private SseUpdatedMessageEmitterAdapter adapter;
 
     @Test
-    void testEmitNewMessage() throws Exception {
+    void Emit_NewMessage_SendsEvent() throws Exception {
         Message msg = new MessageBuilder().withId(10L).withContent("Hello").build();
 
         adapter.emit(new UpdatedMessage.NewMessage(msg));
@@ -38,20 +38,20 @@ class SseUpdatedMessageEmitterAdapterTest {
     }
 
     @Test
-    void testEmitKeepAlive() throws Exception {
+    void Emit_KeepAlive_SendsEvent() throws Exception {
         adapter.emit(new UpdatedMessage.KeepAlive(Instant.now()));
 
         verify(mockEmitter).send(any(SseEmitter.SseEventBuilder.class));
     }
 
     @Test
-    void testComplete() {
+    void Complete_ValidState_CompletesEmitter() {
         assertThatCode(adapter::complete).doesNotThrowAnyException();
         verify(mockEmitter).complete();
     }
 
     @Test
-    void testEmitCatchesExceptionAndCompletesWithError() throws Exception {
+    void Emit_ThrowsException_CompletesWithError() throws Exception {
         Mockito.doThrow(new IOException("Broken pipe")).when(mockEmitter).send(any(SseEmitter.SseEventBuilder.class));
 
         assertThatCode(() -> adapter.emit(new UpdatedMessage.KeepAlive(Instant.now()))).doesNotThrowAnyException();
@@ -60,7 +60,7 @@ class SseUpdatedMessageEmitterAdapterTest {
     }
 
     @Test
-    void testLifecycleCallbacksAreDelegated() {
+    void LifecycleCallbacks_ValidCallbacks_DelegatesToEmitter() {
         Runnable completionCallback = () -> {
         };
         Consumer<Throwable> errorCallback = e -> {

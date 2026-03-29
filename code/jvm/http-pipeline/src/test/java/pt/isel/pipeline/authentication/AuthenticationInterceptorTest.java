@@ -63,19 +63,19 @@ class AuthenticationInterceptorTest {
     }
 
     @Test
-    void testPreHandleNotHandlerMethod() {
+    void PreHandle_NotHandlerMethod_ReturnsTrue() {
         Object nonHandlerMethod = new Object();
         assertThat(interceptor.preHandle(request, response, nonHandlerMethod)).isTrue();
     }
 
     @Test
-    void testPreHandleNoAuthRequired() {
+    void PreHandle_NoAuthRequired_ReturnsTrue() {
         assertThat(interceptor.preHandle(request, response, noAuthHandlerMethod)).isTrue();
         verify(request, never()).getHeader(AuthenticationInterceptor.NAME_AUTHORIZATION_HEADER);
     }
 
     @Test
-    void testPreHandleAuthRequiredValidToken() {
+    void PreHandle_ValidToken_ReturnsTrue() {
         User user = new UserBuilder().withId(1L).withUsername("alice").build();
         AuthenticatedUser authUser = new AuthenticatedUser(user, VALID_TOKEN);
 
@@ -87,7 +87,7 @@ class AuthenticationInterceptorTest {
     }
 
     @Test
-    void testPreHandleAuthRequiredMissingToken() {
+    void PreHandle_MissingToken_ReturnsFalse() {
         when(request.getHeader(AuthenticationInterceptor.NAME_AUTHORIZATION_HEADER)).thenReturn(null);
         when(request.getRequestURI()).thenReturn("/api/users/me");
 
@@ -97,7 +97,7 @@ class AuthenticationInterceptorTest {
     }
 
     @Test
-    void testPreHandleAuthRequiredInvalidToken() {
+    void PreHandle_InvalidToken_ReturnsFalse() {
         when(request.getHeader(AuthenticationInterceptor.NAME_AUTHORIZATION_HEADER)).thenReturn(BEARER_INVALID_TOKEN);
         when(tokenProcessor.processAuthorizationHeaderValue(BEARER_INVALID_TOKEN)).thenReturn(null);
 
@@ -107,7 +107,7 @@ class AuthenticationInterceptorTest {
     }
 
     @Test
-    void testPreHandleAuthRequiredValidTicketForListenEndpoint() {
+    void PreHandle_ValidTicket_ReturnsTrue() {
         User user = new UserBuilder().withId(1L).withUsername("alice").build();
 
         when(request.getHeader(AuthenticationInterceptor.NAME_AUTHORIZATION_HEADER)).thenReturn(null);
@@ -124,7 +124,7 @@ class AuthenticationInterceptorTest {
     }
 
     @Test
-    void testPreHandleAuthRequiredInvalidTicketForListenEndpoint() {
+    void PreHandle_InvalidTicket_ReturnsFalse() {
         when(request.getHeader(AuthenticationInterceptor.NAME_AUTHORIZATION_HEADER)).thenReturn(null);
         when(request.getRequestURI()).thenReturn("/api/channels/10/listen");
         when(request.getParameter("ticket")).thenReturn("invalid-ticket");
@@ -135,7 +135,7 @@ class AuthenticationInterceptorTest {
     }
 
     @Test
-    void testPreHandleAuthRequiredTicketValidButUserNotFound() {
+    void PreHandle_UserNotFound_ReturnsFalse() {
         when(request.getHeader(AuthenticationInterceptor.NAME_AUTHORIZATION_HEADER)).thenReturn(null);
         when(request.getRequestURI()).thenReturn("/api/channels/10/listen");
         when(request.getParameter("ticket")).thenReturn("valid-ticket");
@@ -147,7 +147,7 @@ class AuthenticationInterceptorTest {
     }
 
     @Test
-    void testPreHandleAuthRequiredListenEndpointMissingTicket() {
+    void PreHandle_MissingTicket_ReturnsFalse() {
         when(request.getHeader(AuthenticationInterceptor.NAME_AUTHORIZATION_HEADER)).thenReturn(null);
         when(request.getRequestURI()).thenReturn("/api/channels/10/listen");
 

@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class JdbiUtilsTest {
 
     @Test
-    void testParamsWithEvenArguments() {
+    void Params_EvenArguments_ReturnsMap() {
         Map<String, Object> result = JdbiUtils.params("key1", "value1", "key2", 42);
 
         assertThat(result).hasSize(2);
@@ -19,7 +19,7 @@ class JdbiUtilsTest {
     }
 
     @Test
-    void testParamsThrowsIllegalArgumentExceptionOnOddArguments() {
+    void Params_OddArguments_ThrowsException() {
         assertThatThrownBy(() -> JdbiUtils.params("key1", "value1", "key2"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Key-value array must have even length");

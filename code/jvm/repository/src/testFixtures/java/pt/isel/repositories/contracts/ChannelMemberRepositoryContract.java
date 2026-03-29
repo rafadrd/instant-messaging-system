@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public interface ChannelMemberRepositoryContract extends RepositoryTestHelper {
 
     @Test
-    default void testAddAndFindUserInChannel() {
+    default void AddUserToChannel_ValidInput_AddsAndFindsUser() {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
@@ -34,7 +34,7 @@ public interface ChannelMemberRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testFindAll() {
+    default void FindAll_HasRecords_ReturnsAllRecords() {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel1 = insertChannel(trx, "C1", user, true);
@@ -50,7 +50,7 @@ public interface ChannelMemberRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testFindAllChannelsForUser() {
+    default void FindAllChannelsForUser_ValidUserId_ReturnsChannels() {
         getTxManager().run(trx -> {
             User user1 = insertUser(trx, "alice");
             User user2 = insertUser(trx, "bob");
@@ -72,7 +72,7 @@ public interface ChannelMemberRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testFindAllMembersInChannel() {
+    default void FindAllMembersInChannel_ValidChannelId_ReturnsMembers() {
         getTxManager().run(trx -> {
             User user1 = insertUser(trx, "alice");
             User user2 = insertUser(trx, "bob");
@@ -89,7 +89,7 @@ public interface ChannelMemberRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testRemoveUserFromChannel() {
+    default void RemoveUserFromChannel_ValidInput_RemovesUser() {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
@@ -104,7 +104,7 @@ public interface ChannelMemberRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testSaveUpdatesAccessType() {
+    default void Save_UpdatedAccessType_UpdatesRecord() {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
@@ -126,7 +126,7 @@ public interface ChannelMemberRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testDeleteById() {
+    default void DeleteById_ValidId_DeletesRecord() {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
@@ -140,7 +140,7 @@ public interface ChannelMemberRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testClear() {
+    default void Clear_HasRecords_RemovesAllRecords() {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);

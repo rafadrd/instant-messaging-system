@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ErrorHandlingTest {
 
     @Test
-    void testHandleResultSuccess() {
+    void HandleResult_Success_ReturnsOk() {
         Either<UserError, String> result = Either.success("Success Data");
         ResponseEntity<?> response = ErrorHandling.handleResult(result);
 
@@ -28,7 +28,7 @@ class ErrorHandlingTest {
     }
 
     @Test
-    void testHandleResultSuccessWithCustomMapper() {
+    void HandleResult_SuccessWithMapper_ReturnsMappedResponse() {
         Either<UserError, String> result = Either.success("Created Data");
         ResponseEntity<?> response = ErrorHandling.handleResult(result, data -> ResponseEntity.status(HttpStatus.CREATED).body(data));
 
@@ -37,7 +37,7 @@ class ErrorHandlingTest {
     }
 
     @Test
-    void testHandleResultFailureUserNotFound() {
+    void HandleResult_UserNotFound_ReturnsNotFound() {
         Either<UserError, String> result = Either.failure(new UserError.UserNotFound());
         ResponseEntity<?> response = ErrorHandling.handleResult(result);
 
@@ -51,7 +51,7 @@ class ErrorHandlingTest {
     }
 
     @Test
-    void testHandleResultFailureChannelIsPrivate() {
+    void HandleResult_ChannelIsPrivate_ReturnsForbidden() {
         Either<ChannelError, String> result = Either.failure(new ChannelError.ChannelIsPrivate());
         ResponseEntity<?> response = ErrorHandling.handleResult(result);
 
@@ -65,7 +65,7 @@ class ErrorHandlingTest {
     }
 
     @Test
-    void testHandleResultMessageError() {
+    void HandleResult_MessageError_ReturnsBadRequest() {
         Either<MessageError, String> result = Either.failure(new MessageError.EmptyMessage());
         ResponseEntity<?> response = ErrorHandling.handleResult(result);
 
@@ -79,7 +79,7 @@ class ErrorHandlingTest {
     }
 
     @Test
-    void testHandleResultInvitationError() {
+    void HandleResult_InvitationError_ReturnsConflict() {
         Either<InvitationError, String> result = Either.failure(new InvitationError.InvitationAlreadyExists());
         ResponseEntity<?> response = ErrorHandling.handleResult(result);
 
@@ -93,7 +93,7 @@ class ErrorHandlingTest {
     }
 
     @Test
-    void testExhaustiveErrorMapping() throws Exception {
+    void HandleResult_AllErrors_MapsToProblemResponse() throws Exception {
         List<Class<?>> errorClasses = getConcreteClasses(AppError.class);
         assertThat(errorClasses).as("Should find concrete error classes").isNotEmpty();
 

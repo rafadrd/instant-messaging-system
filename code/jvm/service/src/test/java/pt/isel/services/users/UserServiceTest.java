@@ -82,7 +82,7 @@ class UserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testRegisterUser_Success() {
+    void RegisterUser_ValidInput_ReturnsSuccess() {
         Either<UserError, TokenExternalInfo> result = userService.registerUser("dave", "Strong1!", null);
 
         TokenExternalInfo tokenInfo = EitherAssert.assertRight(result);
@@ -91,7 +91,7 @@ class UserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testRegisterUser_WithInvitation() {
+    void RegisterUser_WithInvitation_ReturnsSuccess() {
         User owner = EitherAssert.assertRight(userService.getUserById(
                 EitherAssert.assertRight(userService.registerUser("owner", "Strong1!", null)).userId()
         ));
@@ -110,7 +110,7 @@ class UserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testRegisterUser_InvitationExpired() {
+    void RegisterUser_InvitationExpired_ReturnsLeft() {
         User owner = EitherAssert.assertRight(userService.getUserById(
                 EitherAssert.assertRight(userService.registerUser("owner", "Strong1!", null)).userId()
         ));
@@ -124,14 +124,14 @@ class UserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testRegisterUser_InsecurePassword() {
+    void RegisterUser_InsecurePassword_ReturnsLeft() {
         Either<UserError, TokenExternalInfo> result = userService.registerUser("dave", "weak", null);
 
         EitherAssert.assertLeft(result, UserError.InsecurePassword.class);
     }
 
     @Test
-    void testRegisterUser_UsernameAlreadyInUse() {
+    void RegisterUser_UsernameAlreadyInUse_ReturnsLeft() {
         userService.registerUser("dave", "Strong1!", null);
         Either<UserError, TokenExternalInfo> result = userService.registerUser("dave", "Strong2!", null);
 
@@ -139,7 +139,7 @@ class UserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testGetUserById_Success() {
+    void GetUserById_ValidId_ReturnsSuccess() {
         Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         Either<UserError, User> result = userService.getUserById(id);
 
@@ -147,7 +147,7 @@ class UserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testUpdateUsername_Success() {
+    void UpdateUsername_ValidInput_ReturnsSuccess() {
         Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         Either<UserError, User> result = userService.updateUsername(id, "dave_new", "Strong1!");
 
@@ -155,7 +155,7 @@ class UserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testUpdateUsername_UsernameAlreadyInUse() {
+    void UpdateUsername_UsernameAlreadyInUse_ReturnsLeft() {
         Long id1 = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         userService.registerUser("eve", "Strong1!", null);
 
@@ -165,7 +165,7 @@ class UserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testUpdateUsername_IncorrectPassword() {
+    void UpdateUsername_IncorrectPassword_ReturnsLeft() {
         Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         Either<UserError, User> result = userService.updateUsername(id, "dave_new", "Wrong1!");
 
@@ -173,7 +173,7 @@ class UserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testUpdatePassword_Success() {
+    void UpdatePassword_ValidInput_ReturnsSuccess() {
         Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         Either<UserError, User> result = userService.updatePassword(id, "Strong1!", "Stronger2@");
 
@@ -181,7 +181,7 @@ class UserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testUpdatePassword_SameAsPrevious() {
+    void UpdatePassword_SameAsPrevious_ReturnsLeft() {
         Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         Either<UserError, User> result = userService.updatePassword(id, "Strong1!", "Strong1!");
 
@@ -189,7 +189,7 @@ class UserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testDeleteUser_Success() {
+    void DeleteUser_ValidInput_ReturnsSuccess() {
         Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         Either<UserError, String> result = userService.deleteUser(id);
 
@@ -198,7 +198,7 @@ class UserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testDeleteUser_HasOwnedChannels() {
+    void DeleteUser_HasOwnedChannels_ReturnsLeft() {
         Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         trxManager.run(trx -> insertChannel(trx, "General", trx.repoUsers().findById(id), true));
 
@@ -208,7 +208,7 @@ class UserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testCreateToken_Success() {
+    void CreateToken_ValidInput_ReturnsSuccess() {
         userService.registerUser("dave", "Strong1!", null);
         Either<UserError, TokenExternalInfo> result = userService.createToken("dave", "Strong1!");
 
@@ -216,7 +216,7 @@ class UserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testCreateToken_RateLimited() {
+    void CreateToken_RateLimited_ReturnsLeft() {
         userService.registerUser("dave", "Strong1!", null);
         when(rateLimiter.isRateLimited(anyString(), anyString(), anyInt(), any())).thenReturn(true);
 
@@ -226,7 +226,7 @@ class UserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testGetUserByToken_Success() {
+    void GetUserByToken_ValidToken_ReturnsUser() {
         Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         User user = userService.getUserByToken("token-" + id);
 
@@ -235,7 +235,7 @@ class UserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testRevokeToken_Success() {
+    void RevokeToken_ValidToken_RevokesToken() {
         Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         String token = "token-" + id;
 
@@ -246,12 +246,12 @@ class UserServiceTest extends AbstractServiceTest {
 
     @ParameterizedTest
     @NullAndEmptySource
-    void testRegisterUser_InvalidUsername(String invalidUsername) {
+    void RegisterUser_InvalidUsername_ReturnsLeft(String invalidUsername) {
         EitherAssert.assertLeft(userService.registerUser(invalidUsername, "Strong1!", null));
     }
 
     @Test
-    void testRegisterUser_UsernameTooLong() {
+    void RegisterUser_UsernameTooLong_ReturnsLeft() {
         String longName = "a".repeat(31);
         Either<UserError, TokenExternalInfo> result = userService.registerUser(longName, "Strong1!", null);
 
@@ -260,19 +260,19 @@ class UserServiceTest extends AbstractServiceTest {
 
     @ParameterizedTest
     @NullAndEmptySource
-    void testRegisterUser_InvalidPassword(String invalidPassword) {
+    void RegisterUser_InvalidPassword_ReturnsLeft(String invalidPassword) {
         EitherAssert.assertLeft(userService.registerUser("eve", invalidPassword, null));
     }
 
     @Test
-    void testRegisterUser_InvitationNotFound() {
+    void RegisterUser_InvitationNotFound_ReturnsLeft() {
         Either<UserError, TokenExternalInfo> result = userService.registerUser("eve", "Strong1!", "invalid-token");
 
         EitherAssert.assertLeft(result, UserError.InvitationNotFound.class);
     }
 
     @Test
-    void testGetUserById_NotFound() {
+    void GetUserById_InvalidId_ReturnsLeft() {
         Either<UserError, User> result = userService.getUserById(999L);
 
         EitherAssert.assertLeft(result, UserError.UserNotFound.class);
@@ -280,13 +280,13 @@ class UserServiceTest extends AbstractServiceTest {
 
     @ParameterizedTest
     @NullAndEmptySource
-    void testUpdateUsername_InvalidUsername(String invalidUsername) {
+    void UpdateUsername_InvalidUsername_ReturnsLeft(String invalidUsername) {
         Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         EitherAssert.assertLeft(userService.updateUsername(id, invalidUsername, "Strong1!"));
     }
 
     @Test
-    void testUpdateUsername_UsernameTooLong() {
+    void UpdateUsername_UsernameTooLong_ReturnsLeft() {
         Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         String longName = "a".repeat(31);
 
@@ -296,7 +296,7 @@ class UserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testUpdateUsername_UserNotFound() {
+    void UpdateUsername_UserNotFound_ReturnsLeft() {
         Either<UserError, User> result = userService.updateUsername(999L, "new_name", "Strong1!");
 
         EitherAssert.assertLeft(result, UserError.UserNotFound.class);
@@ -304,13 +304,13 @@ class UserServiceTest extends AbstractServiceTest {
 
     @ParameterizedTest
     @NullAndEmptySource
-    void testUpdatePassword_InvalidPassword(String invalidPassword) {
+    void UpdatePassword_InvalidPassword_ReturnsLeft(String invalidPassword) {
         Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         EitherAssert.assertLeft(userService.updatePassword(id, "Strong1!", invalidPassword));
     }
 
     @Test
-    void testUpdatePassword_InsecurePassword() {
+    void UpdatePassword_InsecurePassword_ReturnsLeft() {
         Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         Either<UserError, User> result = userService.updatePassword(id, "Strong1!", "weak");
 
@@ -318,7 +318,7 @@ class UserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testUpdatePassword_IncorrectOldPassword() {
+    void UpdatePassword_IncorrectOldPassword_ReturnsLeft() {
         Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         Either<UserError, User> result = userService.updatePassword(id, "Wrong1!", "Stronger2@");
 
@@ -326,7 +326,7 @@ class UserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testDeleteUser_NotFound() {
+    void DeleteUser_InvalidId_ReturnsLeft() {
         Either<UserError, String> result = userService.deleteUser(999L);
 
         EitherAssert.assertLeft(result, UserError.UserNotFound.class);
@@ -334,20 +334,20 @@ class UserServiceTest extends AbstractServiceTest {
 
     @ParameterizedTest
     @NullAndEmptySource
-    void testCreateToken_InvalidCredentials(String invalidInput) {
+    void CreateToken_InvalidCredentials_ReturnsLeft(String invalidInput) {
         EitherAssert.assertLeft(userService.createToken(invalidInput, "Strong1!"));
         EitherAssert.assertLeft(userService.createToken("dave", invalidInput));
     }
 
     @Test
-    void testCreateToken_UserNotFound() {
+    void CreateToken_UserNotFound_ReturnsLeft() {
         Either<UserError, TokenExternalInfo> result = userService.createToken("ghost", "Strong1!");
 
         EitherAssert.assertLeft(result, UserError.UserNotFound.class);
     }
 
     @Test
-    void testCreateToken_IncorrectPassword() {
+    void CreateToken_IncorrectPassword_ReturnsLeft() {
         userService.registerUser("dave", "Strong1!", null);
         Either<UserError, TokenExternalInfo> result = userService.createToken("dave", "Wrong1!");
 
@@ -355,12 +355,12 @@ class UserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testGetUserByToken_InvalidToken() {
+    void GetUserByToken_InvalidToken_ReturnsNull() {
         assertThat(userService.getUserByToken("invalid-format")).isNull();
     }
 
     @Test
-    void testGetUserByToken_BlacklistedToken() {
+    void GetUserByToken_BlacklistedToken_ReturnsNull() {
         Long id = EitherAssert.assertRight(userService.registerUser("dave", "Strong1!", null)).userId();
         String token = "token-" + id;
 
@@ -369,7 +369,7 @@ class UserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testRegisterUser_InvitationAlreadyUsed() {
+    void RegisterUser_InvitationAlreadyUsed_ReturnsLeft() {
         User owner = EitherAssert.assertRight(userService.getUserById(
                 EitherAssert.assertRight(userService.registerUser("owner", "Strong1!", null)).userId()
         ));
@@ -384,19 +384,19 @@ class UserServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testUpdatePassword_UserNotFound() {
+    void UpdatePassword_UserNotFound_ReturnsLeft() {
         Either<UserError, User> result = userService.updatePassword(999L, "Strong1!", "Stronger2@");
 
         EitherAssert.assertLeft(result, UserError.UserNotFound.class);
     }
 
     @Test
-    void testRevokeToken_InvalidToken() {
+    void RevokeToken_InvalidToken_DoesNotThrow() {
         assertThatCode(() -> userService.revokeToken("invalid-token-format")).doesNotThrowAnyException();
     }
 
     @Test
-    void testCleanupExpiredTokens() {
+    void CleanupExpiredTokens_ValidState_DoesNotThrow() {
         assertThatCode(() -> userService.cleanupExpiredTokens()).doesNotThrowAnyException();
     }
 }

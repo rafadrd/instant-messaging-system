@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public interface UserRepositoryContract extends RepositoryTestHelper {
 
     @Test
-    default void testCreateAndFindById() {
+    default void Create_ValidInput_CreatesAndFindsById() {
         getTxManager().run(trx -> {
             User user = trx.repoUsers().create("alice", new PasswordValidationInfo("hash123"));
 
@@ -29,7 +29,7 @@ public interface UserRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testFindByUsername() {
+    default void FindByUsername_ValidUsername_ReturnsUser() {
         getTxManager().run(trx -> {
             insertUser(trx, "bob");
 
@@ -43,7 +43,7 @@ public interface UserRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testHasUsers() {
+    default void HasUsers_HasRecords_ReturnsTrue() {
         getTxManager().run(trx -> {
             assertThat(trx.repoUsers().hasUsers()).isFalse();
             insertUser(trx, "charlie");
@@ -53,7 +53,7 @@ public interface UserRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testFindAll() {
+    default void FindAll_HasRecords_ReturnsAllRecords() {
         getTxManager().run(trx -> {
             insertUser(trx, "user1");
             insertUser(trx, "user2");
@@ -65,7 +65,7 @@ public interface UserRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testSaveUpdatesExistingUser() {
+    default void Save_UpdatedUser_UpdatesRecord() {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "dave");
             User updated = new UserBuilder()
@@ -84,7 +84,7 @@ public interface UserRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testDeleteById() {
+    default void DeleteById_ValidId_DeletesRecord() {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "eve");
             trx.repoUsers().deleteById(user.id());
@@ -96,7 +96,7 @@ public interface UserRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testClear() {
+    default void Clear_HasRecords_RemovesAllRecords() {
         getTxManager().run(trx -> {
             insertUser(trx, "frank");
             trx.repoUsers().clear();

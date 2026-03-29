@@ -31,13 +31,13 @@ class MessageControllerTest extends AbstractControllerTest {
     private MessageService messageService;
 
     @Test
-    void testUnauthorizedAccess() throws Exception {
+    void GetMessages_WithoutAuth_ReturnsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/channels/10/messages"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void testCreateMessage() throws Exception {
+    void CreateMessage_ValidInput_ReturnsCreated() throws Exception {
         MessageRequest request = new MessageRequest("Hello World");
         Message message = new MessageBuilder().withId(100L).withContent("Hello World").build();
 
@@ -51,7 +51,7 @@ class MessageControllerTest extends AbstractControllerTest {
 
     @ParameterizedTest
     @NullAndEmptySource
-    void testCreateMessageValidationFailure_Empty(String invalidContent) throws Exception {
+    void CreateMessage_EmptyContent_ReturnsBadRequest(String invalidContent) throws Exception {
         MessageRequest request = new MessageRequest(invalidContent);
 
         postWithAuth("/api/channels/10/messages", request)
@@ -59,7 +59,7 @@ class MessageControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testCreateMessageValidationFailure_TooLong() throws Exception {
+    void CreateMessage_ContentTooLong_ReturnsBadRequest() throws Exception {
         MessageRequest request = new MessageRequest("a".repeat(1001));
 
         postWithAuth("/api/channels/10/messages", request)
@@ -67,7 +67,7 @@ class MessageControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testGetMessages() throws Exception {
+    void GetMessages_ValidId_ReturnsMessages() throws Exception {
         when(messageService.getMessagesInChannel(eq(1L), eq(10L), anyInt(), anyInt())).thenReturn(Either.success(List.of()));
 
         getWithAuth("/api/channels/10/messages")

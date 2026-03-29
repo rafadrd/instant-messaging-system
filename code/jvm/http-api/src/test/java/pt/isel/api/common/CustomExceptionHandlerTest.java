@@ -21,7 +21,7 @@ class CustomExceptionHandlerTest extends AbstractControllerTest {
     private ChannelService channelService;
 
     @Test
-    void testHandleAllExceptions() throws Exception {
+    void HandleAll_UnexpectedException_ReturnsInternalServerError() throws Exception {
         when(userService.registerUser(anyString(), anyString(), any()))
                 .thenThrow(new RuntimeException("Unexpected database failure"));
 
@@ -34,7 +34,7 @@ class CustomExceptionHandlerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testHandleHttpMessageNotReadable() throws Exception {
+    void HandleHttpMessageNotReadable_MalformedJson_ReturnsBadRequest() throws Exception {
         String malformedJson = "{\"username\":\"alice\", \"password\":\"Strong1!";
 
         mockMvc.perform(post("/api/auth/register")
@@ -44,7 +44,7 @@ class CustomExceptionHandlerTest extends AbstractControllerTest {
     }
 
     @Test
-    void testHandleMethodArgumentNotValid() throws Exception {
+    void HandleMethodArgumentNotValid_InvalidInput_ReturnsBadRequest() throws Exception {
         String invalidJson = "{\"username\":\"\", \"password\":\"Strong1!\"}";
 
         mockMvc.perform(post("/api/auth/register")

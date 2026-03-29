@@ -41,7 +41,7 @@ class TokenCleanupSchedulerTest {
     }
 
     @Test
-    void testRunCleanupExecutesWhenLockAcquired() {
+    void RunCleanup_LockAcquired_ExecutesCleanup() {
         when(valueOperations.setIfAbsent(eq("scheduler:token-cleanup:lock"), eq("locked"), any(Duration.class))).thenReturn(true);
 
         scheduler.runCleanup();
@@ -50,7 +50,7 @@ class TokenCleanupSchedulerTest {
     }
 
     @Test
-    void testRunCleanupSkipsWhenLockNotAcquired() {
+    void RunCleanup_LockNotAcquired_SkipsCleanup() {
         when(valueOperations.setIfAbsent(eq("scheduler:token-cleanup:lock"), eq("locked"), any(Duration.class))).thenReturn(false);
 
         scheduler.runCleanup();
@@ -59,7 +59,7 @@ class TokenCleanupSchedulerTest {
     }
 
     @Test
-    void testRunCleanupHandlesExceptionGracefully() {
+    void RunCleanup_ServiceThrowsException_HandlesGracefully() {
         when(valueOperations.setIfAbsent(eq("scheduler:token-cleanup:lock"), eq("locked"), any(Duration.class)))
                 .thenReturn(true);
 

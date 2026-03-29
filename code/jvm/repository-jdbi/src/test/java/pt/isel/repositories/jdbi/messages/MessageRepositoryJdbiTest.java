@@ -20,7 +20,7 @@ class MessageRepositoryJdbiTest extends AbstractJdbiTest implements MessageRepos
     }
 
     @Test
-    void testMessageAuthorIsNullWhenUserIsDeleted() {
+    void FindById_UserDeleted_ReturnsNullAuthor() {
         txManager.run(trx -> {
             User owner = insertUser(trx, "owner");
             Channel channel = insertChannel(trx, "General", owner, true);

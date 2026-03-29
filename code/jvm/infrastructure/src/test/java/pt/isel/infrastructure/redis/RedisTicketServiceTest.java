@@ -31,7 +31,7 @@ class RedisTicketServiceTest {
     }
 
     @Test
-    void testCreateTicket() {
+    void CreateTicket_ValidUserId_ReturnsTicket() {
         Long userId = 42L;
         String ticket = ticketService.createTicket(userId);
 
@@ -40,7 +40,7 @@ class RedisTicketServiceTest {
     }
 
     @Test
-    void testValidateAndConsumeTicketSuccess() {
+    void ValidateAndConsumeTicket_ValidTicket_ReturnsUserId() {
         String ticket = "some-uuid-ticket";
         when(valueOperations.getAndDelete("ticket:" + ticket)).thenReturn("42");
 
@@ -51,7 +51,7 @@ class RedisTicketServiceTest {
     }
 
     @Test
-    void testValidateAndConsumeTicketNotFound() {
+    void ValidateAndConsumeTicket_InvalidTicket_ReturnsNull() {
         String ticket = "invalid-ticket";
         when(valueOperations.getAndDelete("ticket:" + ticket)).thenReturn(null);
 
@@ -61,7 +61,7 @@ class RedisTicketServiceTest {
     }
 
     @Test
-    void testValidateAndConsumeTicketInvalidFormat() {
+    void ValidateAndConsumeTicket_InvalidFormat_ReturnsNull() {
         String ticket = "corrupted-ticket";
         when(valueOperations.getAndDelete("ticket:" + ticket)).thenReturn("not-a-number");
 

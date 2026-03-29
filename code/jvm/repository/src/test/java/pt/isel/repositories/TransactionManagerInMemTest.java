@@ -17,7 +17,7 @@ class TransactionManagerInMemTest {
     }
 
     @Test
-    void testRunExecutesBlockAndReturnsResult() {
+    void Run_ValidBlock_ReturnsResult() {
         String result = txManager.run(trx -> {
             assertThat(trx.repoUsers()).isNotNull();
             assertThat(trx.repoChannels()).isNotNull();
@@ -33,7 +33,7 @@ class TransactionManagerInMemTest {
     }
 
     @Test
-    void testRollbackIsNoOpButDoesNotCrash() {
+    void Rollback_InMem_DoesNotCrash() {
         assertThatCode(() -> txManager.run(trx -> {
             trx.rollback();
             return null;

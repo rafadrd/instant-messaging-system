@@ -16,13 +16,13 @@ class OpenApiConfigTest extends AbstractIntegrationTest {
     private MockMvc mockMvc;
 
     @Test
-    void testOpenApiDocsAreAccessible() throws Exception {
+    void GetApiDocs_ValidRequest_ReturnsOk() throws Exception {
         mockMvc.perform(get("/api-docs"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void testSwaggerUiIsAccessible() throws Exception {
+    void GetSwaggerUi_ValidRequest_ReturnsRedirect() throws Exception {
         mockMvc.perform(get("/swagger-ui.html"))
                 .andExpect(status().is3xxRedirection());
     }

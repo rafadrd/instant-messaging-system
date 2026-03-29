@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public interface MessageRepositoryContract extends RepositoryTestHelper {
 
     @Test
-    default void testCreateAndFindById() {
+    default void Create_ValidInput_CreatesAndFindsById() {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
@@ -36,7 +36,7 @@ public interface MessageRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testFindAll() {
+    default void FindAll_HasRecords_ReturnsAllRecords() {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
@@ -51,7 +51,7 @@ public interface MessageRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testFindAllInChannelWithPagination() {
+    default void FindAllInChannel_ValidPagination_ReturnsMessages() {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
@@ -76,7 +76,7 @@ public interface MessageRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testSaveUpdatesMessage() {
+    default void Save_UpdatedMessage_UpdatesRecord() {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
@@ -98,7 +98,7 @@ public interface MessageRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testDeleteById() {
+    default void DeleteById_ValidId_DeletesRecord() {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
@@ -112,7 +112,7 @@ public interface MessageRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testClear() {
+    default void Clear_HasRecords_RemovesAllRecords() {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);

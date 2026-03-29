@@ -48,13 +48,13 @@ class AuthenticatedUserArgumentResolverTest {
     }
 
     @Test
-    void testSupportsParameter() {
+    void SupportsParameter_ValidParameter_ReturnsTrue() {
         assertThat(resolver.supportsParameter(validParameter)).isTrue();
         assertThat(resolver.supportsParameter(invalidParameter)).isFalse();
     }
 
     @Test
-    void testResolveArgumentSuccess() {
+    void ResolveArgument_ValidRequest_ReturnsUser() {
         User user = new UserBuilder().withId(1L).withUsername("alice").build();
         AuthenticatedUser authUser = new AuthenticatedUser(user, "token123");
 
@@ -67,7 +67,7 @@ class AuthenticatedUserArgumentResolverTest {
     }
 
     @Test
-    void testResolveArgumentThrowsWhenRequestIsNull() {
+    void ResolveArgument_NullRequest_ThrowsException() {
         when(webRequest.getNativeRequest(HttpServletRequest.class)).thenReturn(null);
 
         assertThatThrownBy(() -> resolver.resolveArgument(validParameter, mavContainer, webRequest, null))
@@ -76,7 +76,7 @@ class AuthenticatedUserArgumentResolverTest {
     }
 
     @Test
-    void testResolveArgumentThrowsWhenUserNotFoundInAttributes() {
+    void ResolveArgument_UserNotInAttributes_ThrowsException() {
         when(webRequest.getNativeRequest(HttpServletRequest.class)).thenReturn(request);
         when(request.getAttribute("AuthenticatedUserArgumentResolver")).thenReturn(null);
 
@@ -86,7 +86,7 @@ class AuthenticatedUserArgumentResolverTest {
     }
 
     @Test
-    void testAddAndGetUser() {
+    void AddAndGetUser_ValidUser_StoresAndRetrievesUser() {
         User user = new UserBuilder().withId(1L).withUsername("alice").build();
         AuthenticatedUser authUser = new AuthenticatedUser(user, "token123");
 

@@ -22,7 +22,7 @@ class SpringPasswordEncoderAdapterTest {
     private SpringPasswordEncoderAdapter adapter;
 
     @Test
-    void testEncodeDelegatesToSpringEncoder() {
+    void Encode_ValidPassword_DelegatesToSpringEncoder() {
         when(springEncoder.encode("myPassword")).thenReturn("encodedPassword");
 
         String result = adapter.encode("myPassword");
@@ -32,7 +32,7 @@ class SpringPasswordEncoderAdapterTest {
     }
 
     @Test
-    void testMatchesDelegatesToSpringEncoder() {
+    void Matches_ValidPasswords_DelegatesToSpringEncoder() {
         when(springEncoder.matches("myPassword", "encodedPassword")).thenReturn(true);
 
         boolean result = adapter.matches("myPassword", "encodedPassword");
@@ -42,7 +42,7 @@ class SpringPasswordEncoderAdapterTest {
     }
 
     @Test
-    void testIntegrationWithRealBCrypt() {
+    void Matches_RealBCrypt_ReturnsExpectedResult() {
         SpringPasswordEncoderAdapter realAdapter = new SpringPasswordEncoderAdapter(new BCryptPasswordEncoder());
 
         String rawPassword = "SecurePassword123!";

@@ -18,12 +18,12 @@ class AppInstantMessagingTest extends AbstractIntegrationTest {
     private ApplicationContext context;
 
     @Test
-    void testContextLoads() {
+    void Context_Loads_Successfully() {
         assertThat(context).as("The Spring application context should load successfully.").isNotNull();
     }
 
     @Test
-    void testVerifyCustomBeansAreLoaded() {
+    void Context_CustomBeans_AreLoaded() {
         assertThat(context.getBean(Jdbi.class)).as("Jdbi bean should be present in the context").isNotNull();
         assertThat(context.getBean(TransactionManager.class)).as("TransactionManager bean should be present in the context").isNotNull();
         assertThat(context.getBean(PasswordEncoder.class)).as("PasswordEncoder bean should be present in the context").isNotNull();

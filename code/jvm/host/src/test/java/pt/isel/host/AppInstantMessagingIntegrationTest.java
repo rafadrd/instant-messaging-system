@@ -21,13 +21,13 @@ class AppInstantMessagingIntegrationTest extends AbstractIntegrationTest {
     private MockMvc mockMvc;
 
     @Test
-    void testProtectedEndpointReturnsUnauthorizedWithoutToken() throws Exception {
+    void GetMe_WithoutToken_ReturnsUnauthorized() throws Exception {
         mockMvc.perform(get("/api/users/me"))
                 .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void testRegisterValidationFailsOnEmptyBody() throws Exception {
+    void Register_EmptyBody_ReturnsBadRequest() throws Exception {
         mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
@@ -35,7 +35,7 @@ class AppInstantMessagingIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void testMainMethodStartsApplicationSuccessfully() {
+    void Main_ValidArgs_StartsSuccessfully() {
         assertThatCode(() -> SpringApplication.run(AppInstantMessaging.class,
                 "--spring.main.web-application-type=none",
                 "--spring.flyway.enabled=false",
@@ -49,7 +49,7 @@ class AppInstantMessagingIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void testCorsConfigurationIsApplied() throws Exception {
+    void Options_ValidOrigin_ReturnsCorsHeaders() throws Exception {
         mockMvc.perform(options("/api/users/me")
                         .header("Origin", "http://localhost:8000")
                         .header("Access-Control-Request-Method", "GET"))
@@ -60,7 +60,7 @@ class AppInstantMessagingIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void testCorsRejectsUnauthorizedOrigin() throws Exception {
+    void Options_UnauthorizedOrigin_ReturnsForbidden() throws Exception {
         mockMvc.perform(options("/api/users/me")
                         .header("Origin", "http://malicious-site.com")
                         .header("Access-Control-Request-Method", "GET"))

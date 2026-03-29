@@ -11,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 public interface TokenBlacklistRepositoryContract extends RepositoryTestHelper {
 
     @Test
-    default void testAddAndExists() {
+    default void Add_ValidToken_AddsAndExists() {
         getTxManager().run(trx -> {
             String jti = "token-uuid-123";
             assertThat(trx.repoTokenBlacklist().exists(jti)).isFalse();
@@ -23,7 +23,7 @@ public interface TokenBlacklistRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testClear() {
+    default void Clear_HasRecords_RemovesAllRecords() {
         getTxManager().run(trx -> {
             trx.repoTokenBlacklist().add("t1", LocalDateTime.now(ZoneOffset.UTC));
             trx.repoTokenBlacklist().add("t2", LocalDateTime.now(ZoneOffset.UTC));
@@ -37,7 +37,7 @@ public interface TokenBlacklistRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testCleanupExpired() {
+    default void CleanupExpired_HasExpiredTokens_RemovesExpiredTokens() {
         getTxManager().run(trx -> {
             trx.repoTokenBlacklist().add("expired-token", LocalDateTime.now(ZoneOffset.UTC).minusHours(1));
             trx.repoTokenBlacklist().add("valid-token", LocalDateTime.now(ZoneOffset.UTC).plusHours(1));
@@ -51,7 +51,7 @@ public interface TokenBlacklistRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testAddDuplicateDoesNotThrow() {
+    default void Add_DuplicateToken_DoesNotThrow() {
         getTxManager().run(trx -> {
             String jti = "duplicate-token";
             LocalDateTime expiry = LocalDateTime.now(ZoneOffset.UTC).plusHours(1);

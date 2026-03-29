@@ -74,7 +74,7 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
     }
 
     @Test
-    void testAddEmitterSuccess() {
+    void AddEmitter_ValidInput_AddsEmitter() {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
 
         assertThatCode(() -> service.addEmitter(channel.id(), alice.id(), emitter))
@@ -85,7 +85,7 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
     }
 
     @Test
-    void testAddEmitterThrowsWhenUserNotFound() {
+    void AddEmitter_UserNotFound_ThrowsException() {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
         assertThatThrownBy(() -> service.addEmitter(channel.id(), 999L, emitter))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -93,7 +93,7 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
     }
 
     @Test
-    void testAddEmitterThrowsWhenChannelNotFound() {
+    void AddEmitter_ChannelNotFound_ThrowsException() {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
         assertThatThrownBy(() -> service.addEmitter(999L, alice.id(), emitter))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -101,7 +101,7 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
     }
 
     @Test
-    void testAddEmitterThrowsWhenUserNotInChannel() {
+    void AddEmitter_UserNotInChannel_ThrowsException() {
         User bob = trxManager.run(trx -> insertUser(trx, "bob"));
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
 
@@ -110,7 +110,7 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
     }
 
     @Test
-    void testBroadcastMessage() {
+    void BroadcastMessage_ValidInput_SendsToRedis() {
         Message msg = new MessageBuilder()
                 .withId(1L)
                 .withContent("Hello")
@@ -125,7 +125,7 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
     }
 
     @Test
-    void testHandleRedisMessageEmitsToLocalListeners() throws Exception {
+    void HandleRedisMessage_ValidMessage_EmitsToListeners() throws Exception {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
         service.addEmitter(channel.id(), alice.id(), emitter);
 
@@ -140,7 +140,7 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
     }
 
     @Test
-    void testShutdownCompletesAllEmitters() {
+    void Shutdown_ActiveEmitters_CompletesEmitters() {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
         service.addEmitter(channel.id(), alice.id(), emitter);
 
@@ -153,7 +153,7 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
     }
 
     @Test
-    void testEmitterRemovedOnEmitExceptionDuringKeepAlive() {
+    void SendKeepAlive_EmitThrowsException_RemovesEmitter() {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
         Mockito.doThrow(new RuntimeException("Connection closed")).when(emitter).emit(any());
 
@@ -166,7 +166,7 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
     }
 
     @Test
-    void testEmitterRemovedOnEmitExceptionDuringHandleRedisMessage() throws Exception {
+    void HandleRedisMessage_EmitThrowsException_RemovesEmitter() throws Exception {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
         Mockito.doThrow(new RuntimeException("Connection closed")).when(emitter).emit(any());
 
@@ -184,7 +184,7 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
     }
 
     @Test
-    void testCallbacksRemoveEmitter() {
+    void OnCompletion_CallbackTriggered_RemovesEmitter() {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
         ArgumentCaptor<Runnable> completionCaptor = ArgumentCaptor.forClass(Runnable.class);
 
@@ -198,14 +198,14 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
     }
 
     @Test
-    void testHandleRedisMessageCatchesJsonProcessingException() {
+    void HandleRedisMessage_InvalidJson_CatchesException() {
         assertThatCode(() -> service.handleRedisMessage("invalid-json-string"))
                 .doesNotThrowAnyException();
     }
 
     @Test
     @SuppressWarnings("unchecked")
-    void testOnErrorCallbackRemovesEmitter() {
+    void OnError_CallbackTriggered_RemovesEmitter() {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
         ArgumentCaptor<Consumer<Throwable>> errorCaptor = ArgumentCaptor.forClass(Consumer.class);
 

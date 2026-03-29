@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class InvitationTest {
 
     @Test
-    void testMainConstructor() {
+    void Constructor_ValidArguments_CreatesInstance() {
         UserInfo creator = new UserInfo(1L, "Alice");
         Channel channel = new Channel(1L, "Lobby", creator);
         LocalDateTime expiry = LocalDateTime.now().plusDays(1);
@@ -28,7 +28,7 @@ class InvitationTest {
     }
 
     @Test
-    void testAuxiliaryConstructorSetsStatusToPending() {
+    void Constructor_WithoutStatus_SetsStatusToPending() {
         UserInfo creator = new UserInfo(1L, "Alice");
         Channel channel = new Channel(1L, "Lobby", creator);
         LocalDateTime expiry = LocalDateTime.now().plusDays(1);

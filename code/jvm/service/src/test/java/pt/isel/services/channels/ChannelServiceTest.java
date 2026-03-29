@@ -31,7 +31,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testCreateChannel_Success() {
+    void CreateChannel_ValidInput_ReturnsSuccess() {
         Either<ChannelError, Channel> result = channelService.createChannel("General", alice.id(), true);
 
         Channel channel = EitherAssert.assertRight(result);
@@ -48,7 +48,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testCreateChannel_ChannelAlreadyExists() {
+    void CreateChannel_ChannelAlreadyExists_ReturnsLeft() {
         channelService.createChannel("General", alice.id(), true);
         Either<ChannelError, Channel> result = channelService.createChannel("General", bob.id(), true);
 
@@ -57,12 +57,12 @@ class ChannelServiceTest extends AbstractServiceTest {
 
     @ParameterizedTest
     @NullAndEmptySource
-    void testCreateChannel_EmptyName(String invalidName) {
+    void CreateChannel_EmptyName_ReturnsLeft(String invalidName) {
         EitherAssert.assertLeft(channelService.createChannel(invalidName, alice.id(), true));
     }
 
     @Test
-    void testCreateChannel_NameTooLong() {
+    void CreateChannel_NameTooLong_ReturnsLeft() {
         String longName = "a".repeat(31);
         Either<ChannelError, Channel> result = channelService.createChannel(longName, alice.id(), true);
 
@@ -70,14 +70,14 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testCreateChannel_UserNotFound() {
+    void CreateChannel_UserNotFound_ReturnsLeft() {
         Either<ChannelError, Channel> result = channelService.createChannel("General", 999L, true);
 
         EitherAssert.assertLeft(result, ChannelError.UserNotFound.class);
     }
 
     @Test
-    void testGetChannelById_Success() {
+    void GetChannelById_ValidId_ReturnsSuccess() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
         Either<ChannelError, Channel> result = channelService.getChannelById(created.id());
 
@@ -85,14 +85,14 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testGetChannelById_NotFound() {
+    void GetChannelById_InvalidId_ReturnsLeft() {
         Either<ChannelError, Channel> result = channelService.getChannelById(999L);
 
         EitherAssert.assertLeft(result, ChannelError.ChannelNotFound.class);
     }
 
     @Test
-    void testDeleteChannel_Success() {
+    void DeleteChannel_ValidInput_ReturnsSuccess() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
         Either<ChannelError, String> result = channelService.deleteChannel(alice.id(), created.id());
 
@@ -101,7 +101,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testDeleteChannel_NotOwner() {
+    void DeleteChannel_NotOwner_ReturnsLeft() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
         Either<ChannelError, String> result = channelService.deleteChannel(bob.id(), created.id());
 
@@ -109,7 +109,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testGetJoinedChannels_Success() {
+    void GetJoinedChannels_ValidInput_ReturnsSuccess() {
         channelService.createChannel("C1", alice.id(), true);
         channelService.createChannel("C2", alice.id(), true);
 
@@ -119,7 +119,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testEditChannel_Success() {
+    void EditChannel_ValidInput_ReturnsSuccess() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
         Either<ChannelError, Channel> result = channelService.editChannel(alice.id(), created.id(), "NewName", false);
 
@@ -129,7 +129,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testEditChannel_ChannelAlreadyExists() {
+    void EditChannel_ChannelAlreadyExists_ReturnsLeft() {
         Channel c1 = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
         channelService.createChannel("Random", alice.id(), true);
 
@@ -139,7 +139,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testEditChannel_UserNotFound() {
+    void EditChannel_UserNotFound_ReturnsLeft() {
         Channel c1 = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
         Either<ChannelError, Channel> result = channelService.editChannel(999L, c1.id(), "NewName", true);
 
@@ -147,14 +147,14 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testEditChannel_ChannelNotFound() {
+    void EditChannel_ChannelNotFound_ReturnsLeft() {
         Either<ChannelError, Channel> result = channelService.editChannel(alice.id(), 999L, "NewName", true);
 
         EitherAssert.assertLeft(result, ChannelError.ChannelNotFound.class);
     }
 
     @Test
-    void testGetAccessType_Success() {
+    void GetAccessType_ValidInput_ReturnsSuccess() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
         channelService.joinPublicChannel(bob.id(), created.id());
 
@@ -164,7 +164,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testEditMemberAccess_Success() {
+    void EditMemberAccess_ValidInput_ReturnsSuccess() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
         channelService.joinPublicChannel(bob.id(), created.id());
 
@@ -174,7 +174,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testEditMemberAccess_TargetIsOwner() {
+    void EditMemberAccess_TargetIsOwner_ReturnsLeft() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
         Either<ChannelError, ChannelMember> result = channelService.editMemberAccess(alice.id(), created.id(), alice.id(), AccessType.READ_ONLY);
 
@@ -182,7 +182,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testEditMemberAccess_TargetNotInChannel() {
+    void EditMemberAccess_TargetNotInChannel_ReturnsLeft() {
         Channel c1 = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
 
         Either<ChannelError, ChannelMember> result = channelService.editMemberAccess(alice.id(), c1.id(), bob.id(), AccessType.READ_WRITE);
@@ -191,7 +191,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testSearchChannels_Success() {
+    void SearchChannels_ValidInput_ReturnsSuccess() {
         channelService.createChannel("Java Devs", alice.id(), true);
         channelService.createChannel("Secret", alice.id(), false);
 
@@ -203,7 +203,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testJoinPublicChannel_Success() {
+    void JoinPublicChannel_ValidInput_ReturnsSuccess() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
         Either<ChannelError, String> result = channelService.joinPublicChannel(bob.id(), created.id());
 
@@ -211,7 +211,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testJoinPublicChannel_PrivateChannel() {
+    void JoinPublicChannel_PrivateChannel_ReturnsLeft() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("Secret", alice.id(), false));
         Either<ChannelError, String> result = channelService.joinPublicChannel(bob.id(), created.id());
 
@@ -219,7 +219,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testJoinPrivateChannel_Success() {
+    void JoinPrivateChannel_ValidInput_ReturnsSuccess() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("Secret", alice.id(), false));
 
         Invitation inv = trxManager.run(trx -> insertInvitation(trx, "token123", alice, created, AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1)));
@@ -232,7 +232,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testLeaveChannel_Success() {
+    void LeaveChannel_ValidInput_ReturnsSuccess() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
         channelService.joinPublicChannel(bob.id(), created.id());
 
@@ -241,7 +241,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testLeaveChannel_OwnerCannotLeave() {
+    void LeaveChannel_OwnerCannotLeave_ReturnsLeft() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
         Either<ChannelError, String> result = channelService.leaveChannel(created.id(), alice.id());
 
@@ -249,21 +249,21 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testDeleteChannel_UserNotFound() {
+    void DeleteChannel_UserNotFound_ReturnsLeft() {
         Either<ChannelError, String> result = channelService.deleteChannel(999L, 1L);
 
         EitherAssert.assertLeft(result, ChannelError.UserNotFound.class);
     }
 
     @Test
-    void testDeleteChannel_ChannelNotFound() {
+    void DeleteChannel_ChannelNotFound_ReturnsLeft() {
         Either<ChannelError, String> result = channelService.deleteChannel(alice.id(), 999L);
 
         EitherAssert.assertLeft(result, ChannelError.ChannelNotFound.class);
     }
 
     @Test
-    void testGetJoinedChannels_UserNotFound() {
+    void GetJoinedChannels_UserNotFound_ReturnsLeft() {
         Either<ChannelError, List<Channel>> result = channelService.getJoinedChannels(999L, 10, 0);
 
         EitherAssert.assertLeft(result, ChannelError.UserNotFound.class);
@@ -271,13 +271,13 @@ class ChannelServiceTest extends AbstractServiceTest {
 
     @ParameterizedTest
     @NullAndEmptySource
-    void testEditChannel_EmptyName(String invalidName) {
+    void EditChannel_EmptyName_ReturnsLeft(String invalidName) {
         Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
         EitherAssert.assertLeft(channelService.editChannel(alice.id(), created.id(), invalidName, true));
     }
 
     @Test
-    void testEditChannel_NotOwner() {
+    void EditChannel_NotOwner_ReturnsLeft() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
         Either<ChannelError, Channel> result = channelService.editChannel(bob.id(), created.id(), "NewName", true);
 
@@ -285,7 +285,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testGetAccessType_TargetNotInChannel() {
+    void GetAccessType_TargetNotInChannel_ReturnsLeft() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
         Either<MessageError, AccessType> result = channelService.getAccessType(alice.id(), bob.id(), created.id());
 
@@ -293,7 +293,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testGetAccessType_RequesterNotAuthorized() {
+    void GetAccessType_RequesterNotAuthorized_ReturnsLeft() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
         channelService.joinPublicChannel(bob.id(), created.id());
 
@@ -303,7 +303,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testEditMemberAccess_NotOwner() {
+    void EditMemberAccess_NotOwner_ReturnsLeft() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
         channelService.joinPublicChannel(bob.id(), created.id());
 
@@ -313,7 +313,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testSearchChannels_EmptyQuery() {
+    void SearchChannels_EmptyQuery_ReturnsSuccess() {
         channelService.createChannel("Java Devs", alice.id(), true);
         channelService.createChannel("Secret", alice.id(), false);
 
@@ -323,7 +323,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testJoinPublicChannel_AlreadyInChannel() {
+    void JoinPublicChannel_AlreadyInChannel_ReturnsLeft() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
         channelService.joinPublicChannel(bob.id(), created.id());
 
@@ -333,14 +333,14 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testJoinPrivateChannel_TokenNotFound() {
+    void JoinPrivateChannel_TokenNotFound_ReturnsLeft() {
         Either<ChannelError, String> result = channelService.joinPrivateChannel(bob.id(), "invalid-token");
 
         EitherAssert.assertLeft(result, ChannelError.TokenNotFound.class);
     }
 
     @Test
-    void testJoinPrivateChannel_ExpiredToken() {
+    void JoinPrivateChannel_ExpiredToken_ReturnsLeft() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("Secret", alice.id(), false));
         trxManager.run(trx -> insertInvitation(trx, "expired-token", alice, created, AccessType.READ_ONLY, LocalDateTime.now(clock).minusDays(1)));
 
@@ -350,14 +350,14 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testLeaveChannel_ChannelNotFound() {
+    void LeaveChannel_ChannelNotFound_ReturnsLeft() {
         Either<ChannelError, String> result = channelService.leaveChannel(999L, bob.id());
 
         EitherAssert.assertLeft(result, ChannelError.ChannelNotFound.class);
     }
 
     @Test
-    void testLeaveChannel_UserNotInChannel() {
+    void LeaveChannel_UserNotInChannel_ReturnsLeft() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
         Either<ChannelError, String> result = channelService.leaveChannel(created.id(), bob.id());
 
@@ -365,7 +365,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testGetUsersInChannel_Success() {
+    void GetUsersInChannel_ValidInput_ReturnsSuccess() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
         channelService.joinPublicChannel(bob.id(), created.id());
 
@@ -375,7 +375,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testEditChannel_NameTooLong() {
+    void EditChannel_NameTooLong_ReturnsLeft() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
         String longName = "a".repeat(31);
 
@@ -385,7 +385,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testEditMemberAccess_UserNotFound() {
+    void EditMemberAccess_UserNotFound_ReturnsLeft() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
 
         Either<ChannelError, ChannelMember> result = channelService.editMemberAccess(alice.id(), created.id(), 999L, AccessType.READ_ONLY);
@@ -394,7 +394,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testJoinPublicChannel_UserNotFound() {
+    void JoinPublicChannel_UserNotFound_ReturnsLeft() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
 
         Either<ChannelError, String> result = channelService.joinPublicChannel(999L, created.id());
@@ -403,21 +403,21 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testJoinPublicChannel_ChannelNotFound() {
+    void JoinPublicChannel_ChannelNotFound_ReturnsLeft() {
         Either<ChannelError, String> result = channelService.joinPublicChannel(bob.id(), 999L);
 
         EitherAssert.assertLeft(result, ChannelError.ChannelNotFound.class);
     }
 
     @Test
-    void testJoinPrivateChannel_UserNotFound() {
+    void JoinPrivateChannel_UserNotFound_ReturnsLeft() {
         Either<ChannelError, String> result = channelService.joinPrivateChannel(999L, "some-token");
 
         EitherAssert.assertLeft(result, ChannelError.UserNotFound.class);
     }
 
     @Test
-    void testJoinPrivateChannel_AlreadyInChannel() {
+    void JoinPrivateChannel_AlreadyInChannel_ReturnsLeft() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("Secret", alice.id(), false));
         trxManager.run(trx -> insertMember(trx, bob, created, AccessType.READ_ONLY));
         trxManager.run(trx -> insertInvitation(trx, "token123", alice, created, AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1)));
@@ -428,7 +428,7 @@ class ChannelServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    void testJoinPrivateChannel_InvitationAlreadyUsed() {
+    void JoinPrivateChannel_InvitationAlreadyUsed_ReturnsLeft() {
         Channel created = EitherAssert.assertRight(channelService.createChannel("Secret", alice.id(), false));
         trxManager.run(trx -> insertInvitation(trx, "token123", alice, created, AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1)));
 

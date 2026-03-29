@@ -18,7 +18,7 @@ class TransactionManagerJdbiTest extends AbstractJdbiTest implements RepositoryT
     }
 
     @Test
-    void testSuccessfulTransactionCommits() {
+    void Run_SuccessfulTransaction_CommitsData() {
         String result = txManager.run(trx -> {
             insertUser(trx, "alice");
             return "Success";
@@ -34,7 +34,7 @@ class TransactionManagerJdbiTest extends AbstractJdbiTest implements RepositoryT
     }
 
     @Test
-    void testRollbackOnEitherLeft() {
+    void Run_ReturnsLeft_RollsBackData() {
         Either<String, String> result = txManager.run(trx -> {
             insertUser(trx, "bob");
             return Either.failure("Business Error");
@@ -50,7 +50,7 @@ class TransactionManagerJdbiTest extends AbstractJdbiTest implements RepositoryT
     }
 
     @Test
-    void testRollbackOnException() {
+    void Run_ThrowsException_RollsBackData() {
         assertThatThrownBy(() -> txManager.run(trx -> {
             insertUser(trx, "charlie");
             throw new RuntimeException("Unexpected Error");
@@ -66,7 +66,7 @@ class TransactionManagerJdbiTest extends AbstractJdbiTest implements RepositoryT
     }
 
     @Test
-    void testExplicitRollback() {
+    void Run_ExplicitRollback_RollsBackData() {
         txManager.run(trx -> {
             insertUser(trx, "dave");
 

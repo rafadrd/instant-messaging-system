@@ -11,7 +11,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MessageTest {
 
     @Test
-    void testMainConstructor() {
+    void Constructor_ValidArguments_CreatesInstance() {
         UserInfo user = new UserInfo(1L, "Alice");
         Channel channel = new Channel(1L, "Lobby", user);
         LocalDateTime fixedTime = LocalDateTime.of(2025, 1, 1, 12, 0);

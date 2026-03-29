@@ -26,26 +26,26 @@ class RequestTokenProcessorTest {
     private RequestTokenProcessor processor;
 
     @Test
-    void testProcessAuthorizationHeaderValueNullOrBlank() {
+    void ProcessAuthorizationHeaderValue_NullOrBlank_ReturnsNull() {
         assertThat(processor.processAuthorizationHeaderValue(null)).isNull();
         assertThat(processor.processAuthorizationHeaderValue("")).isNull();
         assertThat(processor.processAuthorizationHeaderValue("   ")).isNull();
     }
 
     @Test
-    void testProcessAuthorizationHeaderValueMalformed() {
+    void ProcessAuthorizationHeaderValue_Malformed_ReturnsNull() {
         assertThat(processor.processAuthorizationHeaderValue("Bearer")).isNull();
         assertThat(processor.processAuthorizationHeaderValue("Bearer token extra")).isNull();
     }
 
     @Test
-    void testProcessAuthorizationHeaderValueInvalidScheme() {
+    void ProcessAuthorizationHeaderValue_InvalidScheme_ReturnsNull() {
         assertThat(processor.processAuthorizationHeaderValue("Basic dXNlcjpwYXNz")).isNull();
         assertThat(processor.processAuthorizationHeaderValue("Token some-token")).isNull();
     }
 
     @Test
-    void testProcessAuthorizationHeaderValueValidToken() {
+    void ProcessAuthorizationHeaderValue_ValidToken_ReturnsUser() {
         User user = new UserBuilder().withId(1L).withUsername("alice").build();
         when(userService.getUserByToken(VALID_TOKEN)).thenReturn(user);
 
@@ -57,7 +57,7 @@ class RequestTokenProcessorTest {
     }
 
     @Test
-    void testProcessAuthorizationHeaderValueValidTokenCaseInsensitiveScheme() {
+    void ProcessAuthorizationHeaderValue_CaseInsensitiveScheme_ReturnsUser() {
         User user = new UserBuilder().withId(1L).withUsername("alice").build();
         when(userService.getUserByToken(VALID_TOKEN)).thenReturn(user);
 
@@ -69,7 +69,7 @@ class RequestTokenProcessorTest {
     }
 
     @Test
-    void testProcessAuthorizationHeaderValueInvalidToken() {
+    void ProcessAuthorizationHeaderValue_InvalidToken_ReturnsNull() {
         when(userService.getUserByToken("invalid-token")).thenReturn(null);
 
         AuthenticatedUser authUser = processor.processAuthorizationHeaderValue("Bearer invalid-token");

@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public interface InvitationRepositoryContract extends RepositoryTestHelper {
 
     @Test
-    default void testCreateAndFindByToken() {
+    default void Create_ValidInput_CreatesAndFindsByToken() {
         getTxManager().run(trx -> {
             User creator = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "Secret", creator, false);
@@ -39,7 +39,7 @@ public interface InvitationRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testFindAll() {
+    default void FindAll_HasRecords_ReturnsAllRecords() {
         getTxManager().run(trx -> {
             User creator = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "Secret", creator, false);
@@ -55,7 +55,7 @@ public interface InvitationRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testFindByChannelId() {
+    default void FindByChannelId_ValidChannelId_ReturnsInvitations() {
         getTxManager().run(trx -> {
             User creator = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "Secret", creator, false);
@@ -71,7 +71,7 @@ public interface InvitationRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testConsumeInvitation() {
+    default void Consume_ValidId_UpdatesStatusToAccepted() {
         getTxManager().run(trx -> {
             User creator = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "Secret", creator, false);
@@ -89,7 +89,7 @@ public interface InvitationRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testSaveUpdatesInvitation() {
+    default void Save_UpdatedInvitation_UpdatesRecord() {
         getTxManager().run(trx -> {
             User creator = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "Secret", creator, false);
@@ -113,7 +113,7 @@ public interface InvitationRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testDeleteById() {
+    default void DeleteById_ValidId_DeletesRecord() {
         getTxManager().run(trx -> {
             User creator = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "Secret", creator, false);
@@ -127,7 +127,7 @@ public interface InvitationRepositoryContract extends RepositoryTestHelper {
     }
 
     @Test
-    default void testClear() {
+    default void Clear_HasRecords_RemovesAllRecords() {
         getTxManager().run(trx -> {
             User creator = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "Secret", creator, false);

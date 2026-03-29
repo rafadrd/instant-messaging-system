@@ -33,56 +33,56 @@ class PasswordSecurityDomainTest {
     }
 
     @Test
-    void testCreatePasswordValidationInformation() {
+    void CreatePasswordValidationInformation_ValidPassword_ReturnsInfo() {
         PasswordValidationInfo info = securityDomain.createPasswordValidationInformation("mySecret");
         assertThat(info.validationInfo()).isEqualTo("encoded_mySecret");
     }
 
     @Test
-    void testValidatePasswordSuccess() {
+    void ValidatePassword_CorrectPassword_ReturnsTrue() {
         PasswordValidationInfo info = new PasswordValidationInfoBuilder().withValidationInfo("encoded_mySecret").build();
         assertThat(securityDomain.validatePassword("mySecret", info)).isTrue();
     }
 
     @Test
-    void testValidatePasswordFailure() {
+    void ValidatePassword_IncorrectPassword_ReturnsFalse() {
         PasswordValidationInfo info = new PasswordValidationInfoBuilder().withValidationInfo("encoded_mySecret").build();
         assertThat(securityDomain.validatePassword("wrongSecret", info)).isFalse();
     }
 
     @Test
-    void testIsSafePassword_Valid() {
+    void IsSafePassword_ValidPassword_ReturnsTrue() {
         assertThat(securityDomain.isSafePassword("Strong1!")).isTrue();
         assertThat(securityDomain.isSafePassword("Another_P@ssw0rd")).isTrue();
     }
 
     @Test
-    void testIsSafePassword_TooShort() {
+    void IsSafePassword_TooShort_ReturnsFalse() {
         assertThat(securityDomain.isSafePassword("Stro1!a")).isFalse();
     }
 
     @Test
-    void testIsSafePassword_MissingUppercase() {
+    void IsSafePassword_MissingUppercase_ReturnsFalse() {
         assertThat(securityDomain.isSafePassword("weakpass1!")).isFalse();
     }
 
     @Test
-    void testIsSafePassword_MissingLowercase() {
+    void IsSafePassword_MissingLowercase_ReturnsFalse() {
         assertThat(securityDomain.isSafePassword("WEAKPASS1!")).isFalse();
     }
 
     @Test
-    void testIsSafePassword_MissingDigit() {
+    void IsSafePassword_MissingDigit_ReturnsFalse() {
         assertThat(securityDomain.isSafePassword("StrongPass!")).isFalse();
     }
 
     @Test
-    void testIsSafePassword_MissingSpecialChar() {
+    void IsSafePassword_MissingSpecialChar_ReturnsFalse() {
         assertThat(securityDomain.isSafePassword("StrongPass123")).isFalse();
     }
 
     @Test
-    void testIsSafePassword_WithRelaxedPolicy() {
+    void IsSafePassword_RelaxedPolicy_ReturnsTrue() {
         PasswordPolicyConfig relaxedConfig = new PasswordPolicyConfig(4, false, false, false, false);
         PasswordSecurityDomain relaxedDomain = new PasswordSecurityDomain(fakeEncoder, relaxedConfig);
 

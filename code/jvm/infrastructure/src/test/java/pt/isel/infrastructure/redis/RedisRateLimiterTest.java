@@ -36,7 +36,7 @@ class RedisRateLimiterTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void testIsRateLimitedReturnsTrueWhenLimitExceeded() {
+    void IsRateLimited_LimitExceeded_ReturnsTrue() {
         when(redisTemplate.execute(any(RedisScript.class), anyList(), anyString(), anyString(), anyString(), anyString())).thenReturn(0L);
 
         boolean result = rateLimiter.isRateLimited("login", "user123", 5, Duration.ofMinutes(1));
@@ -46,7 +46,7 @@ class RedisRateLimiterTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    void testIsRateLimitedReturnsFalseWhenUnderLimit() {
+    void IsRateLimited_UnderLimit_ReturnsFalse() {
         when(redisTemplate.execute(any(RedisScript.class), anyList(), anyString(), anyString(), anyString(), anyString())).thenReturn(1L);
 
         boolean result = rateLimiter.isRateLimited("login", "user123", 5, Duration.ofMinutes(1));

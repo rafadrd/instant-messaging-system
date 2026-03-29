@@ -8,7 +8,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ChannelTest {
 
     @Test
-    void testMainConstructor() {
+    void Constructor_ValidArguments_CreatesInstance() {
         UserInfo owner = new UserInfo(1L, "Alice");
         Channel channel = new Channel(10L, "Secret Room", owner, false);
 
@@ -19,7 +19,7 @@ class ChannelTest {
     }
 
     @Test
-    void testAuxiliaryConstructorSetsPublicToTrue() {
+    void Constructor_WithoutIsPublic_SetsPublicToTrue() {
         UserInfo owner = new UserInfo(2L, "Bob");
         Channel channel = new Channel(20L, "Public Lobby", owner);
 
