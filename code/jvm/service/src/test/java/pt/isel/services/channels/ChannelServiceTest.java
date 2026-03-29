@@ -34,11 +34,10 @@ class ChannelServiceTest extends AbstractServiceTest {
     void CreateChannel_ValidInput_ReturnsSuccess() {
         Either<ChannelError, Channel> result = channelService.createChannel("General", alice.id(), true);
 
-        Channel channel = EitherAssert.assertRight(result);
+        Channel channel = EitherAssert.assertThat(result).isRight().getRightValue();
         assertThat(channel.name()).isEqualTo("General");
         assertThat(channel.owner().id()).isEqualTo(alice.id());
         assertThat(channel.isPublic()).isTrue();
-
         trxManager.run(trx -> {
             ChannelMember member = trx.repoMemberships().findUserInChannel(alice.id(), channel.id());
             assertThat(member).isNotNull();
@@ -50,62 +49,70 @@ class ChannelServiceTest extends AbstractServiceTest {
     @Test
     void CreateChannel_ChannelAlreadyExists_ReturnsLeft() {
         channelService.createChannel("General", alice.id(), true);
+
         Either<ChannelError, Channel> result = channelService.createChannel("General", bob.id(), true);
 
-        EitherAssert.assertLeft(result, ChannelError.ChannelAlreadyExists.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.ChannelAlreadyExists.class);
     }
 
     @ParameterizedTest
     @NullAndEmptySource
     void CreateChannel_EmptyName_ReturnsLeft(String invalidName) {
-        EitherAssert.assertLeft(channelService.createChannel(invalidName, alice.id(), true));
+        Either<ChannelError, Channel> result = channelService.createChannel(invalidName, alice.id(), true);
+
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.EmptyChannelName.class);
     }
 
     @Test
     void CreateChannel_NameTooLong_ReturnsLeft() {
         String longName = "a".repeat(31);
+
         Either<ChannelError, Channel> result = channelService.createChannel(longName, alice.id(), true);
 
-        EitherAssert.assertLeft(result, ChannelError.InvalidChannelNameLength.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.InvalidChannelNameLength.class);
     }
 
     @Test
     void CreateChannel_UserNotFound_ReturnsLeft() {
         Either<ChannelError, Channel> result = channelService.createChannel("General", 999L, true);
 
-        EitherAssert.assertLeft(result, ChannelError.UserNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.UserNotFound.class);
     }
 
     @Test
     void GetChannelById_ValidId_ReturnsSuccess() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
+
         Either<ChannelError, Channel> result = channelService.getChannelById(created.id());
 
-        assertThat(EitherAssert.assertRight(result).id()).isEqualTo(created.id());
+        Channel channel = EitherAssert.assertThat(result).isRight().getRightValue();
+        assertThat(channel.id()).isEqualTo(created.id());
     }
 
     @Test
     void GetChannelById_InvalidId_ReturnsLeft() {
         Either<ChannelError, Channel> result = channelService.getChannelById(999L);
 
-        EitherAssert.assertLeft(result, ChannelError.ChannelNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.ChannelNotFound.class);
     }
 
     @Test
     void DeleteChannel_ValidInput_ReturnsSuccess() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
+
         Either<ChannelError, String> result = channelService.deleteChannel(alice.id(), created.id());
 
-        EitherAssert.assertRight(result);
-        EitherAssert.assertLeft(channelService.getChannelById(created.id()));
+        EitherAssert.assertThat(result).containsRight("Channel 'General' was deleted successfully.");
+        EitherAssert.assertThat(channelService.getChannelById(created.id())).isLeftInstanceOf(ChannelError.ChannelNotFound.class);
     }
 
     @Test
     void DeleteChannel_NotOwner_ReturnsLeft() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
+
         Either<ChannelError, String> result = channelService.deleteChannel(bob.id(), created.id());
 
-        EitherAssert.assertLeft(result, ChannelError.UserNotOwner.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.UserNotOwner.class);
     }
 
     @Test
@@ -115,79 +122,84 @@ class ChannelServiceTest extends AbstractServiceTest {
 
         Either<ChannelError, List<Channel>> result = channelService.getJoinedChannels(alice.id(), 10, 0);
 
-        assertThat(EitherAssert.assertRight(result)).hasSize(2);
+        List<Channel> channels = EitherAssert.assertThat(result).isRight().getRightValue();
+        assertThat(channels).hasSize(2);
     }
 
     @Test
     void EditChannel_ValidInput_ReturnsSuccess() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
+
         Either<ChannelError, Channel> result = channelService.editChannel(alice.id(), created.id(), "NewName", false);
 
-        Channel updated = EitherAssert.assertRight(result);
+        Channel updated = EitherAssert.assertThat(result).isRight().getRightValue();
         assertThat(updated.name()).isEqualTo("NewName");
         assertThat(updated.isPublic()).isFalse();
     }
 
     @Test
     void EditChannel_ChannelAlreadyExists_ReturnsLeft() {
-        Channel c1 = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel c1 = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
         channelService.createChannel("Random", alice.id(), true);
 
         Either<ChannelError, Channel> result = channelService.editChannel(alice.id(), c1.id(), "Random", true);
 
-        EitherAssert.assertLeft(result, ChannelError.ChannelAlreadyExists.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.ChannelAlreadyExists.class);
     }
 
     @Test
     void EditChannel_UserNotFound_ReturnsLeft() {
-        Channel c1 = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel c1 = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
+
         Either<ChannelError, Channel> result = channelService.editChannel(999L, c1.id(), "NewName", true);
 
-        EitherAssert.assertLeft(result, ChannelError.UserNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.UserNotFound.class);
     }
 
     @Test
     void EditChannel_ChannelNotFound_ReturnsLeft() {
         Either<ChannelError, Channel> result = channelService.editChannel(alice.id(), 999L, "NewName", true);
 
-        EitherAssert.assertLeft(result, ChannelError.ChannelNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.ChannelNotFound.class);
     }
 
     @Test
     void GetAccessType_ValidInput_ReturnsSuccess() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
         channelService.joinPublicChannel(bob.id(), created.id());
 
         Either<MessageError, AccessType> result = channelService.getAccessType(alice.id(), bob.id(), created.id());
 
-        assertThat(EitherAssert.assertRight(result)).isEqualTo(AccessType.READ_WRITE);
+        EitherAssert.assertThat(result).containsRight(AccessType.READ_WRITE);
     }
 
     @Test
     void EditMemberAccess_ValidInput_ReturnsSuccess() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
         channelService.joinPublicChannel(bob.id(), created.id());
 
         Either<ChannelError, ChannelMember> result = channelService.editMemberAccess(alice.id(), created.id(), bob.id(), AccessType.READ_ONLY);
 
-        assertThat(EitherAssert.assertRight(result).accessType()).isEqualTo(AccessType.READ_ONLY);
+        ChannelMember member = EitherAssert.assertThat(result).isRight().getRightValue();
+        assertThat(member.accessType()).isEqualTo(AccessType.READ_ONLY);
     }
 
     @Test
     void EditMemberAccess_TargetIsOwner_ReturnsLeft() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
+
         Either<ChannelError, ChannelMember> result = channelService.editMemberAccess(alice.id(), created.id(), alice.id(), AccessType.READ_ONLY);
 
-        EitherAssert.assertLeft(result, ChannelError.UserIsOwner.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.UserIsOwner.class);
     }
 
     @Test
     void EditMemberAccess_TargetNotInChannel_ReturnsLeft() {
-        Channel c1 = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel c1 = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
 
         Either<ChannelError, ChannelMember> result = channelService.editMemberAccess(alice.id(), c1.id(), bob.id(), AccessType.READ_WRITE);
 
-        EitherAssert.assertLeft(result, ChannelError.UserNotInChannel.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.UserNotInChannel.class);
     }
 
     @Test
@@ -197,119 +209,127 @@ class ChannelServiceTest extends AbstractServiceTest {
 
         Either<ChannelError, List<Channel>> result = channelService.searchChannels("java", 10, 0);
 
-        List<Channel> channels = EitherAssert.assertRight(result);
+        List<Channel> channels = EitherAssert.assertThat(result).isRight().getRightValue();
         assertThat(channels).hasSize(1);
         assertThat(channels.getFirst().name()).isEqualTo("Java Devs");
     }
 
     @Test
     void JoinPublicChannel_ValidInput_ReturnsSuccess() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
+
         Either<ChannelError, String> result = channelService.joinPublicChannel(bob.id(), created.id());
 
-        EitherAssert.assertRight(result);
+        EitherAssert.assertThat(result).containsRight("Joined public channel 'General'.");
     }
 
     @Test
     void JoinPublicChannel_PrivateChannel_ReturnsLeft() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("Secret", alice.id(), false));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("Secret", alice.id(), false)).isRight().getRightValue();
+
         Either<ChannelError, String> result = channelService.joinPublicChannel(bob.id(), created.id());
 
-        EitherAssert.assertLeft(result, ChannelError.ChannelIsPrivate.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.ChannelIsPrivate.class);
     }
 
     @Test
     void JoinPrivateChannel_ValidInput_ReturnsSuccess() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("Secret", alice.id(), false));
-
+        Channel created = EitherAssert.assertThat(channelService.createChannel("Secret", alice.id(), false)).isRight().getRightValue();
         Invitation inv = trxManager.run(trx -> insertInvitation(trx, "token123", alice, created, AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1)));
 
         Either<ChannelError, String> result = channelService.joinPrivateChannel(bob.id(), inv.token());
-        EitherAssert.assertRight(result);
 
+        EitherAssert.assertThat(result).containsRight("Joined private channel 'Secret'");
         Either<MessageError, AccessType> access = channelService.getAccessType(bob.id(), bob.id(), created.id());
-        assertThat(EitherAssert.assertRight(access)).isEqualTo(AccessType.READ_ONLY);
+        EitherAssert.assertThat(access).containsRight(AccessType.READ_ONLY);
     }
 
     @Test
     void LeaveChannel_ValidInput_ReturnsSuccess() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
         channelService.joinPublicChannel(bob.id(), created.id());
 
         Either<ChannelError, String> result = channelService.leaveChannel(created.id(), bob.id());
-        EitherAssert.assertRight(result);
+
+        EitherAssert.assertThat(result).containsRight("Left channel 'General'");
     }
 
     @Test
     void LeaveChannel_OwnerCannotLeave_ReturnsLeft() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
+
         Either<ChannelError, String> result = channelService.leaveChannel(created.id(), alice.id());
 
-        EitherAssert.assertLeft(result, ChannelError.OwnerCannotLeave.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.OwnerCannotLeave.class);
     }
 
     @Test
     void DeleteChannel_UserNotFound_ReturnsLeft() {
         Either<ChannelError, String> result = channelService.deleteChannel(999L, 1L);
 
-        EitherAssert.assertLeft(result, ChannelError.UserNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.UserNotFound.class);
     }
 
     @Test
     void DeleteChannel_ChannelNotFound_ReturnsLeft() {
         Either<ChannelError, String> result = channelService.deleteChannel(alice.id(), 999L);
 
-        EitherAssert.assertLeft(result, ChannelError.ChannelNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.ChannelNotFound.class);
     }
 
     @Test
     void GetJoinedChannels_UserNotFound_ReturnsLeft() {
         Either<ChannelError, List<Channel>> result = channelService.getJoinedChannels(999L, 10, 0);
 
-        EitherAssert.assertLeft(result, ChannelError.UserNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.UserNotFound.class);
     }
 
     @ParameterizedTest
     @NullAndEmptySource
     void EditChannel_EmptyName_ReturnsLeft(String invalidName) {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
-        EitherAssert.assertLeft(channelService.editChannel(alice.id(), created.id(), invalidName, true));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
+
+        Either<ChannelError, Channel> result = channelService.editChannel(alice.id(), created.id(), invalidName, true);
+
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.EmptyChannelName.class);
     }
 
     @Test
     void EditChannel_NotOwner_ReturnsLeft() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
+
         Either<ChannelError, Channel> result = channelService.editChannel(bob.id(), created.id(), "NewName", true);
 
-        EitherAssert.assertLeft(result, ChannelError.UserNotOwner.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.UserNotOwner.class);
     }
 
     @Test
     void GetAccessType_TargetNotInChannel_ReturnsLeft() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
+
         Either<MessageError, AccessType> result = channelService.getAccessType(alice.id(), bob.id(), created.id());
 
-        EitherAssert.assertLeft(result, MessageError.UserNotInChannel.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(MessageError.UserNotInChannel.class);
     }
 
     @Test
     void GetAccessType_RequesterNotAuthorized_ReturnsLeft() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
         channelService.joinPublicChannel(bob.id(), created.id());
 
         Either<MessageError, AccessType> result = channelService.getAccessType(charlie.id(), bob.id(), created.id());
 
-        EitherAssert.assertLeft(result, MessageError.UserNotAuthorized.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(MessageError.UserNotAuthorized.class);
     }
 
     @Test
     void EditMemberAccess_NotOwner_ReturnsLeft() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
         channelService.joinPublicChannel(bob.id(), created.id());
 
         Either<ChannelError, ChannelMember> result = channelService.editMemberAccess(bob.id(), created.id(), bob.id(), AccessType.READ_ONLY);
 
-        EitherAssert.assertLeft(result, ChannelError.UserNotOwner.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.UserNotOwner.class);
     }
 
     @Test
@@ -319,123 +339,125 @@ class ChannelServiceTest extends AbstractServiceTest {
 
         Either<ChannelError, List<Channel>> result = channelService.searchChannels("", 10, 0);
 
-        assertThat(EitherAssert.assertRight(result)).hasSize(1);
+        List<Channel> channels = EitherAssert.assertThat(result).isRight().getRightValue();
+        assertThat(channels).hasSize(1);
     }
 
     @Test
     void JoinPublicChannel_AlreadyInChannel_ReturnsLeft() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
         channelService.joinPublicChannel(bob.id(), created.id());
 
         Either<ChannelError, String> result = channelService.joinPublicChannel(bob.id(), created.id());
 
-        EitherAssert.assertLeft(result, ChannelError.UserAlreadyInChannel.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.UserAlreadyInChannel.class);
     }
 
     @Test
     void JoinPrivateChannel_TokenNotFound_ReturnsLeft() {
         Either<ChannelError, String> result = channelService.joinPrivateChannel(bob.id(), "invalid-token");
 
-        EitherAssert.assertLeft(result, ChannelError.TokenNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.TokenNotFound.class);
     }
 
     @Test
     void JoinPrivateChannel_ExpiredToken_ReturnsLeft() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("Secret", alice.id(), false));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("Secret", alice.id(), false)).isRight().getRightValue();
         trxManager.run(trx -> insertInvitation(trx, "expired-token", alice, created, AccessType.READ_ONLY, LocalDateTime.now(clock).minusDays(1)));
 
         Either<ChannelError, String> result = channelService.joinPrivateChannel(bob.id(), "expired-token");
 
-        EitherAssert.assertLeft(result, ChannelError.InvitationExpired.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.InvitationExpired.class);
     }
 
     @Test
     void LeaveChannel_ChannelNotFound_ReturnsLeft() {
         Either<ChannelError, String> result = channelService.leaveChannel(999L, bob.id());
 
-        EitherAssert.assertLeft(result, ChannelError.ChannelNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.ChannelNotFound.class);
     }
 
     @Test
     void LeaveChannel_UserNotInChannel_ReturnsLeft() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
+
         Either<ChannelError, String> result = channelService.leaveChannel(created.id(), bob.id());
 
-        EitherAssert.assertLeft(result, ChannelError.UserNotInChannel.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.UserNotInChannel.class);
     }
 
     @Test
     void GetUsersInChannel_ValidInput_ReturnsSuccess() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
         channelService.joinPublicChannel(bob.id(), created.id());
 
         Either<ChannelError, List<UserInfo>> result = channelService.getUsersInChannel(created.id(), 10, 0);
 
-        assertThat(EitherAssert.assertRight(result)).hasSize(2);
+        List<UserInfo> users = EitherAssert.assertThat(result).isRight().getRightValue();
+        assertThat(users).hasSize(2);
     }
 
     @Test
     void EditChannel_NameTooLong_ReturnsLeft() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
         String longName = "a".repeat(31);
 
         Either<ChannelError, Channel> result = channelService.editChannel(alice.id(), created.id(), longName, true);
 
-        EitherAssert.assertLeft(result, ChannelError.InvalidChannelNameLength.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.InvalidChannelNameLength.class);
     }
 
     @Test
     void EditMemberAccess_UserNotFound_ReturnsLeft() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
 
         Either<ChannelError, ChannelMember> result = channelService.editMemberAccess(alice.id(), created.id(), 999L, AccessType.READ_ONLY);
 
-        EitherAssert.assertLeft(result, ChannelError.UserNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.UserNotFound.class);
     }
 
     @Test
     void JoinPublicChannel_UserNotFound_ReturnsLeft() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("General", alice.id(), true));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("General", alice.id(), true)).isRight().getRightValue();
 
         Either<ChannelError, String> result = channelService.joinPublicChannel(999L, created.id());
 
-        EitherAssert.assertLeft(result, ChannelError.UserNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.UserNotFound.class);
     }
 
     @Test
     void JoinPublicChannel_ChannelNotFound_ReturnsLeft() {
         Either<ChannelError, String> result = channelService.joinPublicChannel(bob.id(), 999L);
 
-        EitherAssert.assertLeft(result, ChannelError.ChannelNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.ChannelNotFound.class);
     }
 
     @Test
     void JoinPrivateChannel_UserNotFound_ReturnsLeft() {
         Either<ChannelError, String> result = channelService.joinPrivateChannel(999L, "some-token");
 
-        EitherAssert.assertLeft(result, ChannelError.UserNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.UserNotFound.class);
     }
 
     @Test
     void JoinPrivateChannel_AlreadyInChannel_ReturnsLeft() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("Secret", alice.id(), false));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("Secret", alice.id(), false)).isRight().getRightValue();
         trxManager.run(trx -> insertMember(trx, bob, created, AccessType.READ_ONLY));
         trxManager.run(trx -> insertInvitation(trx, "token123", alice, created, AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1)));
 
         Either<ChannelError, String> result = channelService.joinPrivateChannel(bob.id(), "token123");
 
-        EitherAssert.assertLeft(result, ChannelError.UserAlreadyInChannel.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.UserAlreadyInChannel.class);
     }
 
     @Test
     void JoinPrivateChannel_InvitationAlreadyUsed_ReturnsLeft() {
-        Channel created = EitherAssert.assertRight(channelService.createChannel("Secret", alice.id(), false));
+        Channel created = EitherAssert.assertThat(channelService.createChannel("Secret", alice.id(), false)).isRight().getRightValue();
         trxManager.run(trx -> insertInvitation(trx, "token123", alice, created, AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1)));
-
         channelService.joinPrivateChannel(bob.id(), "token123");
 
         Either<ChannelError, String> result = channelService.joinPrivateChannel(charlie.id(), "token123");
 
-        EitherAssert.assertLeft(result, ChannelError.InvitationAlreadyUsed.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(ChannelError.InvitationAlreadyUsed.class);
     }
 }

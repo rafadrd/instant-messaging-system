@@ -24,12 +24,12 @@ class AppInstantMessagingTest extends AbstractIntegrationTest {
 
     @Test
     void Context_CustomBeans_AreLoaded() {
+        PasswordPolicyConfig passwordPolicyConfig = context.getBean(PasswordPolicyConfig.class);
+
         assertThat(context.getBean(Jdbi.class)).as("Jdbi bean should be present in the context").isNotNull();
         assertThat(context.getBean(TransactionManager.class)).as("TransactionManager bean should be present in the context").isNotNull();
         assertThat(context.getBean(PasswordEncoder.class)).as("PasswordEncoder bean should be present in the context").isNotNull();
         assertThat(context.getBean(Clock.class)).as("Clock bean should be present in the context").isNotNull();
-
-        PasswordPolicyConfig passwordPolicyConfig = context.getBean(PasswordPolicyConfig.class);
         assertThat(passwordPolicyConfig).as("PasswordPolicyConfig bean should be present in the context").isNotNull();
     }
 }

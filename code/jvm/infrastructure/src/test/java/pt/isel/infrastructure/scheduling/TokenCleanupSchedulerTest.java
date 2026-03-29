@@ -60,9 +60,7 @@ class TokenCleanupSchedulerTest {
 
     @Test
     void RunCleanup_ServiceThrowsException_HandlesGracefully() {
-        when(valueOperations.setIfAbsent(eq("scheduler:token-cleanup:lock"), eq("locked"), any(Duration.class)))
-                .thenReturn(true);
-
+        when(valueOperations.setIfAbsent(eq("scheduler:token-cleanup:lock"), eq("locked"), any(Duration.class))).thenReturn(true);
         doThrow(new RuntimeException("Database connection failed")).when(userService).cleanupExpiredTokens();
 
         assertThatCode(() -> scheduler.runCleanup()).doesNotThrowAnyException();

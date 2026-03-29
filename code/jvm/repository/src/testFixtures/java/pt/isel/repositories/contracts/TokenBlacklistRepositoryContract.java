@@ -17,6 +17,7 @@ public interface TokenBlacklistRepositoryContract extends RepositoryTestHelper {
             assertThat(trx.repoTokenBlacklist().exists(jti)).isFalse();
 
             trx.repoTokenBlacklist().add(jti, LocalDateTime.now(ZoneOffset.UTC).plusHours(1));
+
             assertThat(trx.repoTokenBlacklist().exists(jti)).isTrue();
             return null;
         });
@@ -58,7 +59,7 @@ public interface TokenBlacklistRepositoryContract extends RepositoryTestHelper {
 
             assertThatCode(() -> {
                 trx.repoTokenBlacklist().add(jti, expiry);
-                trx.repoTokenBlacklist().add(jti, expiry); // Should ignore conflict
+                trx.repoTokenBlacklist().add(jti, expiry);
             }).doesNotThrowAnyException();
 
             assertThat(trx.repoTokenBlacklist().exists(jti)).isTrue();

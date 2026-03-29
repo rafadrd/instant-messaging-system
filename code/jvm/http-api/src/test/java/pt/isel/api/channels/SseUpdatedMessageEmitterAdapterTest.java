@@ -47,6 +47,7 @@ class SseUpdatedMessageEmitterAdapterTest {
     @Test
     void Complete_ValidState_CompletesEmitter() {
         assertThatCode(adapter::complete).doesNotThrowAnyException();
+
         verify(mockEmitter).complete();
     }
 
@@ -61,10 +62,8 @@ class SseUpdatedMessageEmitterAdapterTest {
 
     @Test
     void LifecycleCallbacks_ValidCallbacks_DelegatesToEmitter() {
-        Runnable completionCallback = () -> {
-        };
-        Consumer<Throwable> errorCallback = e -> {
-        };
+        Runnable completionCallback = () -> {};
+        Consumer<Throwable> errorCallback = e -> {};
 
         adapter.onCompletion(completionCallback);
         adapter.onError(errorCallback);

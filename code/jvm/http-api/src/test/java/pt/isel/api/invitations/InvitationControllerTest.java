@@ -47,7 +47,6 @@ class InvitationControllerTest extends AbstractControllerTest {
                 .withAccessType(AccessType.READ_ONLY)
                 .withExpiresAt(expiry)
                 .build();
-
         when(invitationService.createInvitation(eq(1L), eq(10L), eq(AccessType.READ_ONLY), any())).thenReturn(Either.success(invitation));
 
         postWithAuth("/api/channels/10/invitations", input)

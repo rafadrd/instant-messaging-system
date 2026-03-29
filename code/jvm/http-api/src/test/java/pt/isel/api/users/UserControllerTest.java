@@ -43,7 +43,6 @@ class UserControllerTest extends AbstractControllerTest {
     void RegisterUser_ValidInput_ReturnsCreated() throws Exception {
         RegisterInput input = new RegisterInput("alice", "Strong1!", null);
         TokenExternalInfo tokenInfo = new TokenExternalInfo("token123", Instant.now(), 1L);
-
         when(userService.registerUser(anyString(), anyString(), any())).thenReturn(Either.success(tokenInfo));
 
         postWithoutAuth("/api/auth/register", input)
@@ -75,7 +74,6 @@ class UserControllerTest extends AbstractControllerTest {
     void LoginUser_ValidInput_ReturnsOk() throws Exception {
         UserInput input = new UserInput("alice", "Strong1!");
         TokenExternalInfo tokenInfo = new TokenExternalInfo("token123", Instant.now(), 1L);
-
         when(userService.createToken(anyString(), anyString())).thenReturn(Either.success(tokenInfo));
 
         postWithoutAuth("/api/auth/login", input)
@@ -115,7 +113,6 @@ class UserControllerTest extends AbstractControllerTest {
     void UpdateUsername_ValidInput_ReturnsUpdatedUser() throws Exception {
         UpdateUsernameInput input = new UpdateUsernameInput("new_alice", "Strong1!");
         User updatedUser = new UserBuilder().withId(1L).withUsername("new_alice").build();
-
         when(userService.updateUsername(eq(1L), eq("new_alice"), eq("Strong1!"))).thenReturn(Either.success(updatedUser));
 
         putWithAuth("/api/users/me", input)
@@ -127,7 +124,6 @@ class UserControllerTest extends AbstractControllerTest {
     void UpdatePassword_ValidInput_ReturnsOk() throws Exception {
         UpdatePasswordInput input = new UpdatePasswordInput("Strong1!", "Stronger2@");
         User updatedUser = new UserBuilder().withId(1L).withPasswordValidation(new PasswordValidationInfo("newhash")).build();
-
         when(userService.updatePassword(eq(1L), eq("Strong1!"), eq("Stronger2@"))).thenReturn(Either.success(updatedUser));
 
         putWithAuth("/api/users/me/password", input)

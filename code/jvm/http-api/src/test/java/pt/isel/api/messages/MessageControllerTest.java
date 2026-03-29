@@ -40,7 +40,6 @@ class MessageControllerTest extends AbstractControllerTest {
     void CreateMessage_ValidInput_ReturnsCreated() throws Exception {
         MessageRequest request = new MessageRequest("Hello World");
         Message message = new MessageBuilder().withId(100L).withContent("Hello World").build();
-
         when(messageService.createMessage(anyString(), anyLong(), anyLong())).thenReturn(Either.success(message));
 
         postWithAuth("/api/channels/10/messages", request)

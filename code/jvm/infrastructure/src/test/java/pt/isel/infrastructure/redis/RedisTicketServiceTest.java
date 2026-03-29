@@ -16,14 +16,13 @@ import static org.mockito.Mockito.when;
 
 class RedisTicketServiceTest {
 
-    private StringRedisTemplate redisTemplate;
     private ValueOperations<String, String> valueOperations;
     private RedisTicketService ticketService;
 
     @BeforeEach
     @SuppressWarnings("unchecked")
     void setUp() {
-        redisTemplate = mock(StringRedisTemplate.class);
+        StringRedisTemplate redisTemplate = mock(StringRedisTemplate.class);
         valueOperations = mock(ValueOperations.class);
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
 
@@ -33,6 +32,7 @@ class RedisTicketServiceTest {
     @Test
     void CreateTicket_ValidUserId_ReturnsTicket() {
         Long userId = 42L;
+
         String ticket = ticketService.createTicket(userId);
 
         assertThat(ticket).isNotNull();
