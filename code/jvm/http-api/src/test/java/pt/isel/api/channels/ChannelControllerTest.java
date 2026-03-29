@@ -64,7 +64,6 @@ class ChannelControllerTest extends AbstractControllerTest {
     void CreateChannel_ValidInput_ReturnsCreated() throws Exception {
         ChannelInput input = new ChannelInput("General", true);
         Channel channel = new ChannelBuilder().withId(10L).withName("General").build();
-
         when(channelService.createChannel(anyString(), anyLong(), anyBoolean())).thenReturn(Either.success(channel));
 
         postWithAuth("/api/channels", input)
@@ -87,7 +86,6 @@ class ChannelControllerTest extends AbstractControllerTest {
     void EditChannel_ValidInput_ReturnsUpdatedChannel() throws Exception {
         EditChannelInput input = new EditChannelInput("NewName", false);
         Channel channel = new ChannelBuilder().withId(10L).withName("NewName").withIsPublic(false).build();
-
         when(channelService.editChannel(eq(1L), eq(10L), eq("NewName"), eq(false))).thenReturn(Either.success(channel));
 
         putWithAuth("/api/channels/10", input)
@@ -154,7 +152,6 @@ class ChannelControllerTest extends AbstractControllerTest {
                 .withUser(new UserInfoBuilder().withId(2L).withUsername("bob").build())
                 .withAccessType(AccessType.READ_WRITE)
                 .build();
-
         when(channelService.editMemberAccess(1L, 10L, 2L, AccessType.READ_WRITE)).thenReturn(Either.success(member));
 
         putWithAuth("/api/channels/10/members/2", input)
@@ -221,7 +218,6 @@ class ChannelControllerTest extends AbstractControllerTest {
     @Test
     void Listen_ServiceThrowsException_CompletesWithError() throws Exception {
         when(channelService.getAccessType(1L, 1L, 10L)).thenReturn(Either.success(AccessType.READ_WRITE));
-
         Mockito.doThrow(new RuntimeException("Redis connection failed"))
                 .when(messageEventService).addEmitter(anyLong(), anyLong(), any());
 

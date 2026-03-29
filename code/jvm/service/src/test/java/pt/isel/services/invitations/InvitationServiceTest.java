@@ -32,9 +32,10 @@ class InvitationServiceTest extends AbstractServiceTest {
     @Test
     void CreateInvitation_ByOwner_ReturnsSuccess() {
         LocalDateTime expiry = LocalDateTime.now(clock).plusDays(1);
+
         Either<InvitationError, Invitation> result = invitationService.createInvitation(alice.id(), channel.id(), AccessType.READ_ONLY, expiry);
 
-        Invitation inv = EitherAssert.assertRight(result);
+        Invitation inv = EitherAssert.assertThat(result).isRight().getRightValue();
         assertThat(inv.token()).isNotNull();
         assertThat(inv.accessType()).isEqualTo(AccessType.READ_ONLY);
     }
@@ -42,25 +43,29 @@ class InvitationServiceTest extends AbstractServiceTest {
     @Test
     void CreateInvitation_ByReadWriteMember_ReturnsSuccess() {
         LocalDateTime expiry = LocalDateTime.now(clock).plusDays(1);
+
         Either<InvitationError, Invitation> result = invitationService.createInvitation(bob.id(), channel.id(), AccessType.READ_WRITE, expiry);
 
-        EitherAssert.assertRight(result);
+        Invitation inv = EitherAssert.assertThat(result).isRight().getRightValue();
+        assertThat(inv.accessType()).isEqualTo(AccessType.READ_WRITE);
     }
 
     @Test
     void CreateInvitation_ByReadOnlyMember_ReturnsLeft() {
         LocalDateTime expiry = LocalDateTime.now(clock).plusDays(1);
+
         Either<InvitationError, Invitation> result = invitationService.createInvitation(charlie.id(), channel.id(), AccessType.READ_ONLY, expiry);
 
-        EitherAssert.assertLeft(result, InvitationError.UserNotAuthorized.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(InvitationError.UserNotAuthorized.class);
     }
 
     @Test
     void CreateInvitation_InvalidExpiration_ReturnsLeft() {
         LocalDateTime expiry = LocalDateTime.now(clock).minusDays(1);
+
         Either<InvitationError, Invitation> result = invitationService.createInvitation(alice.id(), channel.id(), AccessType.READ_ONLY, expiry);
 
-        EitherAssert.assertLeft(result, InvitationError.InvalidExpirationTime.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(InvitationError.InvalidExpirationTime.class);
     }
 
     @Test
@@ -70,40 +75,42 @@ class InvitationServiceTest extends AbstractServiceTest {
 
         Either<InvitationError, List<Invitation>> result = invitationService.getInvitationsForChannel(alice.id(), channel.id());
 
-        assertThat(EitherAssert.assertRight(result)).hasSize(2);
+        List<Invitation> invitations = EitherAssert.assertThat(result).isRight().getRightValue();
+        assertThat(invitations).hasSize(2);
     }
 
     @Test
     void GetInvitationsForChannel_UserNotFound_ReturnsLeft() {
         Either<InvitationError, List<Invitation>> result = invitationService.getInvitationsForChannel(999L, channel.id());
 
-        EitherAssert.assertLeft(result, InvitationError.UserNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(InvitationError.UserNotFound.class);
     }
 
     @Test
     void GetInvitationsForChannel_ChannelNotFound_ReturnsLeft() {
         Either<InvitationError, List<Invitation>> result = invitationService.getInvitationsForChannel(alice.id(), 999L);
 
-        EitherAssert.assertLeft(result, InvitationError.ChannelNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(InvitationError.ChannelNotFound.class);
     }
 
     @Test
     void GetInvitationsForChannel_UserNotInChannel_ReturnsLeft() {
         User dave = trxManager.run(trx -> insertUser(trx, "dave"));
+
         Either<InvitationError, List<Invitation>> result = invitationService.getInvitationsForChannel(dave.id(), channel.id());
 
-        EitherAssert.assertLeft(result, InvitationError.UserNotInChannel.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(InvitationError.UserNotInChannel.class);
     }
 
     @Test
     void RevokeInvitation_ByOwner_ReturnsSuccess() {
-        Invitation inv = EitherAssert.assertRight(invitationService.createInvitation(
+        Invitation inv = EitherAssert.assertThat(invitationService.createInvitation(
                 alice.id(), channel.id(), AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1)
-        ));
+        )).isRight().getRightValue();
 
         Either<InvitationError, String> result = invitationService.revokeInvitation(alice.id(), channel.id(), inv.id());
-        EitherAssert.assertRight(result);
 
+        EitherAssert.assertThat(result).containsRight("Invitation revoked.");
         trxManager.run(trx -> {
             assertThat(trx.repoInvitations().findById(inv.id()).status()).isEqualTo(InvitationStatus.REJECTED);
             return null;
@@ -112,62 +119,63 @@ class InvitationServiceTest extends AbstractServiceTest {
 
     @Test
     void RevokeInvitation_NotOwner_ReturnsLeft() {
-        Invitation inv = EitherAssert.assertRight(invitationService.createInvitation(
+        Invitation inv = EitherAssert.assertThat(invitationService.createInvitation(
                 alice.id(), channel.id(), AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1)
-        ));
+        )).isRight().getRightValue();
 
         Either<InvitationError, String> result = invitationService.revokeInvitation(bob.id(), channel.id(), inv.id());
 
-        EitherAssert.assertLeft(result, InvitationError.UserNotAuthorized.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(InvitationError.UserNotAuthorized.class);
     }
 
     @Test
     void CreateInvitation_UserNotFound_ReturnsLeft() {
         Either<InvitationError, Invitation> result = invitationService.createInvitation(999L, channel.id(), AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1));
 
-        EitherAssert.assertLeft(result, InvitationError.UserNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(InvitationError.UserNotFound.class);
     }
 
     @Test
     void CreateInvitation_ChannelNotFound_ReturnsLeft() {
         Either<InvitationError, Invitation> result = invitationService.createInvitation(alice.id(), 999L, AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1));
 
-        EitherAssert.assertLeft(result, InvitationError.ChannelNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(InvitationError.ChannelNotFound.class);
     }
 
     @Test
     void CreateInvitation_UserNotInChannel_ReturnsLeft() {
         User dave = trxManager.run(trx -> insertUser(trx, "dave"));
+
         Either<InvitationError, Invitation> result = invitationService.createInvitation(dave.id(), channel.id(), AccessType.READ_ONLY, LocalDateTime.now(clock).plusDays(1));
 
-        EitherAssert.assertLeft(result, InvitationError.UserNotInChannel.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(InvitationError.UserNotInChannel.class);
     }
 
     @Test
     void RevokeInvitation_InvitationNotFound_ReturnsLeft() {
         Either<InvitationError, String> result = invitationService.revokeInvitation(alice.id(), channel.id(), 999L);
 
-        EitherAssert.assertLeft(result, InvitationError.InvitationNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(InvitationError.InvitationNotFound.class);
     }
 
     @Test
     void RevokeInvitation_ChannelNotFound_ReturnsLeft() {
         Either<InvitationError, String> result = invitationService.revokeInvitation(alice.id(), 999L, 1L);
 
-        EitherAssert.assertLeft(result, InvitationError.ChannelNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(InvitationError.ChannelNotFound.class);
     }
 
     @Test
     void GetInvitationsForChannel_UserNotAuthorized_ReturnsLeft() {
         Either<InvitationError, List<Invitation>> result = invitationService.getInvitationsForChannel(charlie.id(), channel.id());
 
-        EitherAssert.assertLeft(result, InvitationError.UserNotAuthorized.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(InvitationError.UserNotAuthorized.class);
     }
 
     @Test
     void RevokeInvitation_UserNotFound_ReturnsLeft() {
         Either<InvitationError, String> result = invitationService.revokeInvitation(999L, channel.id(), 1L);
 
-        EitherAssert.assertLeft(result, InvitationError.UserNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(InvitationError.UserNotFound.class);
     }
 }

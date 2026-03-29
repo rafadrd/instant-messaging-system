@@ -57,7 +57,6 @@ class AuthenticatedUserArgumentResolverTest {
     void ResolveArgument_ValidRequest_ReturnsUser() {
         User user = new UserBuilder().withId(1L).withUsername("alice").build();
         AuthenticatedUser authUser = new AuthenticatedUser(user, "token123");
-
         when(webRequest.getNativeRequest(HttpServletRequest.class)).thenReturn(request);
         when(request.getAttribute("AuthenticatedUserArgumentResolver")).thenReturn(authUser);
 
@@ -91,6 +90,7 @@ class AuthenticatedUserArgumentResolverTest {
         AuthenticatedUser authUser = new AuthenticatedUser(user, "token123");
 
         AuthenticatedUserArgumentResolver.addUserTo(authUser, request);
+
         verify(request).setAttribute("AuthenticatedUserArgumentResolver", authUser);
 
         when(request.getAttribute("AuthenticatedUserArgumentResolver")).thenReturn(authUser);

@@ -24,7 +24,6 @@ class CustomExceptionHandlerTest extends AbstractControllerTest {
     void HandleAll_UnexpectedException_ReturnsInternalServerError() throws Exception {
         when(userService.registerUser(anyString(), anyString(), any()))
                 .thenThrow(new RuntimeException("Unexpected database failure"));
-
         String validJson = "{\"username\":\"alice\", \"password\":\"Strong1!\"}";
 
         mockMvc.perform(post("/api/auth/register")

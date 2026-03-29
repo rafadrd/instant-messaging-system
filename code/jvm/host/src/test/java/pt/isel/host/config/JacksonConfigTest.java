@@ -33,14 +33,10 @@ class JacksonConfigTest {
         UpdatedMessage.NewMessage newMessage = new UpdatedMessage.NewMessage(message);
 
         String json = objectMapper.writeValueAsString(newMessage);
-
-        assertThat(json).isNotNull()
-                .as("JSON should contain the polymorphic type identifier")
-                .contains("\"type\":\"new-message\"");
-
         UpdatedMessage deserialized = objectMapper.readValue(json, UpdatedMessage.class);
-        assertThat(deserialized).isInstanceOf(UpdatedMessage.NewMessage.class);
 
+        assertThat(json).isNotNull().contains("\"type\":\"new-message\"");
+        assertThat(deserialized).isInstanceOf(UpdatedMessage.NewMessage.class);
         UpdatedMessage.NewMessage deserializedNewMessage = (UpdatedMessage.NewMessage) deserialized;
         assertThat(deserializedNewMessage.message().id()).isEqualTo(100L);
         assertThat(deserializedNewMessage.message().content()).isEqualTo("Hello World");
@@ -53,14 +49,10 @@ class JacksonConfigTest {
         UpdatedMessage.KeepAlive keepAlive = new UpdatedMessage.KeepAlive(now);
 
         String json = objectMapper.writeValueAsString(keepAlive);
-
-        assertThat(json).isNotNull()
-                .as("JSON should contain the polymorphic type identifier")
-                .contains("\"type\":\"keep-alive\"");
-
         UpdatedMessage deserialized = objectMapper.readValue(json, UpdatedMessage.class);
-        assertThat(deserialized).isInstanceOf(UpdatedMessage.KeepAlive.class);
 
+        assertThat(json).isNotNull().contains("\"type\":\"keep-alive\"");
+        assertThat(deserialized).isInstanceOf(UpdatedMessage.KeepAlive.class);
         UpdatedMessage.KeepAlive deserializedKeepAlive = (UpdatedMessage.KeepAlive) deserialized;
         assertThat(deserializedKeepAlive.timestamp()).isEqualTo(now);
     }

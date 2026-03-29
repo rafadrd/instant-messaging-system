@@ -26,11 +26,10 @@ class RedisRateLimiterTest {
     private StringRedisTemplate redisTemplate;
 
     private RedisRateLimiter rateLimiter;
-    private Clock clock;
 
     @BeforeEach
     void setUp() {
-        clock = Clock.fixed(Instant.parse("2025-01-01T10:00:00Z"), ZoneOffset.UTC);
+        Clock clock = Clock.fixed(Instant.parse("2025-01-01T10:00:00Z"), ZoneOffset.UTC);
         rateLimiter = new RedisRateLimiter(redisTemplate, clock);
     }
 

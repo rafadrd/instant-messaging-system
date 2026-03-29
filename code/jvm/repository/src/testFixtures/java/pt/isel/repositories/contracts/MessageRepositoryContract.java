@@ -40,11 +40,11 @@ public interface MessageRepositoryContract extends RepositoryTestHelper {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
-
             trx.repoMessages().create("Msg 1", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC));
             trx.repoMessages().create("Msg 2", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC));
 
             List<Message> allMessages = trx.repoMessages().findAll();
+
             assertThat(allMessages).hasSize(2);
             return null;
         });
@@ -55,20 +55,18 @@ public interface MessageRepositoryContract extends RepositoryTestHelper {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
-
             trx.repoMessages().create("Msg 1", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC).minusMinutes(3));
             trx.repoMessages().create("Msg 2", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC).minusMinutes(2));
             trx.repoMessages().create("Msg 3", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC).minusMinutes(1));
-
             Channel otherChannel = insertChannel(trx, "Other", user, true);
             trx.repoMessages().create("Other Msg", toUserInfo(user), otherChannel, LocalDateTime.now(ZoneOffset.UTC));
 
             List<Message> page1 = trx.repoMessages().findAllInChannel(channel, 2, 0);
+            List<Message> page2 = trx.repoMessages().findAllInChannel(channel, 2, 2);
+
             assertThat(page1).hasSize(2);
             assertThat(page1.get(0).content()).isEqualTo("Msg 3");
             assertThat(page1.get(1).content()).isEqualTo("Msg 2");
-
-            List<Message> page2 = trx.repoMessages().findAllInChannel(channel, 2, 2);
             assertThat(page2).hasSize(1);
             assertThat(page2.getFirst().content()).isEqualTo("Msg 1");
             return null;
@@ -80,7 +78,6 @@ public interface MessageRepositoryContract extends RepositoryTestHelper {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
-
             Message msg = trx.repoMessages().create("Original", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC));
             Message updated = new MessageBuilder()
                     .withId(msg.id())
@@ -102,8 +99,8 @@ public interface MessageRepositoryContract extends RepositoryTestHelper {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
-
             Message msg = trx.repoMessages().create("To Delete", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC));
+
             trx.repoMessages().deleteById(msg.id());
 
             assertThat(trx.repoMessages().findById(msg.id())).isNull();
@@ -119,6 +116,7 @@ public interface MessageRepositoryContract extends RepositoryTestHelper {
             trx.repoMessages().create("Msg", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC));
 
             trx.repoMessages().clear();
+
             assertThat(trx.repoMessages().findAll()).isEmpty();
             return null;
         });

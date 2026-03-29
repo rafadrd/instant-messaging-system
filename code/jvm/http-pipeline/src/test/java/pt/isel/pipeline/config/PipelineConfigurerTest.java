@@ -60,7 +60,6 @@ class PipelineConfigurerTest {
     void AddCorsMappings_ValidRegistry_AddsMappings() {
         CorsRegistry registry = mock(CorsRegistry.class);
         CorsRegistration registration = mock(CorsRegistration.class);
-
         when(registry.addMapping(anyString())).thenReturn(registration);
         when(registration.allowedOrigins(any(String[].class))).thenReturn(registration);
         when(registration.allowedMethods(any(String[].class))).thenReturn(registration);

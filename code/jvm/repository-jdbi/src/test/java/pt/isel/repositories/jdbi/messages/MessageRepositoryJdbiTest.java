@@ -24,19 +24,16 @@ class MessageRepositoryJdbiTest extends AbstractJdbiTest implements MessageRepos
         txManager.run(trx -> {
             User owner = insertUser(trx, "owner");
             Channel channel = insertChannel(trx, "General", owner, true);
-
             User author = insertUser(trx, "author");
-
             Message msg = trx.repoMessages().create("Ghost message", toUserInfo(author), channel, LocalDateTime.now(ZoneOffset.UTC));
             assertThat(msg.user()).isNotNull();
 
             trx.repoUsers().deleteById(author.id());
-
             Message found = trx.repoMessages().findById(msg.id());
+
             assertThat(found).isNotNull();
             assertThat(found.content()).isEqualTo("Ghost message");
             assertThat(found.user()).as("Author should be null because the user was deleted (ON DELETE SET NULL)").isNull();
-
             return null;
         });
     }

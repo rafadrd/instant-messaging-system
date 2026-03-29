@@ -21,6 +21,7 @@ class ErrorHandlingTest {
     @Test
     void HandleResult_Success_ReturnsOk() {
         Either<UserError, String> result = Either.success("Success Data");
+
         ResponseEntity<?> response = ErrorHandling.handleResult(result);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -30,6 +31,7 @@ class ErrorHandlingTest {
     @Test
     void HandleResult_SuccessWithMapper_ReturnsMappedResponse() {
         Either<UserError, String> result = Either.success("Created Data");
+
         ResponseEntity<?> response = ErrorHandling.handleResult(result, data -> ResponseEntity.status(HttpStatus.CREATED).body(data));
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
@@ -39,6 +41,7 @@ class ErrorHandlingTest {
     @Test
     void HandleResult_UserNotFound_ReturnsNotFound() {
         Either<UserError, String> result = Either.failure(new UserError.UserNotFound());
+
         ResponseEntity<?> response = ErrorHandling.handleResult(result);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
@@ -53,6 +56,7 @@ class ErrorHandlingTest {
     @Test
     void HandleResult_ChannelIsPrivate_ReturnsForbidden() {
         Either<ChannelError, String> result = Either.failure(new ChannelError.ChannelIsPrivate());
+
         ResponseEntity<?> response = ErrorHandling.handleResult(result);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
@@ -67,6 +71,7 @@ class ErrorHandlingTest {
     @Test
     void HandleResult_MessageError_ReturnsBadRequest() {
         Either<MessageError, String> result = Either.failure(new MessageError.EmptyMessage());
+
         ResponseEntity<?> response = ErrorHandling.handleResult(result);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
@@ -81,6 +86,7 @@ class ErrorHandlingTest {
     @Test
     void HandleResult_InvitationError_ReturnsConflict() {
         Either<InvitationError, String> result = Either.failure(new InvitationError.InvitationAlreadyExists());
+
         ResponseEntity<?> response = ErrorHandling.handleResult(result);
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);

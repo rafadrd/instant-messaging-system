@@ -25,9 +25,7 @@ class TransactionManagerJdbiTest extends AbstractJdbiTest implements RepositoryT
         });
 
         assertThat(result).isEqualTo("Success");
-
         txManager.run(trx -> {
-            // Verify data was committed
             assertThat(trx.repoUsers().hasUsers()).isTrue();
             return null;
         });
@@ -40,10 +38,8 @@ class TransactionManagerJdbiTest extends AbstractJdbiTest implements RepositoryT
             return Either.failure("Business Error");
         });
 
-        assertThat(EitherAssert.assertLeft(result)).isEqualTo("Business Error");
-
+        EitherAssert.assertThat(result).containsLeft("Business Error");
         txManager.run(trx -> {
-            // Verify data was rolled back
             assertThat(trx.repoUsers().findByUsername("bob")).isNull();
             return null;
         });
@@ -59,7 +55,6 @@ class TransactionManagerJdbiTest extends AbstractJdbiTest implements RepositoryT
                 .hasMessage("Unexpected Error");
 
         txManager.run(trx -> {
-            // Verify data was rolled back
             assertThat(trx.repoUsers().findByUsername("charlie")).isNull();
             return null;
         });
@@ -69,14 +64,11 @@ class TransactionManagerJdbiTest extends AbstractJdbiTest implements RepositoryT
     void Run_ExplicitRollback_RollsBackData() {
         txManager.run(trx -> {
             insertUser(trx, "dave");
-
-            // Explicitly rollback the transaction
             trx.rollback();
             return null;
         });
 
         txManager.run(trx -> {
-            // Verify data was rolled back and not committed
             assertThat(trx.repoUsers().findByUsername("dave")).isNull();
             return null;
         });

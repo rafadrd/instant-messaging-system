@@ -39,11 +39,11 @@ public interface ChannelMemberRepositoryContract extends RepositoryTestHelper {
             User user = insertUser(trx, "alice");
             Channel channel1 = insertChannel(trx, "C1", user, true);
             Channel channel2 = insertChannel(trx, "C2", user, true);
-
             trx.repoMemberships().addUserToChannel(toUserInfo(user), channel1, AccessType.READ_WRITE);
             trx.repoMemberships().addUserToChannel(toUserInfo(user), channel2, AccessType.READ_ONLY);
 
             List<ChannelMember> allMemberships = trx.repoMemberships().findAll();
+
             assertThat(allMemberships).hasSize(2);
             return null;
         });
@@ -54,18 +54,16 @@ public interface ChannelMemberRepositoryContract extends RepositoryTestHelper {
         getTxManager().run(trx -> {
             User user1 = insertUser(trx, "alice");
             User user2 = insertUser(trx, "bob");
-
             Channel channel1 = insertChannel(trx, "General", user1, true);
             Channel channel2 = insertChannel(trx, "Secret", user1, false);
-
             trx.repoMemberships().addUserToChannel(toUserInfo(user1), channel1, AccessType.READ_WRITE);
             trx.repoMemberships().addUserToChannel(toUserInfo(user1), channel2, AccessType.READ_ONLY);
             trx.repoMemberships().addUserToChannel(toUserInfo(user2), channel1, AccessType.READ_ONLY);
 
             List<ChannelMember> aliceChannels = trx.repoMemberships().findAllChannelsForUser(user1.id(), 10, 0);
-            assertThat(aliceChannels).hasSize(2);
-
             List<ChannelMember> bobChannels = trx.repoMemberships().findAllChannelsForUser(user2.id(), 10, 0);
+
+            assertThat(aliceChannels).hasSize(2);
             assertThat(bobChannels).hasSize(1);
             return null;
         });
@@ -76,13 +74,12 @@ public interface ChannelMemberRepositoryContract extends RepositoryTestHelper {
         getTxManager().run(trx -> {
             User user1 = insertUser(trx, "alice");
             User user2 = insertUser(trx, "bob");
-
             Channel channel = insertChannel(trx, "General", user1, true);
-
             trx.repoMemberships().addUserToChannel(toUserInfo(user1), channel, AccessType.READ_WRITE);
             trx.repoMemberships().addUserToChannel(toUserInfo(user2), channel, AccessType.READ_ONLY);
 
             List<ChannelMember> members = trx.repoMemberships().findAllMembersInChannel(channel.id(), 10, 0);
+
             assertThat(members).hasSize(2);
             return null;
         });
@@ -93,11 +90,11 @@ public interface ChannelMemberRepositoryContract extends RepositoryTestHelper {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
-
             trx.repoMemberships().addUserToChannel(toUserInfo(user), channel, AccessType.READ_WRITE);
             assertThat(trx.repoMemberships().findUserInChannel(user.id(), channel.id())).isNotNull();
 
             trx.repoMemberships().removeUserFromChannel(user.id(), channel.id());
+
             assertThat(trx.repoMemberships().findUserInChannel(user.id(), channel.id())).isNull();
             return null;
         });
@@ -108,7 +105,6 @@ public interface ChannelMemberRepositoryContract extends RepositoryTestHelper {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
-
             ChannelMember member = trx.repoMemberships().addUserToChannel(toUserInfo(user), channel, AccessType.READ_ONLY);
             ChannelMember updated = new ChannelMemberBuilder()
                     .withId(member.id())
@@ -130,10 +126,10 @@ public interface ChannelMemberRepositoryContract extends RepositoryTestHelper {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
-
             ChannelMember member = trx.repoMemberships().addUserToChannel(toUserInfo(user), channel, AccessType.READ_WRITE);
 
             trx.repoMemberships().deleteById(member.id());
+
             assertThat(trx.repoMemberships().findById(member.id())).isNull();
             return null;
         });
@@ -144,10 +140,10 @@ public interface ChannelMemberRepositoryContract extends RepositoryTestHelper {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
-
             trx.repoMemberships().addUserToChannel(toUserInfo(user), channel, AccessType.READ_WRITE);
 
             trx.repoMemberships().clear();
+
             assertThat(trx.repoMemberships().findAll()).isEmpty();
             return null;
         });

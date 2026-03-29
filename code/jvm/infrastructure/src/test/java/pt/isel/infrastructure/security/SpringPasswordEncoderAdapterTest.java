@@ -44,11 +44,13 @@ class SpringPasswordEncoderAdapterTest {
     @Test
     void Matches_RealBCrypt_ReturnsExpectedResult() {
         SpringPasswordEncoderAdapter realAdapter = new SpringPasswordEncoderAdapter(new BCryptPasswordEncoder());
-
         String rawPassword = "SecurePassword123!";
         String encoded = realAdapter.encode(rawPassword);
 
-        assertThat(realAdapter.matches(rawPassword, encoded)).isTrue();
-        assertThat(realAdapter.matches("WrongPassword!", encoded)).isFalse();
+        boolean resultTrue = realAdapter.matches(rawPassword, encoded);
+        boolean resultFalse = realAdapter.matches("WrongPassword!", encoded);
+
+        assertThat(resultTrue).isTrue();
+        assertThat(resultFalse).isFalse();
     }
 }

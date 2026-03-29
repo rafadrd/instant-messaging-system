@@ -16,6 +16,7 @@ class InvitationTest {
         UserInfo creator = new UserInfo(1L, "Alice");
         Channel channel = new Channel(1L, "Lobby", creator);
         LocalDateTime expiry = LocalDateTime.now().plusDays(1);
+
         Invitation inv = new Invitation(10L, "token123", creator, channel, AccessType.READ_WRITE, expiry, InvitationStatus.ACCEPTED);
 
         assertThat(inv.id()).isEqualTo(10L);
@@ -32,6 +33,7 @@ class InvitationTest {
         UserInfo creator = new UserInfo(1L, "Alice");
         Channel channel = new Channel(1L, "Lobby", creator);
         LocalDateTime expiry = LocalDateTime.now().plusDays(1);
+
         Invitation inv = new Invitation(20L, "token456", creator, channel, AccessType.READ_ONLY, expiry);
 
         assertThat(inv.id()).isEqualTo(20L);

@@ -25,7 +25,6 @@ class TransactionManagerInMemTest {
             assertThat(trx.repoMemberships()).isNotNull();
             assertThat(trx.repoInvitations()).isNotNull();
             assertThat(trx.repoTokenBlacklist()).isNotNull();
-
             return "Success";
         });
 

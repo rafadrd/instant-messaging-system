@@ -34,9 +34,9 @@ public interface UserRepositoryContract extends RepositoryTestHelper {
             insertUser(trx, "bob");
 
             User found = trx.repoUsers().findByUsername("bob");
+
             assertThat(found).isNotNull();
             assertThat(found.username()).isEqualTo("bob");
-
             assertThat(trx.repoUsers().findByUsername("nonexistent")).isNull();
             return null;
         });
@@ -46,7 +46,9 @@ public interface UserRepositoryContract extends RepositoryTestHelper {
     default void HasUsers_HasRecords_ReturnsTrue() {
         getTxManager().run(trx -> {
             assertThat(trx.repoUsers().hasUsers()).isFalse();
+
             insertUser(trx, "charlie");
+
             assertThat(trx.repoUsers().hasUsers()).isTrue();
             return null;
         });
@@ -59,6 +61,7 @@ public interface UserRepositoryContract extends RepositoryTestHelper {
             insertUser(trx, "user2");
 
             List<User> users = trx.repoUsers().findAll();
+
             assertThat(users).hasSize(2);
             return null;
         });
@@ -87,6 +90,7 @@ public interface UserRepositoryContract extends RepositoryTestHelper {
     default void DeleteById_ValidId_DeletesRecord() {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "eve");
+
             trx.repoUsers().deleteById(user.id());
 
             assertThat(trx.repoUsers().findById(user.id())).isNull();
@@ -99,6 +103,7 @@ public interface UserRepositoryContract extends RepositoryTestHelper {
     default void Clear_HasRecords_RemovesAllRecords() {
         getTxManager().run(trx -> {
             insertUser(trx, "frank");
+
             trx.repoUsers().clear();
 
             assertThat(trx.repoUsers().hasUsers()).isFalse();

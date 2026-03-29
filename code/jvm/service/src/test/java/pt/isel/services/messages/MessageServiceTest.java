@@ -56,10 +56,9 @@ class MessageServiceTest extends AbstractServiceTest {
     void CreateMessage_ValidInput_ReturnsSuccess() {
         Either<MessageError, Message> result = messageService.createMessage("Hello World", alice.id(), channel.id());
 
-        Message msg = EitherAssert.assertRight(result);
+        Message msg = EitherAssert.assertThat(result).isRight().getRightValue();
         assertThat(msg.content()).isEqualTo("Hello World");
         assertThat(msg.user().id()).isEqualTo(alice.id());
-
         verify(messageEventService).broadcastMessage(eq(channel.id()), any(UpdatedMessage.NewMessage.class));
     }
 
@@ -69,29 +68,32 @@ class MessageServiceTest extends AbstractServiceTest {
 
         Either<MessageError, Message> result = messageService.createMessage("Hello", alice.id(), channel.id());
 
-        EitherAssert.assertLeft(result, MessageError.RateLimitExceeded.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(MessageError.RateLimitExceeded.class);
         verify(messageEventService, never()).broadcastMessage(anyLong(), any());
     }
 
     @ParameterizedTest
     @NullAndEmptySource
     void CreateMessage_EmptyContent_ReturnsLeft(String invalidContent) {
-        EitherAssert.assertLeft(messageService.createMessage(invalidContent, alice.id(), channel.id()));
+        Either<MessageError, Message> result = messageService.createMessage(invalidContent, alice.id(), channel.id());
+
+        EitherAssert.assertThat(result).isLeftInstanceOf(MessageError.EmptyMessage.class);
     }
 
     @Test
     void CreateMessage_ContentTooLong_ReturnsLeft() {
         String longMsg = "a".repeat(1001);
+
         Either<MessageError, Message> result = messageService.createMessage(longMsg, alice.id(), channel.id());
 
-        EitherAssert.assertLeft(result, MessageError.InvalidMessageLength.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(MessageError.InvalidMessageLength.class);
     }
 
     @Test
     void CreateMessage_UserNotAuthorized_ReturnsLeft() {
         Either<MessageError, Message> result = messageService.createMessage("Hello", charlie.id(), channel.id());
 
-        EitherAssert.assertLeft(result, MessageError.UserNotAuthorized.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(MessageError.UserNotAuthorized.class);
     }
 
     @Test
@@ -101,13 +103,16 @@ class MessageServiceTest extends AbstractServiceTest {
 
         Either<MessageError, List<Message>> result = messageService.getMessagesInChannel(charlie.id(), channel.id(), 10, 0);
 
-        assertThat(EitherAssert.assertRight(result)).hasSize(2);
+        assertThat(EitherAssert.assertThat(result).isRight().getRightValue()).hasSize(2);
     }
 
     @Test
     void GetMessagesInChannel_InvalidPagination_ReturnsLeft() {
-        EitherAssert.assertLeft(messageService.getMessagesInChannel(alice.id(), channel.id(), 0, 0));
-        EitherAssert.assertLeft(messageService.getMessagesInChannel(alice.id(), channel.id(), 10, -1));
+        Either<MessageError, List<Message>> result1 = messageService.getMessagesInChannel(alice.id(), channel.id(), 0, 0);
+        Either<MessageError, List<Message>> result2 = messageService.getMessagesInChannel(alice.id(), channel.id(), 10, -1);
+
+        EitherAssert.assertThat(result1).isLeftInstanceOf(MessageError.InvalidLimit.class);
+        EitherAssert.assertThat(result2).isLeftInstanceOf(MessageError.InvalidOffset.class);
     }
 
     @Test
@@ -116,35 +121,36 @@ class MessageServiceTest extends AbstractServiceTest {
 
         Either<MessageError, List<Message>> result = messageService.getMessagesInChannel(dave.id(), channel.id(), 10, 0);
 
-        EitherAssert.assertLeft(result, MessageError.UserNotInChannel.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(MessageError.UserNotInChannel.class);
     }
 
     @Test
     void CreateMessage_UserNotFound_ReturnsLeft() {
         Either<MessageError, Message> result = messageService.createMessage("Hello", 999L, channel.id());
 
-        EitherAssert.assertLeft(result, MessageError.UserNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(MessageError.UserNotFound.class);
     }
 
     @Test
     void CreateMessage_ChannelNotFound_ReturnsLeft() {
         Either<MessageError, Message> result = messageService.createMessage("Hello", alice.id(), 999L);
 
-        EitherAssert.assertLeft(result, MessageError.ChannelNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(MessageError.ChannelNotFound.class);
     }
 
     @Test
     void CreateMessage_UserNotInChannel_ReturnsLeft() {
         User dave = trxManager.run(trx -> insertUser(trx, "dave"));
+
         Either<MessageError, Message> result = messageService.createMessage("Hello", dave.id(), channel.id());
 
-        EitherAssert.assertLeft(result, MessageError.UserNotInChannel.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(MessageError.UserNotInChannel.class);
     }
 
     @Test
     void GetMessagesInChannel_ChannelNotFound_ReturnsLeft() {
         Either<MessageError, List<Message>> result = messageService.getMessagesInChannel(alice.id(), 999L, 10, 0);
 
-        EitherAssert.assertLeft(result, MessageError.ChannelNotFound.class);
+        EitherAssert.assertThat(result).isLeftInstanceOf(MessageError.ChannelNotFound.class);
     }
 }

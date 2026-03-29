@@ -10,6 +10,7 @@ class ChannelTest {
     @Test
     void Constructor_ValidArguments_CreatesInstance() {
         UserInfo owner = new UserInfo(1L, "Alice");
+
         Channel channel = new Channel(10L, "Secret Room", owner, false);
 
         assertThat(channel.id()).isEqualTo(10L);
@@ -21,6 +22,7 @@ class ChannelTest {
     @Test
     void Constructor_WithoutIsPublic_SetsPublicToTrue() {
         UserInfo owner = new UserInfo(2L, "Bob");
+
         Channel channel = new Channel(20L, "Public Lobby", owner);
 
         assertThat(channel.id()).isEqualTo(20L);

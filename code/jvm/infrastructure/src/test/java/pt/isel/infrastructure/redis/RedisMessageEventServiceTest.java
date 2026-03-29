@@ -56,7 +56,7 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
     }
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         trxManager = new TransactionManagerInMem();
 
         objectMapper = new ObjectMapper();
@@ -87,6 +87,7 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
     @Test
     void AddEmitter_UserNotFound_ThrowsException() {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
+
         assertThatThrownBy(() -> service.addEmitter(channel.id(), 999L, emitter))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("not found");
@@ -95,6 +96,7 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
     @Test
     void AddEmitter_ChannelNotFound_ThrowsException() {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
+
         assertThatThrownBy(() -> service.addEmitter(999L, alice.id(), emitter))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("not found");
@@ -128,10 +130,8 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
     void HandleRedisMessage_ValidMessage_EmitsToListeners() throws Exception {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
         service.addEmitter(channel.id(), alice.id(), emitter);
-
         UpdatedMessage.KeepAlive keepAlive = new UpdatedMessage.KeepAlive(Instant.now());
         RedisMessageEventService.DistributedEvent event = new RedisMessageEventService.DistributedEvent(channel.id(), keepAlive);
-
         String json = objectMapper.writeValueAsString(event);
 
         service.handleRedisMessage(json);
@@ -147,7 +147,6 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
         service.shutdown();
 
         verify(emitter).complete();
-
         service.sendKeepAlive();
         verify(emitter, never()).emit(any(UpdatedMessage.KeepAlive.class));
     }
@@ -156,12 +155,11 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
     void SendKeepAlive_EmitThrowsException_RemovesEmitter() {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
         Mockito.doThrow(new RuntimeException("Connection closed")).when(emitter).emit(any());
-
         service.addEmitter(channel.id(), alice.id(), emitter);
 
         service.sendKeepAlive();
-
         service.sendKeepAlive();
+
         verify(emitter, Mockito.times(1)).emit(any());
     }
 
@@ -169,12 +167,9 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
     void HandleRedisMessage_EmitThrowsException_RemovesEmitter() throws Exception {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
         Mockito.doThrow(new RuntimeException("Connection closed")).when(emitter).emit(any());
-
         service.addEmitter(channel.id(), alice.id(), emitter);
-
         UpdatedMessage.KeepAlive keepAlive = new UpdatedMessage.KeepAlive(Instant.now());
         RedisMessageEventService.DistributedEvent event = new RedisMessageEventService.DistributedEvent(channel.id(), keepAlive);
-
         String json = objectMapper.writeValueAsString(event);
 
         service.handleRedisMessage(json);
@@ -187,7 +182,6 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
     void OnCompletion_CallbackTriggered_RemovesEmitter() {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
         ArgumentCaptor<Runnable> completionCaptor = ArgumentCaptor.forClass(Runnable.class);
-
         service.addEmitter(channel.id(), alice.id(), emitter);
         verify(emitter).onCompletion(completionCaptor.capture());
 
@@ -208,7 +202,6 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
     void OnError_CallbackTriggered_RemovesEmitter() {
         UpdatedMessageEmitter emitter = mock(UpdatedMessageEmitter.class);
         ArgumentCaptor<Consumer<Throwable>> errorCaptor = ArgumentCaptor.forClass(Consumer.class);
-
         service.addEmitter(channel.id(), alice.id(), emitter);
         verify(emitter).onError(errorCaptor.capture());
 

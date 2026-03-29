@@ -15,6 +15,7 @@ class MessageTest {
         UserInfo user = new UserInfo(1L, "Alice");
         Channel channel = new Channel(1L, "Lobby", user);
         LocalDateTime fixedTime = LocalDateTime.of(2025, 1, 1, 12, 0);
+
         Message msg = new Message(100L, "Hello World", user, channel, fixedTime);
 
         assertThat(msg.id()).isEqualTo(100L);

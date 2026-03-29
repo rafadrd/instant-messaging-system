@@ -12,10 +12,10 @@ import pt.isel.repositories.jdbi.utils.JdbiConfig;
 public abstract class AbstractJdbiTest {
 
     @SuppressWarnings("resource")
-    private static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
-            .withDatabaseName("testdb")
-            .withUsername("testuser")
-            .withPassword("testpass");
+    private static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
+            .withDatabaseName("ims_db")
+            .withUsername("dbuser")
+            .withPassword("dbpass");
 
     protected static Jdbi jdbi;
     protected static TransactionManagerJdbi txManager;
@@ -48,7 +48,7 @@ public abstract class AbstractJdbiTest {
     @BeforeEach
     void cleanUp() {
         jdbi.useHandle(h -> h.execute(
-                "TRUNCATE TABLE users, channels, messages, invitations, channel_members, token_blacklist RESTART IDENTITY CASCADE"
+                "DO $$ DECLARE r RECORD; BEGIN FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema() AND tablename != 'flyway_schema_history') LOOP EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE'; END LOOP; END $$;"
         ));
     }
 }

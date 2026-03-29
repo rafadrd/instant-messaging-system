@@ -65,12 +65,17 @@ class AuthenticationInterceptorTest {
     @Test
     void PreHandle_NotHandlerMethod_ReturnsTrue() {
         Object nonHandlerMethod = new Object();
-        assertThat(interceptor.preHandle(request, response, nonHandlerMethod)).isTrue();
+
+        boolean result = interceptor.preHandle(request, response, nonHandlerMethod);
+
+        assertThat(result).isTrue();
     }
 
     @Test
     void PreHandle_NoAuthRequired_ReturnsTrue() {
-        assertThat(interceptor.preHandle(request, response, noAuthHandlerMethod)).isTrue();
+        boolean result = interceptor.preHandle(request, response, noAuthHandlerMethod);
+
+        assertThat(result).isTrue();
         verify(request, never()).getHeader(AuthenticationInterceptor.NAME_AUTHORIZATION_HEADER);
     }
 
@@ -78,11 +83,12 @@ class AuthenticationInterceptorTest {
     void PreHandle_ValidToken_ReturnsTrue() {
         User user = new UserBuilder().withId(1L).withUsername("alice").build();
         AuthenticatedUser authUser = new AuthenticatedUser(user, VALID_TOKEN);
-
         when(request.getHeader(AuthenticationInterceptor.NAME_AUTHORIZATION_HEADER)).thenReturn(BEARER_VALID_TOKEN);
         when(tokenProcessor.processAuthorizationHeaderValue(BEARER_VALID_TOKEN)).thenReturn(authUser);
 
-        assertThat(interceptor.preHandle(request, response, authHandlerMethod)).isTrue();
+        boolean result = interceptor.preHandle(request, response, authHandlerMethod);
+
+        assertThat(result).isTrue();
         verify(request).setAttribute("AuthenticatedUserArgumentResolver", authUser);
     }
 
@@ -91,7 +97,9 @@ class AuthenticationInterceptorTest {
         when(request.getHeader(AuthenticationInterceptor.NAME_AUTHORIZATION_HEADER)).thenReturn(null);
         when(request.getRequestURI()).thenReturn("/api/users/me");
 
-        assertThat(interceptor.preHandle(request, response, authHandlerMethod)).isFalse();
+        boolean result = interceptor.preHandle(request, response, authHandlerMethod);
+
+        assertThat(result).isFalse();
         verify(response).setStatus(401);
         verify(response).addHeader("WWW-Authenticate", "bearer");
     }
@@ -101,7 +109,9 @@ class AuthenticationInterceptorTest {
         when(request.getHeader(AuthenticationInterceptor.NAME_AUTHORIZATION_HEADER)).thenReturn(BEARER_INVALID_TOKEN);
         when(tokenProcessor.processAuthorizationHeaderValue(BEARER_INVALID_TOKEN)).thenReturn(null);
 
-        assertThat(interceptor.preHandle(request, response, authHandlerMethod)).isFalse();
+        boolean result = interceptor.preHandle(request, response, authHandlerMethod);
+
+        assertThat(result).isFalse();
         verify(response).setStatus(401);
         verify(response).addHeader("WWW-Authenticate", "bearer");
     }
@@ -109,14 +119,15 @@ class AuthenticationInterceptorTest {
     @Test
     void PreHandle_ValidTicket_ReturnsTrue() {
         User user = new UserBuilder().withId(1L).withUsername("alice").build();
-
         when(request.getHeader(AuthenticationInterceptor.NAME_AUTHORIZATION_HEADER)).thenReturn(null);
         when(request.getRequestURI()).thenReturn("/api/channels/10/listen");
         when(request.getParameter("ticket")).thenReturn("valid-ticket");
         when(ticketService.validateAndConsumeTicket("valid-ticket")).thenReturn(1L);
         when(userService.getUserById(1L)).thenReturn(Either.success(user));
 
-        assertThat(interceptor.preHandle(request, response, authHandlerMethod)).isTrue();
+        boolean result = interceptor.preHandle(request, response, authHandlerMethod);
+
+        assertThat(result).isTrue();
         verify(request).setAttribute(
                 org.mockito.ArgumentMatchers.eq("AuthenticatedUserArgumentResolver"),
                 org.mockito.ArgumentMatchers.any(AuthenticatedUser.class)
@@ -130,7 +141,9 @@ class AuthenticationInterceptorTest {
         when(request.getParameter("ticket")).thenReturn("invalid-ticket");
         when(ticketService.validateAndConsumeTicket("invalid-ticket")).thenReturn(null);
 
-        assertThat(interceptor.preHandle(request, response, authHandlerMethod)).isFalse();
+        boolean result = interceptor.preHandle(request, response, authHandlerMethod);
+
+        assertThat(result).isFalse();
         verify(response).setStatus(401);
     }
 
@@ -142,7 +155,9 @@ class AuthenticationInterceptorTest {
         when(ticketService.validateAndConsumeTicket("valid-ticket")).thenReturn(999L);
         when(userService.getUserById(999L)).thenReturn(Either.failure(new UserError.UserNotFound()));
 
-        assertThat(interceptor.preHandle(request, response, authHandlerMethod)).isFalse();
+        boolean result = interceptor.preHandle(request, response, authHandlerMethod);
+
+        assertThat(result).isFalse();
         verify(response).setStatus(401);
     }
 
@@ -150,10 +165,11 @@ class AuthenticationInterceptorTest {
     void PreHandle_MissingTicket_ReturnsFalse() {
         when(request.getHeader(AuthenticationInterceptor.NAME_AUTHORIZATION_HEADER)).thenReturn(null);
         when(request.getRequestURI()).thenReturn("/api/channels/10/listen");
-
         when(request.getParameter("ticket")).thenReturn(null);
 
-        assertThat(interceptor.preHandle(request, response, authHandlerMethod)).isFalse();
+        boolean result = interceptor.preHandle(request, response, authHandlerMethod);
+
+        assertThat(result).isFalse();
         verify(response).setStatus(401);
         verify(response).addHeader("WWW-Authenticate", "bearer");
     }

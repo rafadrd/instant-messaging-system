@@ -1,28 +1,60 @@
 package pt.isel.domain.common;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import org.assertj.core.api.AbstractAssert;
+import org.assertj.core.api.Assertions;
 
-public class EitherAssert {
+@SuppressWarnings({"UnusedReturnValue", "unused"})
+public class EitherAssert<L, R> extends AbstractAssert<EitherAssert<L, R>, Either<L, R>> {
 
-    public static <L, R> R assertRight(Either<L, R> either) {
-        assertThat(either)
-                .as("Expected Either to be Right but was Left")
-                .isInstanceOf(Either.Right.class);
-        return ((Either.Right<L, R>) either).value();
+    public EitherAssert(Either<L, R> actual) {
+        super(actual, EitherAssert.class);
     }
 
-    public static <L, R> void assertLeft(Either<L, R> either, Class<? extends L> expectedErrorClass) {
-        assertThat(either)
-                .as("Expected Either to be Left but was Right")
-                .isInstanceOf(Either.Left.class);
-        L error = ((Either.Left<L, R>) either).value();
-        assertThat(error).isInstanceOf(expectedErrorClass);
+    public static <L, R> EitherAssert<L, R> assertThat(Either<L, R> actual) {
+        return new EitherAssert<>(actual);
     }
 
-    public static <L, R> L assertLeft(Either<L, R> either) {
-        assertThat(either)
-                .as("Expected Either to be Left but was Right")
-                .isInstanceOf(Either.Left.class);
-        return ((Either.Left<L, R>) either).value();
+    public EitherAssert<L, R> isRight() {
+        isNotNull();
+        if (!(actual instanceof Either.Right)) {
+            failWithMessage("Expected Either to be Right but was Left: %s", ((Either.Left<L, R>) actual).value());
+        }
+        return this;
+    }
+
+    public EitherAssert<L, R> isLeft() {
+        isNotNull();
+        if (!(actual instanceof Either.Left)) {
+            failWithMessage("Expected Either to be Left but was Right: %s", ((Either.Right<L, R>) actual).value());
+        }
+        return this;
+    }
+
+    public EitherAssert<L, R> containsRight(R expected) {
+        isRight();
+        Assertions.assertThat(((Either.Right<L, R>) actual).value()).isEqualTo(expected);
+        return this;
+    }
+
+    public EitherAssert<L, R> containsLeft(L expected) {
+        isLeft();
+        Assertions.assertThat(((Either.Left<L, R>) actual).value()).isEqualTo(expected);
+        return this;
+    }
+
+    public R getRightValue() {
+        isRight();
+        return ((Either.Right<L, R>) actual).value();
+    }
+
+    public L getLeftValue() {
+        isLeft();
+        return ((Either.Left<L, R>) actual).value();
+    }
+
+    public EitherAssert<L, R> isLeftInstanceOf(Class<? extends L> expectedClass) {
+        isLeft();
+        Assertions.assertThat(((Either.Left<L, R>) actual).value()).isInstanceOf(expectedClass);
+        return this;
     }
 }
