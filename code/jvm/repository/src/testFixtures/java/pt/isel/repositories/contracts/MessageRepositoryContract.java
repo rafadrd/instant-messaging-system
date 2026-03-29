@@ -6,8 +6,6 @@ import pt.isel.domain.channels.Channel;
 import pt.isel.domain.messages.Message;
 import pt.isel.domain.users.User;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -20,7 +18,7 @@ public interface MessageRepositoryContract extends RepositoryTestHelper {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
 
-            Message msg = trx.repoMessages().create("Hello World", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC));
+            Message msg = trx.repoMessages().create("Hello World", toUserInfo(user), channel, FIXED_TIME);
 
             assertThat(msg).isNotNull();
             assertThat(msg.id()).isNotNull();
@@ -40,8 +38,8 @@ public interface MessageRepositoryContract extends RepositoryTestHelper {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
-            trx.repoMessages().create("Msg 1", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC));
-            trx.repoMessages().create("Msg 2", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC));
+            trx.repoMessages().create("Msg 1", toUserInfo(user), channel, FIXED_TIME);
+            trx.repoMessages().create("Msg 2", toUserInfo(user), channel, FIXED_TIME);
 
             List<Message> allMessages = trx.repoMessages().findAll();
 
@@ -55,11 +53,11 @@ public interface MessageRepositoryContract extends RepositoryTestHelper {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
-            trx.repoMessages().create("Msg 1", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC).minusMinutes(3));
-            trx.repoMessages().create("Msg 2", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC).minusMinutes(2));
-            trx.repoMessages().create("Msg 3", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC).minusMinutes(1));
+            trx.repoMessages().create("Msg 1", toUserInfo(user), channel, FIXED_TIME.minusMinutes(3));
+            trx.repoMessages().create("Msg 2", toUserInfo(user), channel, FIXED_TIME.minusMinutes(2));
+            trx.repoMessages().create("Msg 3", toUserInfo(user), channel, FIXED_TIME.minusMinutes(1));
             Channel otherChannel = insertChannel(trx, "Other", user, true);
-            trx.repoMessages().create("Other Msg", toUserInfo(user), otherChannel, LocalDateTime.now(ZoneOffset.UTC));
+            trx.repoMessages().create("Other Msg", toUserInfo(user), otherChannel, FIXED_TIME);
 
             List<Message> page1 = trx.repoMessages().findAllInChannel(channel, 2, 0);
             List<Message> page2 = trx.repoMessages().findAllInChannel(channel, 2, 2);
@@ -78,7 +76,7 @@ public interface MessageRepositoryContract extends RepositoryTestHelper {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
-            Message msg = trx.repoMessages().create("Original", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC));
+            Message msg = trx.repoMessages().create("Original", toUserInfo(user), channel, FIXED_TIME);
             Message updated = new MessageBuilder()
                     .withId(msg.id())
                     .withContent("Edited")
@@ -99,7 +97,7 @@ public interface MessageRepositoryContract extends RepositoryTestHelper {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
-            Message msg = trx.repoMessages().create("To Delete", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC));
+            Message msg = trx.repoMessages().create("To Delete", toUserInfo(user), channel, FIXED_TIME);
 
             trx.repoMessages().deleteById(msg.id());
 
@@ -113,7 +111,7 @@ public interface MessageRepositoryContract extends RepositoryTestHelper {
         getTxManager().run(trx -> {
             User user = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "General", user, true);
-            trx.repoMessages().create("Msg", toUserInfo(user), channel, LocalDateTime.now(ZoneOffset.UTC));
+            trx.repoMessages().create("Msg", toUserInfo(user), channel, FIXED_TIME);
 
             trx.repoMessages().clear();
 

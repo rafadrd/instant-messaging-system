@@ -15,20 +15,16 @@ import pt.isel.domain.messages.Message;
 import pt.isel.domain.messages.UpdatedMessage;
 import pt.isel.domain.users.User;
 import pt.isel.services.AbstractServiceTest;
-import pt.isel.services.common.RateLimiter;
+import pt.isel.services.fakes.FakeRateLimiter;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class MessageServiceTest extends AbstractServiceTest {
@@ -36,18 +32,14 @@ class MessageServiceTest extends AbstractServiceTest {
     @Mock
     private MessageEventService messageEventService;
 
-    @Mock
-    private RateLimiter rateLimiter;
-
+    private FakeRateLimiter rateLimiter;
     private MessageService messageService;
     private Channel channel;
 
     @BeforeEach
     void setUp() {
         super.setUpBaseState();
-
-        lenient().when(rateLimiter.isRateLimited(anyString(), anyString(), anyInt(), any())).thenReturn(false);
-
+        rateLimiter = new FakeRateLimiter();
         messageService = new MessageService(trxManager, messageEventService, rateLimiter, clock);
         channel = createChannelWithMembers("General", true);
     }
@@ -64,7 +56,7 @@ class MessageServiceTest extends AbstractServiceTest {
 
     @Test
     void CreateMessage_RateLimited_ReturnsLeft() {
-        when(rateLimiter.isRateLimited(anyString(), anyString(), anyInt(), any())).thenReturn(true);
+        rateLimiter.setRateLimited(true);
 
         Either<MessageError, Message> result = messageService.createMessage("Hello", alice.id(), channel.id());
 

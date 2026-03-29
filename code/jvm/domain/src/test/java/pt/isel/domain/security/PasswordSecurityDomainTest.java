@@ -2,32 +2,19 @@ package pt.isel.domain.security;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import pt.isel.domain.builders.PasswordValidationInfoBuilder;
+import pt.isel.domain.fakes.FakePasswordEncoder;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.lenient;
 
-@ExtendWith(MockitoExtension.class)
 class PasswordSecurityDomainTest {
 
-    @Mock
-    private PasswordEncoder fakeEncoder;
-
+    private FakePasswordEncoder fakeEncoder;
     private PasswordSecurityDomain securityDomain;
 
     @BeforeEach
     void setUp() {
-        lenient().when(fakeEncoder.encode(anyString())).thenAnswer(inv -> "encoded_" + inv.getArgument(0));
-        lenient().when(fakeEncoder.matches(anyString(), anyString())).thenAnswer(inv -> {
-            String raw = inv.getArgument(0);
-            String encoded = inv.getArgument(1);
-            return encoded.equals("encoded_" + raw);
-        });
-
+        fakeEncoder = new FakePasswordEncoder();
         PasswordPolicyConfig config = new PasswordPolicyConfig(8, true, true, true, true);
         securityDomain = new PasswordSecurityDomain(fakeEncoder, config);
     }

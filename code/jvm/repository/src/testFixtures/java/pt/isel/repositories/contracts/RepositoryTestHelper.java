@@ -13,6 +13,9 @@ import pt.isel.repositories.TransactionManager;
 import java.time.LocalDateTime;
 
 public interface RepositoryTestHelper {
+    String CLEANUP_SQL = "DO $$ DECLARE r RECORD; BEGIN FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema() AND tablename != 'flyway_schema_history') LOOP EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE'; END LOOP; END $$;";
+    LocalDateTime FIXED_TIME = LocalDateTime.of(2030, 1, 1, 10, 0);
+
     TransactionManager getTxManager();
 
     default User insertUser(Transaction trx, String username) {

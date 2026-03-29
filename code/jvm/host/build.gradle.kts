@@ -30,4 +30,5 @@ dependencies {
     testImplementation(libs.testcontainers.postgresql)
     testImplementation(libs.spring.boot.testcontainers)
     testImplementation(testFixtures(project(":domain")))
+    testImplementation(testFixtures(project(":repository")))
 }

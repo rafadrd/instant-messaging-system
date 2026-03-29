@@ -1,3 +1,4 @@
+// host/src/test/java/pt/isel/host/AppInstantMessagingTest.java
 package pt.isel.host;
 
 import org.jdbi.v3.core.Jdbi;
@@ -18,12 +19,12 @@ class AppInstantMessagingTest extends AbstractIntegrationTest {
     private ApplicationContext context;
 
     @Test
-    void Context_Loads_Successfully() {
+    void LoadContext_ValidConfiguration_StartsSuccessfully() {
         assertThat(context).as("The Spring application context should load successfully.").isNotNull();
     }
 
     @Test
-    void Context_CustomBeans_AreLoaded() {
+    void LoadContext_ValidConfiguration_RegistersCustomBeans() {
         PasswordPolicyConfig passwordPolicyConfig = context.getBean(PasswordPolicyConfig.class);
 
         assertThat(context.getBean(Jdbi.class)).as("Jdbi bean should be present in the context").isNotNull();

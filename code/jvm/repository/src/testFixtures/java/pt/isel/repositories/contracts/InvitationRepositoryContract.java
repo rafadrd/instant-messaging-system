@@ -9,7 +9,6 @@ import pt.isel.domain.invitations.InvitationStatus;
 import pt.isel.domain.users.User;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -22,7 +21,7 @@ public interface InvitationRepositoryContract extends RepositoryTestHelper {
         getTxManager().run(trx -> {
             User creator = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "Secret", creator, false);
-            LocalDateTime expiry = LocalDateTime.now(ZoneOffset.UTC).plusDays(1).truncatedTo(ChronoUnit.MILLIS);
+            LocalDateTime expiry = FIXED_TIME.plusDays(1).truncatedTo(ChronoUnit.MILLIS);
 
             Invitation inv = trx.repoInvitations().create("token-123", toUserInfo(creator), channel, AccessType.READ_ONLY, expiry);
 
@@ -43,7 +42,7 @@ public interface InvitationRepositoryContract extends RepositoryTestHelper {
         getTxManager().run(trx -> {
             User creator = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "Secret", creator, false);
-            LocalDateTime expiry = LocalDateTime.now(ZoneOffset.UTC).plusDays(1);
+            LocalDateTime expiry = FIXED_TIME.plusDays(1);
             trx.repoInvitations().create("t1", toUserInfo(creator), channel, AccessType.READ_ONLY, expiry);
             trx.repoInvitations().create("t2", toUserInfo(creator), channel, AccessType.READ_WRITE, expiry);
 
@@ -59,7 +58,7 @@ public interface InvitationRepositoryContract extends RepositoryTestHelper {
         getTxManager().run(trx -> {
             User creator = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "Secret", creator, false);
-            LocalDateTime expiry = LocalDateTime.now(ZoneOffset.UTC).plusDays(1);
+            LocalDateTime expiry = FIXED_TIME.plusDays(1);
             trx.repoInvitations().create("t1", toUserInfo(creator), channel, AccessType.READ_ONLY, expiry);
             trx.repoInvitations().create("t2", toUserInfo(creator), channel, AccessType.READ_WRITE, expiry);
 
@@ -75,7 +74,7 @@ public interface InvitationRepositoryContract extends RepositoryTestHelper {
         getTxManager().run(trx -> {
             User creator = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "Secret", creator, false);
-            Invitation inv = trx.repoInvitations().create("t1", toUserInfo(creator), channel, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).plusDays(1));
+            Invitation inv = trx.repoInvitations().create("t1", toUserInfo(creator), channel, AccessType.READ_ONLY, FIXED_TIME.plusDays(1));
 
             boolean consumed = trx.repoInvitations().consume(inv.id());
 
@@ -92,7 +91,7 @@ public interface InvitationRepositoryContract extends RepositoryTestHelper {
         getTxManager().run(trx -> {
             User creator = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "Secret", creator, false);
-            Invitation inv = trx.repoInvitations().create("t1", toUserInfo(creator), channel, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).plusDays(1));
+            Invitation inv = trx.repoInvitations().create("t1", toUserInfo(creator), channel, AccessType.READ_ONLY, FIXED_TIME.plusDays(1));
             Invitation rejected = new InvitationBuilder()
                     .withId(inv.id())
                     .withToken(inv.token())
@@ -115,7 +114,7 @@ public interface InvitationRepositoryContract extends RepositoryTestHelper {
         getTxManager().run(trx -> {
             User creator = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "Secret", creator, false);
-            Invitation inv = trx.repoInvitations().create("t1", toUserInfo(creator), channel, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).plusDays(1));
+            Invitation inv = trx.repoInvitations().create("t1", toUserInfo(creator), channel, AccessType.READ_ONLY, FIXED_TIME.plusDays(1));
 
             trx.repoInvitations().deleteById(inv.id());
 
@@ -129,7 +128,7 @@ public interface InvitationRepositoryContract extends RepositoryTestHelper {
         getTxManager().run(trx -> {
             User creator = insertUser(trx, "alice");
             Channel channel = insertChannel(trx, "Secret", creator, false);
-            trx.repoInvitations().create("t1", toUserInfo(creator), channel, AccessType.READ_ONLY, LocalDateTime.now(ZoneOffset.UTC).plusDays(1));
+            trx.repoInvitations().create("t1", toUserInfo(creator), channel, AccessType.READ_ONLY, FIXED_TIME.plusDays(1));
 
             trx.repoInvitations().clear();
 

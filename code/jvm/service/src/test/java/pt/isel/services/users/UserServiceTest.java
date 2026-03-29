@@ -2,84 +2,46 @@ package pt.isel.services.users;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import pt.isel.domain.builders.TokenExternalInfoBuilder;
 import pt.isel.domain.channels.AccessType;
 import pt.isel.domain.channels.Channel;
 import pt.isel.domain.common.Either;
 import pt.isel.domain.common.EitherAssert;
 import pt.isel.domain.common.UserError;
+import pt.isel.domain.fakes.FakePasswordEncoder;
 import pt.isel.domain.invitations.Invitation;
-import pt.isel.domain.security.PasswordEncoder;
 import pt.isel.domain.security.PasswordPolicyConfig;
 import pt.isel.domain.security.PasswordSecurityDomain;
 import pt.isel.domain.security.TokenExternalInfo;
 import pt.isel.domain.users.User;
 import pt.isel.services.AbstractServiceTest;
-import pt.isel.services.builders.ParsedTokenBuilder;
-import pt.isel.services.common.RateLimiter;
+import pt.isel.services.fakes.FakeRateLimiter;
+import pt.isel.services.fakes.FakeTokenService;
 
 import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
 class UserServiceTest extends AbstractServiceTest {
 
-    @Mock
-    private PasswordEncoder passwordEncoder;
-
-    @Mock
-    private TokenService tokenService;
-
-    @Mock
-    private RateLimiter rateLimiter;
-
+    private FakeRateLimiter rateLimiter;
     private UserService userService;
 
     @BeforeEach
     void setUp() {
         super.setUpBaseState();
-
-        lenient().when(passwordEncoder.encode(anyString())).thenAnswer(inv -> "encoded_" + inv.getArgument(0));
-        lenient().when(passwordEncoder.matches(anyString(), anyString())).thenAnswer(inv -> {
-            String raw = inv.getArgument(0);
-            String encoded = inv.getArgument(1);
-            return encoded.equals("encoded_" + raw);
-        });
-
-        lenient().when(tokenService.createToken(anyLong())).thenAnswer(inv -> {
-            Long id = inv.getArgument(0);
-            return new TokenExternalInfoBuilder().withTokenValue("token-" + id).withUserId(id).build();
-        });
-
-        lenient().when(tokenService.validateToken(anyString())).thenAnswer(inv -> {
-            String token = inv.getArgument(0);
-            if (token.startsWith("token-")) {
-                Long id = Long.parseLong(token.substring(6));
-                return new ParsedTokenBuilder().withJti("jti-" + id).withUserId(id).build();
-            }
-            return null;
-        });
-
-        lenient().when(rateLimiter.isRateLimited(anyString(), anyString(), anyInt(), any())).thenReturn(false);
+        FakePasswordEncoder passwordEncoder = new FakePasswordEncoder();
+        FakeTokenService tokenService = new FakeTokenService();
+        rateLimiter = new FakeRateLimiter();
 
         PasswordPolicyConfig config = new PasswordPolicyConfig(8, true, true, true, true);
         PasswordSecurityDomain securityDomain = new PasswordSecurityDomain(passwordEncoder, config);
 
         userService = new UserService(trxManager, securityDomain, tokenService, clock, rateLimiter);
     }
+
 
     @Test
     void RegisterUser_ValidInput_ReturnsSuccess() {
@@ -227,7 +189,7 @@ class UserServiceTest extends AbstractServiceTest {
     @Test
     void CreateToken_RateLimited_ReturnsLeft() {
         userService.registerUser("dave", "Strong1!", null);
-        when(rateLimiter.isRateLimited(anyString(), anyString(), anyInt(), any())).thenReturn(true);
+        rateLimiter.setRateLimited(true);
 
         Either<UserError, TokenExternalInfo> result = userService.createToken("dave", "Strong1!");
 

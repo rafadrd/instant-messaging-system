@@ -25,6 +25,7 @@ import pt.isel.repositories.mem.TransactionManagerInMem;
 
 import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -63,7 +64,7 @@ class RedisMessageEventServiceTest implements RepositoryTestHelper {
         objectMapper.findAndRegisterModules();
         objectMapper.addMixIn(UpdatedMessage.class, UpdatedMessageMixin.class);
 
-        service = new RedisMessageEventService(trxManager, redisTemplate, objectMapper, Clock.systemUTC());
+        service = new RedisMessageEventService(trxManager, redisTemplate, objectMapper, Clock.fixed(Instant.parse("2025-01-01T10:00:00Z"), ZoneOffset.UTC));
 
         alice = trxManager.run(trx -> insertUser(trx, "alice"));
         channel = trxManager.run(trx -> {
